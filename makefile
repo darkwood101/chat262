@@ -3,7 +3,7 @@ all: server client
 CFLAGS := -Wall -Wextra -Werror -O2 -std=c++17
 LDFLAGS := -pthread
 
-server: server.o
+server: server.o logger.o
 	g++ $(LDFLAGS) -o $@ $^
 
 client: client.o

@@ -1,7 +1,9 @@
 #include "server.h"
 
 #include "chat262_protocol.h"
+#include "logger.h"
 
+#include <cinttypes>
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
@@ -120,8 +122,7 @@ void server::start_listening() {
             std::string("Could not listen on the socket: ") +
             std::string(strerror(errno)));
     }
-    std::cout << "Listening on " << str_ip_addr_ << ":" << chat262::port
-              << "\n";
+    logger::log_out("Listening on %s:%" PRIu16 "\n", str_ip_addr_.c_str(), chat262::port);
 }
 
 void server::start_accepting() {
@@ -140,7 +141,7 @@ void server::start_accepting() {
 void server::handle_client(int client_fd, sockaddr_in client_addr) {
     // Make sure the connection was properly accepted
     if (client_fd < 0) {
-        std::cerr << "Could not accept: " << strerror(errno) << "\n";
+        logger::log_err("Could not accept: %s\n", strerror(errno));
         return;
     }
     char client_ip[INET_ADDRSTRLEN];
@@ -148,10 +149,10 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
                    &client_addr.sin_addr,
                    client_ip,
                    sizeof(client_ip))) {
-        std::cerr << "Could not read client's IP\n";
+        logger::log_err("%s", "Could not read client's IP\n");
         return;
     }
-    std::cout << "Accepted connection from " << client_ip << "\n";
+    logger::log_out("Accepted connection from %s\n", client_ip);
 }
 
 int main(int argc, char** argv) {
