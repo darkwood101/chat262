@@ -1,9 +1,12 @@
 #include "client.h"
+#include "chat262_protocol.h"
 
 #include <arpa/inet.h>
 #include <stdexcept>
 #include <cstring>
 #include <iostream>
+#include <sys/socket.h>
+#include <cerrno>
 
 status client::run(int argc, char const* const* argv) {
     cmdline_args args;
@@ -18,6 +21,14 @@ status client::run(int argc, char const* const* argv) {
     if (args.help_) {
         usage(argv[0]);
         return status::ok;
+    }
+
+    n_ip_addr_ = args.n_ip_addr_;
+    str_ip_addr_ = argv[1];
+
+    status s = connect_server();
+    if (s != status::ok) {
+        return s;
     }
 
     return status::ok;
@@ -53,6 +64,28 @@ void client::usage(char const* prog) const {
                  "\n"
                  "Options:\n"
                  "\t-h\t\t Display this message and exit.\n";
+}
+
+status client::connect_server() {
+    server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd_ < 0) {
+        std::cerr << "Could not create a socket: " << strerror(errno) << "\n";
+        return status::error;
+    }
+
+    sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(chat262::port);
+    server_addr.sin_addr.s_addr = n_ip_addr_;
+
+    if (connect(server_fd_, (const sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+        std::cerr << "Could not connect to server: " << strerror(errno) << "\n";
+        return status::error;
+    }
+
+    std::cout << "Successfully connected to server on " << str_ip_addr_ << ":" << chat262::port << "\n";
+    return status::ok;
 }
 
 int main(int argc, char** argv) {

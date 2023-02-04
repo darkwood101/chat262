@@ -24,8 +24,17 @@ private:
     // Print usage information to standard error
     void usage(char const* prog) const;
 
+    status connect_server();
+
     std::string username_;
     std::string password_;
+
+    // Connected socket file descriptor
+    int server_fd_;
+    // IP address in network byte order
+    uint32_t n_ip_addr_;
+    // IP address in string format
+    std::string str_ip_addr_;
 };
 
 #endif
