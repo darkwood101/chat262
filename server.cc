@@ -11,13 +11,13 @@
 #include <thread>
 #include <unistd.h>
 
-server::server() : socket_fd_(-1), n_ip_addr_(0) {
+server::server() : server_fd_(-1), n_ip_addr_(0) {
 }
 
 server::~server() {
     // If the socket descriptor was open, close it
-    if (socket_fd_ != -1) {
-        close(socket_fd_);
+    if (server_fd_ != -1) {
+        close(server_fd_);
     }
 }
 
@@ -85,8 +85,8 @@ void server::usage(char const* prog) const {
 }
 
 void server::start_listening() {
-    socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
-    if (socket_fd_ < 0) {
+    server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd_ < 0) {
         throw std::runtime_error(std::string("Could not create socket: ") +
                                  std::string(strerror(errno)));
     }
@@ -94,7 +94,7 @@ void server::start_listening() {
     // Allow reuse of this address immediately. Otherwise, we might have to
     // wait.
     static constexpr int enable_addr_reuse = 1;
-    if (setsockopt(socket_fd_,
+    if (setsockopt(server_fd_,
                    SOL_SOCKET,
                    SO_REUSEADDR,
                    &enable_addr_reuse,
@@ -109,13 +109,13 @@ void server::start_listening() {
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(chat262::port);
     server_addr.sin_addr.s_addr = n_ip_addr_;
-    if (bind(socket_fd_, (const sockaddr*) &server_addr, sizeof(server_addr)) <
+    if (bind(server_fd_, (const sockaddr*) &server_addr, sizeof(server_addr)) <
         0) {
         throw std::runtime_error(std::string("Could not bind the socket: ") +
                                  std::string(strerror(errno)));
     }
 
-    if (listen(socket_fd_, 1) < 0) {
+    if (listen(server_fd_, 1) < 0) {
         throw std::runtime_error(
             std::string("Could not listen on the socket: ") +
             std::string(strerror(errno)));
@@ -131,7 +131,7 @@ void server::start_accepting() {
 
     while (true) {
         int client_fd =
-            accept(socket_fd_, (sockaddr*) &client_addr, &client_addr_len);
+            accept(server_fd_, (sockaddr*) &client_addr, &client_addr_len);
         std::thread t(&server::handle_client, this, client_fd, client_addr);
         t.detach();
     }

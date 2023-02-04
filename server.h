@@ -39,7 +39,7 @@ private:
     void handle_client(int client_fd, sockaddr_in client_addr);
 
     // Listen socket file descriptor
-    int socket_fd_;
+    int server_fd_;
     // IP address in network byte order
     uint32_t n_ip_addr_;
     // IP address in string format
