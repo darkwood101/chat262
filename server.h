@@ -35,6 +35,7 @@ private:
     void usage(char const* prog) const;
 
     void start_listening();
+    void start_accepting();
     void handle_client(int client_fd, sockaddr_in client_addr);
 
     // Listen socket file descriptor

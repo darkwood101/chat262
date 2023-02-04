@@ -46,6 +46,8 @@ status server::run(int argc, char const* const* argv) {
         return status::error;
     }
 
+    start_accepting();
+
     return status::ok;
 }
 
@@ -120,7 +122,9 @@ void server::start_listening() {
     }
     std::cout << "Listening on " << str_ip_addr_ << ":" << chat262::port
               << "\n";
+}
 
+void server::start_accepting() {
     sockaddr_in client_addr;
     memset(&client_addr, 0, sizeof(client_addr));
     socklen_t client_addr_len = sizeof(client_addr);
@@ -128,20 +132,17 @@ void server::start_listening() {
     while (true) {
         int client_fd =
             accept(socket_fd_, (sockaddr*) &client_addr, &client_addr_len);
-        if (client_fd < 0) {
-            throw std::runtime_error(std::string("Could not accept: ") +
-                                     std::string(strerror(errno)));
-        }
-        // Should never happen, because we know what protocol we're dealing with
-        if (client_addr_len != sizeof(client_addr)) {
-            throw std::runtime_error("Client address length mismatch\n");
-        }
         std::thread t(&server::handle_client, this, client_fd, client_addr);
         t.detach();
     }
 }
 
 void server::handle_client(int client_fd, sockaddr_in client_addr) {
+    // Make sure the connection was properly accepted
+    if (client_fd < 0) {
+        std::cerr << "Could not accept: " << strerror(errno);
+        return;
+    }
     char client_ip[INET_ADDRSTRLEN];
     if (!inet_ntop(AF_INET,
                    &client_addr.sin_addr,
