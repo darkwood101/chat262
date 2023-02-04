@@ -9,7 +9,7 @@ namespace chat262 {
 static constexpr uint16_t version = 0x1;
 static constexpr uint16_t port = 45171;
 
-enum class message_type : uint16_t {
+enum message_type : uint16_t {
     registration = 0x0,
     login = 0x1,
     logout = 0x2
