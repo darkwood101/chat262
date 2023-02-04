@@ -26,7 +26,7 @@ status server::run(int argc, char const* const* argv) {
     try {
         args = parse_args(argc, argv);
     } catch (std::exception& e) {
-        std::cerr << e.what();
+        std::cerr << e.what() << "\n";
         usage(argv[0]);
         return status::error;
     }
@@ -42,7 +42,7 @@ status server::run(int argc, char const* const* argv) {
     try {
         start_listening();
     } catch (std::exception& e) {
-        std::cerr << e.what();
+        std::cerr << e.what() << "\n";
         return status::error;
     }
 
@@ -54,7 +54,7 @@ status server::run(int argc, char const* const* argv) {
 server::cmdline_args server::parse_args(const int argc,
                                         char const* const* argv) const {
     if (argc != 2 && argc != 3) {
-        throw std::invalid_argument("Wrong number of arguments\n");
+        throw std::invalid_argument("Wrong number of arguments");
     }
 
     cmdline_args args;
@@ -68,7 +68,7 @@ server::cmdline_args server::parse_args(const int argc,
     }
     // Parse the IP address
     if (inet_pton(AF_INET, argv[1], &(args.n_ip_addr_)) != 1) {
-        throw std::invalid_argument("Invalid IP address\n");
+        throw std::invalid_argument("Invalid IP address");
     }
     return args;
 }
@@ -140,7 +140,7 @@ void server::start_accepting() {
 void server::handle_client(int client_fd, sockaddr_in client_addr) {
     // Make sure the connection was properly accepted
     if (client_fd < 0) {
-        std::cerr << "Could not accept: " << strerror(errno);
+        std::cerr << "Could not accept: " << strerror(errno) << "\n";
         return;
     }
     char client_ip[INET_ADDRSTRLEN];
