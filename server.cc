@@ -41,11 +41,9 @@ status server::run(int argc, char const* const* argv) {
     n_ip_addr_ = args.n_ip_addr_;
     str_ip_addr_ = argv[1];
 
-    try {
-        start_listening();
-    } catch (std::exception& e) {
-        std::cerr << e.what() << "\n";
-        return status::error;
+    status s = start_listening();
+    if (s != status::ok) {
+        return s;
     }
 
     start_accepting();
@@ -86,11 +84,11 @@ void server::usage(char const* prog) const {
                  "\t-h\t\t Display this message and exit.\n";
 }
 
-void server::start_listening() {
+status server::start_listening() {
     server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd_ < 0) {
-        throw std::runtime_error(std::string("Could not create socket: ") +
-                                 std::string(strerror(errno)));
+        logger::log_err("Could not create socket: %s\n", strerror(errno));
+        return status::error;
     }
 
     // Allow reuse of this address immediately. Otherwise, we might have to
@@ -101,9 +99,9 @@ void server::start_listening() {
                    SO_REUSEADDR,
                    &enable_addr_reuse,
                    sizeof(enable_addr_reuse)) < 0) {
-        throw std::runtime_error(
-            std::string("Could not enable address reuse: ") +
-            std::string(strerror(errno)));
+        logger::log_err("Could not enable address reuse: %s\n",
+                        strerror(errno));
+        return status::error;
     }
 
     sockaddr_in server_addr;
@@ -113,18 +111,19 @@ void server::start_listening() {
     server_addr.sin_addr.s_addr = n_ip_addr_;
     if (bind(server_fd_, (const sockaddr*) &server_addr, sizeof(server_addr)) <
         0) {
-        throw std::runtime_error(std::string("Could not bind the socket: ") +
-                                 std::string(strerror(errno)));
+        logger::log_err("Could not bind the socket: %s\n", strerror(errno));
+        return status::error;
     }
 
     if (listen(server_fd_, 1) < 0) {
-        throw std::runtime_error(
-            std::string("Could not listen on the socket: ") +
-            std::string(strerror(errno)));
+        logger::log_err("Could not listen on the socket: %s\n",
+                        strerror(errno));
+        return status::error;
     }
     logger::log_out("Listening on %s:%" PRIu16 "\n",
                     str_ip_addr_.c_str(),
                     chat262::port);
+    return status::ok;
 }
 
 void server::start_accepting() {

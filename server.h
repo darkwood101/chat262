@@ -34,14 +34,21 @@ private:
     // Print usage information to standard error
     void usage(char const* prog) const;
 
-    void start_listening();
-    void start_accepting();
+    // Open the server socket for incoming connections
+    status start_listening();
+
+    // Forever accept incoming connections
+    __attribute__((noreturn)) void start_accepting();
+
+    // Handle the accepted connection. Runs in a separate thread.
     void handle_client(int client_fd, sockaddr_in client_addr);
 
     // Listen socket file descriptor
     int server_fd_;
+
     // IP address in network byte order
     uint32_t n_ip_addr_;
+
     // IP address in string format
     std::string str_ip_addr_;
 };
