@@ -156,6 +156,9 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
 
 int main(int argc, char** argv) {
     server s;
-    s.run(argc, argv);
-    return 0;
+    if (s.run(argc, argv) == status::ok) {
+        return EXIT_SUCCESS;
+    } else {
+        return EXIT_FAILURE;
+    }
 }
