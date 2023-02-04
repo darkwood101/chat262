@@ -6,11 +6,7 @@
 
 class logger {
 public:
-    logger() = default;
-    logger(const logger&) = delete;
-    logger(logger&&) = delete;
-    logger& operator=(const logger&) = delete;
-    logger& operator=(logger&&) = delete;
+    logger() = delete;
 
     template <typename... args>
     static void log_out(args... a);
