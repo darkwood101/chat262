@@ -1,2 +1,18 @@
+all: server client
+
+CFLAGS := -Wall -Wextra -Werror -O2 -std=c++17
+LDFLAGS := -pthread
+
 server: server.o
-	g++ -std=c++17 -O2 -Wall -Wextra -Wshadow -Werror -o server server.cc -pthread
+	g++ $(LDFLAGS) -o $@ $^
+
+client: client.o
+	g++ $(LDFLAGS) -o $@ $^
+
+%.o: %.cc
+	g++ $(CFLAGS) -c -o $@ $<
+
+clean:
+	$(RM) *.o client server
+
+.PHONY: all clean
