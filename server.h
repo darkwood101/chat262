@@ -4,11 +4,19 @@
 #include "common.h"
 
 #include <cstdint>
-#include <string>
 #include <netinet/in.h>
+#include <string>
 
 class server {
 public:
+    server();
+    ~server();
+
+    server(const server&) = delete;
+    server(server&&) = delete;
+    server& operator=(const server&) = delete;
+    server& operator=(server&&) = delete;
+
     // Run the server with command-line arguments
     status run(const int argc, char const* const* argv);
 

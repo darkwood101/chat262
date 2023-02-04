@@ -9,13 +9,24 @@
 #include <stdexcept>
 #include <sys/socket.h>
 #include <thread>
+#include <unistd.h>
+
+server::server() : socket_fd_(-1), n_ip_addr_(0) {
+}
+
+server::~server() {
+    // If the socket descriptor was open, close it
+    if (socket_fd_ != -1) {
+        close(socket_fd_);
+    }
+}
 
 status server::run(int argc, char const* const* argv) {
     cmdline_args args;
     try {
         args = parse_args(argc, argv);
     } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << e.what();
         usage(argv[0]);
         return status::error;
     }
@@ -28,13 +39,20 @@ status server::run(int argc, char const* const* argv) {
     n_ip_addr_ = args.n_ip_addr_;
     str_ip_addr_ = argv[1];
 
-    start_listening();
+    try {
+        start_listening();
+    } catch (std::exception& e) {
+        std::cerr << e.what();
+        return status::error;
+    }
+
+    return status::ok;
 }
 
 server::cmdline_args server::parse_args(const int argc,
                                         char const* const* argv) const {
     if (argc != 2 && argc != 3) {
-        throw std::invalid_argument("Wrong number of arguments");
+        throw std::invalid_argument("Wrong number of arguments\n");
     }
 
     cmdline_args args;
@@ -48,7 +66,7 @@ server::cmdline_args server::parse_args(const int argc,
     }
     // Parse the IP address
     if (inet_pton(AF_INET, argv[1], &(args.n_ip_addr_)) != 1) {
-        throw std::invalid_argument("Invalid IP address");
+        throw std::invalid_argument("Invalid IP address\n");
     }
     return args;
 }
@@ -112,11 +130,11 @@ void server::start_listening() {
             accept(socket_fd_, (sockaddr*) &client_addr, &client_addr_len);
         if (client_fd < 0) {
             throw std::runtime_error(std::string("Could not accept: ") +
-                                    std::string(strerror(errno)));
+                                     std::string(strerror(errno)));
         }
         // Should never happen, because we know what protocol we're dealing with
         if (client_addr_len != sizeof(client_addr)) {
-            throw std::runtime_error("Client address length mismatch");
+            throw std::runtime_error("Client address length mismatch\n");
         }
         std::thread t(&server::handle_client, this, client_fd, client_addr);
         t.detach();
@@ -125,7 +143,10 @@ void server::start_listening() {
 
 void server::handle_client(int client_fd, sockaddr_in client_addr) {
     char client_ip[INET_ADDRSTRLEN];
-    if (!inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip))) {
+    if (!inet_ntop(AF_INET,
+                   &client_addr.sin_addr,
+                   client_ip,
+                   sizeof(client_ip))) {
         std::cerr << "Could not read client's IP\n";
         return;
     }
