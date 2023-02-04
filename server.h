@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <string>
+#include <netinet/in.h>
 
 class server {
 public:
@@ -26,6 +27,7 @@ private:
     void usage(char const* prog) const;
 
     void start_listening();
+    void handle_client(int client_fd, sockaddr_in client_addr);
 
     // Listen socket file descriptor
     int socket_fd_;

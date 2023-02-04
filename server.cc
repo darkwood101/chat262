@@ -8,6 +8,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sys/socket.h>
+#include <thread>
 
 status server::run(int argc, char const* const* argv) {
     cmdline_args args;
@@ -105,17 +106,30 @@ void server::start_listening() {
     sockaddr_in client_addr;
     memset(&client_addr, 0, sizeof(client_addr));
     socklen_t client_addr_len = sizeof(client_addr);
-    int client_fd =
-        accept(socket_fd_, (sockaddr*) &client_addr, &client_addr_len);
-    if (client_fd < 0) {
-        throw std::runtime_error(std::string("Could not accept: ") +
-                                 std::string(strerror(errno)));
-    }
 
-    // Should never happen, because we know what protocol we're dealing with
-    if (client_addr_len != sizeof(client_addr)) {
-        throw std::runtime_error("Client address length mismatch");
+    while (true) {
+        int client_fd =
+            accept(socket_fd_, (sockaddr*) &client_addr, &client_addr_len);
+        if (client_fd < 0) {
+            throw std::runtime_error(std::string("Could not accept: ") +
+                                    std::string(strerror(errno)));
+        }
+        // Should never happen, because we know what protocol we're dealing with
+        if (client_addr_len != sizeof(client_addr)) {
+            throw std::runtime_error("Client address length mismatch");
+        }
+        std::thread t(&server::handle_client, this, client_fd, client_addr);
+        t.detach();
     }
+}
+
+void server::handle_client(int client_fd, sockaddr_in client_addr) {
+    char client_ip[INET_ADDRSTRLEN];
+    if (!inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, sizeof(client_ip))) {
+        std::cerr << "Could not read client's IP\n";
+        return;
+    }
+    std::cout << "Accepted connection from " << client_ip << "\n";
 }
 
 int main(int argc, char** argv) {
