@@ -3,9 +3,9 @@
 #include "chat262_protocol.h"
 #include "logger.h"
 
-#include <cinttypes>
 #include <arpa/inet.h>
 #include <cerrno>
+#include <cinttypes>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -122,7 +122,9 @@ void server::start_listening() {
             std::string("Could not listen on the socket: ") +
             std::string(strerror(errno)));
     }
-    logger::log_out("Listening on %s:%" PRIu16 "\n", str_ip_addr_.c_str(), chat262::port);
+    logger::log_out("Listening on %s:%" PRIu16 "\n",
+                    str_ip_addr_.c_str(),
+                    chat262::port);
 }
 
 void server::start_accepting() {

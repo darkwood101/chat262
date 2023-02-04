@@ -1,16 +1,17 @@
 #include "logger.h"
 
 #include <cinttypes>
-#include <thread>
 #include <sstream>
+#include <thread>
 
-using std::chrono::time_point;
-using std::chrono::high_resolution_clock;
 using std::chrono::duration;
 using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
 using std::chrono::microseconds;
+using std::chrono::time_point;
 
-static const time_point<high_resolution_clock> start_of_time = high_resolution_clock::now();
+static const time_point<high_resolution_clock> start_of_time =
+    high_resolution_clock::now();
 
 void logger::add_prefix(FILE* out) {
     fprintf(out, "[");

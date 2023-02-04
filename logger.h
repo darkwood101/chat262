@@ -14,7 +14,7 @@ public:
 
     template <typename... args>
     static void log_out(args... a);
-    
+
     template <typename... args>
     static void log_err(args... a);
 

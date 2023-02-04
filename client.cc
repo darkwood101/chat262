@@ -1,12 +1,13 @@
 #include "client.h"
+
 #include "chat262_protocol.h"
 
 #include <arpa/inet.h>
-#include <stdexcept>
+#include <cerrno>
 #include <cstring>
 #include <iostream>
+#include <stdexcept>
 #include <sys/socket.h>
-#include <cerrno>
 
 status client::run(int argc, char const* const* argv) {
     cmdline_args args;
@@ -34,7 +35,8 @@ status client::run(int argc, char const* const* argv) {
     return status::ok;
 }
 
-client::cmdline_args client::parse_args(const int argc, char const* const* argv) const {
+client::cmdline_args client::parse_args(const int argc,
+                                        char const* const* argv) const {
     if (argc != 2 && argc != 3) {
         throw std::invalid_argument("Wrong number of arguments");
     }
@@ -59,8 +61,10 @@ void client::usage(char const* prog) const {
     std::cerr << "usage: " << prog
               << " [-h] <ip address>\n"
                  "\n"
-                 "Start the Chat262 client and connect to a Chat262 server on IP address\n"
-                 "<ip address>. The address should be in the xxx.xxx.xxx.xxx format.\n"
+                 "Start the Chat262 client and connect to a Chat262 server on "
+                 "IP address\n"
+                 "<ip address>. The address should be in the xxx.xxx.xxx.xxx "
+                 "format.\n"
                  "\n"
                  "Options:\n"
                  "\t-h\t\t Display this message and exit.\n";
@@ -79,12 +83,15 @@ status client::connect_server() {
     server_addr.sin_port = htons(chat262::port);
     server_addr.sin_addr.s_addr = n_ip_addr_;
 
-    if (connect(server_fd_, (const sockaddr*) &server_addr, sizeof(server_addr)) < 0) {
+    if (connect(server_fd_,
+                (const sockaddr*) &server_addr,
+                sizeof(server_addr)) < 0) {
         std::cerr << "Could not connect to server: " << strerror(errno) << "\n";
         return status::error;
     }
 
-    std::cout << "Successfully connected to server on " << str_ip_addr_ << ":" << chat262::port << "\n";
+    std::cout << "Successfully connected to server on " << str_ip_addr_ << ":"
+              << chat262::port << "\n";
     return status::ok;
 }
 
