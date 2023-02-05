@@ -166,17 +166,31 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
     std::vector<uint8_t> body_data = recv_body(client_fd, msg_hdr.body_len_);
 
     switch (msg_hdr.type_) {
-        case chat262::registration:
-            handle_registration(body_data);
+        case chat262::msgtype_registration_request:
+            handle_registration(client_fd, body_data);
             break;
-        case chat262::login:
-            handle_login(body_data);
+        case chat262::msgtype_login_request:
+            handle_login(client_fd, body_data);
             break;
-        case chat262::logout:
+        case chat262::msgtype_logout_request:
+            // TODO
             break;
         default:
             logger::log_err("Unknown message type %" PRIu16 "\n",
                             msg_hdr.type_);
+            // TODO
+    }
+}
+
+void server::send_msg(int client_fd,
+                      std::shared_ptr<chat262::message> msg) const {
+    size_t total_sent = 0;
+    ssize_t sent = 0;
+    size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
+    while (total_sent != total_len) {
+        sent = write(client_fd, msg.get(), total_len);
+        // TODO: check for errors
+        total_sent += sent;
     }
 }
 
@@ -214,36 +228,45 @@ std::vector<uint8_t> server::recv_body(int client_fd, uint32_t body_len) {
     return body_data;
 }
 
-void server::handle_registration(const std::vector<uint8_t>& body_data) {
+void server::handle_registration(int client_fd, const std::vector<uint8_t>& body_data) {
     user u;
-    chat262::registration_body::deserialize(body_data,
-                                            u.username_,
-                                            u.password_);
+    chat262::registration_request::deserialize(body_data,
+                                               u.username_,
+                                               u.password_);
     users_.insert({u.username_, u});
 
     logger::log_out(
         "Registered user with username \"%s\" and password \"%s\"\n",
         u.username_.c_str(),
         u.password_.c_str());
+
+    auto msg = chat262::registration_response::serialize(chat262::status_ok);
+    send_msg(client_fd, msg);
 }
 
-void server::handle_login(const std::vector<uint8_t>& body_data) {
+void server::handle_login(int client_fd, const std::vector<uint8_t>& body_data) {
     std::string username;
     std::string password;
 
-    chat262::login_body::deserialize(body_data, username, password);
+    chat262::login_request::deserialize(body_data, username, password);
     logger::log_out(
         "Login requested with username \"%s\" and password \"%s\"\n",
         username.c_str(),
         password.c_str());
     if (users_.find(username) == users_.end()) {
         logger::log_out("Username \"%s\" not found\n", username.c_str());
+        auto msg = chat262::registration_response::serialize(chat262::status_invalid_user_pass);
+        send_msg(client_fd, msg);
     } else if (password != users_.at(username).password_) {
         logger::log_out("Password \"%s\" for username \"%s\" incorrect\n",
                         password.c_str(),
                         username.c_str());
+        auto msg = chat262::registration_response::serialize(chat262::status_invalid_user_pass);
+        send_msg(client_fd, msg);
     } else {
         logger::log_out("User \"%s\" logged in\n", username.c_str());
+        auto msg = chat262::registration_response::serialize(chat262::status_ok);
+        send_msg(client_fd, msg);
     }
 }
 

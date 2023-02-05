@@ -130,6 +130,35 @@ void client::send_msg(std::shared_ptr<chat262::message> msg) const {
     }
 }
 
+chat262::message_header client::recv_hdr() const {
+    std::vector<uint8_t> hdr_data;
+    hdr_data.resize(sizeof(chat262::message_header));
+    size_t total_read = 0;
+    ssize_t readed = 0;
+    while (total_read != sizeof(chat262::message_header)) {
+        readed =
+            read(server_fd_, hdr_data.data(), sizeof(chat262::message_header));
+        // TODO: handle errors
+        total_read += readed;
+    }
+    chat262::message_header msg_hdr =
+        chat262::message_header::deserialize(hdr_data);
+    return msg_hdr;
+}
+
+std::vector<uint8_t> client::recv_body(uint32_t body_len) {
+    std::vector<uint8_t> body_data;
+    body_data.resize(sizeof(body_len));
+    size_t total_read = 0;
+    ssize_t readed = 0;
+    while (total_read != body_len) {
+        readed = read(server_fd_, body_data.data(), body_len);
+        // TODO: handle errors
+        total_read += readed;
+    }
+    return body_data;
+}
+
 void client::start_ui() {
     clear_screen();
     std::cout << "\n*** Welcome to Chat262 ***\n"
@@ -175,8 +204,41 @@ void client::login() {
               << "\n\n"
                  "Logging in...\n";
 
-    auto msg = chat262::login_body::serialize(username, password);
+    auto msg = chat262::login_request::serialize(username, password);
     send_msg(msg);
+
+    chat262::message_header msg_hdr = recv_hdr();
+    if (msg_hdr.version_ != chat262::version) {
+        // TODO
+    } else if (msg_hdr.type_ != chat262::msgtype_login_response) {
+        // TODO
+    }
+    std::vector<uint8_t> body = recv_body(msg_hdr.body_len_);
+    uint32_t status;
+    chat262::registration_response::deserialize(body, status);
+    if (status == chat262::status_ok) {
+        clear_screen();
+        std::cout << "*** Chat262 login ***\n"
+                     "\n"
+                     "Username: "
+                  << username
+                  << "\n"
+                     "Password: "
+                  << password
+                  << "\n\n"
+                     "Login successful!\n";
+    } else {
+        clear_screen();
+        std::cout << "*** Chat262 login ***\n"
+                     "\n"
+                     "Username: "
+                  << username
+                  << "\n"
+                     "Password: "
+                  << password
+                  << "\n\n"
+                     "Login failed.\n";
+    }
 }
 
 void client::registration() {
@@ -205,8 +267,41 @@ void client::registration() {
               << "\n\n"
                  "Registering...\n";
 
-    auto msg = chat262::registration_body::serialize(username, password);
+    auto msg = chat262::registration_request::serialize(username, password);
     send_msg(msg);
+
+    chat262::message_header msg_hdr = recv_hdr();
+    if (msg_hdr.version_ != chat262::version) {
+        // TODO
+    } else if (msg_hdr.type_ != chat262::msgtype_registration_response) {
+        // TODO
+    }
+    std::vector<uint8_t> body = recv_body(msg_hdr.body_len_);
+    uint32_t status;
+    chat262::registration_response::deserialize(body, status);
+    if (status == chat262::status_ok) {
+        clear_screen();
+        std::cout << "*** Chat262 registration ***\n"
+                     "\n"
+                     "Username: "
+                  << username
+                  << "\n"
+                     "Password: "
+                  << password
+                  << "\n\n"
+                     "Registration successful!\n";
+    } else {
+        clear_screen();
+        std::cout << "*** Chat262 registration ***\n"
+                     "\n"
+                     "Username: "
+                  << username
+                  << "\n"
+                     "Password: "
+                  << password
+                  << "\n\n"
+                     "Registration failed.\n";
+    }
 }
 
 int main(int argc, char** argv) {

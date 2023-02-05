@@ -35,6 +35,8 @@ private:
     status connect_server();
 
     void send_msg(std::shared_ptr<chat262::message> msg) const;
+    chat262::message_header recv_hdr() const;
+    std::vector<uint8_t> recv_body(uint32_t body_len);
 
     void start_ui();
     void login();

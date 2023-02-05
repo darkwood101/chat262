@@ -46,11 +46,12 @@ private:
     // Handle the accepted connection. Runs in a separate thread.
     void handle_client(int client_fd, sockaddr_in client_addr);
 
+    void send_msg(int client_fd, std::shared_ptr<chat262::message> msg) const;
     chat262::message_header recv_hdr(int client_fd);
     std::vector<uint8_t> recv_body(int client_fd, uint32_t body_len);
 
-    void handle_registration(const std::vector<uint8_t>& body_data);
-    void handle_login(const std::vector<uint8_t>& body_data);
+    void handle_registration(int client_fd, const std::vector<uint8_t>& body_data);
+    void handle_login(int client_fd, const std::vector<uint8_t>& body_data);
 
     std::unordered_map<std::string, user> users_;
 
