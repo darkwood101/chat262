@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cinttypes>
 #include <cstring>
+#include <endian.h>
 #include <iostream>
 #include <stdexcept>
 #include <sys/socket.h>
@@ -154,6 +155,78 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
         return;
     }
     logger::log_out("Accepted connection from %s\n", client_ip);
+
+    chat262::message_header msg_hdr = recv_hdr(client_fd);
+    if (msg_hdr.version_ != chat262::version) {
+        logger::log_err("Unsupported protocol version %" PRIu16 "\n",
+                        msg_hdr.version_);
+        // TODO
+    }
+
+    std::vector<uint8_t> body_data = recv_body(client_fd, msg_hdr.body_len_);
+
+    switch (msg_hdr.type_) {
+        case chat262::registration:
+            break;
+        case chat262::login:
+            handle_login(body_data);
+            break;
+        case chat262::logout:
+            break;
+        default:
+            logger::log_err("Unknown message type %" PRIu16 "\n",
+                            msg_hdr.type_);
+    }
+
+    size_t total_read = 0;
+    ssize_t readed = 0;
+    chat262::message_header hdr;
+    while (total_read != sizeof(chat262::message_header)) {
+        readed = read(client_fd, &hdr, sizeof(chat262::message_header));
+        total_read += readed;
+    }
+    logger::log_out("Received packet: version %" PRIu16 ", type %" PRIu16
+                    ", body len %" PRIu32 "\n",
+                    le16toh(hdr.version_),
+                    hdr.type_,
+                    le32toh(hdr.body_len_));
+}
+
+chat262::message_header server::recv_hdr(int client_fd) {
+    std::vector<uint8_t> hdr_data;
+    hdr_data.resize(sizeof(chat262::message_header));
+    size_t total_read = 0;
+    ssize_t readed = 0;
+    while (total_read != sizeof(chat262::message_header)) {
+        readed =
+            read(client_fd, hdr_data.data(), sizeof(chat262::message_header));
+        // TODO: handle errors
+        total_read += readed;
+    }
+    return chat262::message_header::deserialize(hdr_data);
+}
+
+std::vector<uint8_t> server::recv_body(int client_fd, uint32_t body_len) {
+    std::vector<uint8_t> body_data;
+    body_data.resize(sizeof(body_len));
+    size_t total_read = 0;
+    ssize_t readed = 0;
+    while (total_read != body_len) {
+        readed = read(client_fd, body_data.data(), body_len);
+        // TODO: handle errors
+        total_read += readed;
+    }
+    return body_data;
+}
+
+void server::handle_login(const std::vector<uint8_t>& body_data) {
+    std::string username;
+    std::string password;
+
+    chat262::login_body::deserialize(body_data, username, password);
+    logger::log_out("Login requested with username %s and password %s\n",
+                    username.c_str(),
+                    password.c_str());
 }
 
 int main(int argc, char** argv) {

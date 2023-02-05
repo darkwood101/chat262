@@ -1,6 +1,7 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 
+#include "chat262_protocol.h"
 #include "common.h"
 
 #include <cstdint>
@@ -42,6 +43,11 @@ private:
 
     // Handle the accepted connection. Runs in a separate thread.
     void handle_client(int client_fd, sockaddr_in client_addr);
+
+    chat262::message_header recv_hdr(int client_fd);
+    std::vector<uint8_t> recv_body(int client_fd, uint32_t body_len);
+
+    void handle_login(const std::vector<uint8_t>& body_data);
 
     // Listen socket file descriptor
     int server_fd_;
