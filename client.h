@@ -3,6 +3,7 @@
 
 #include "chat262_protocol.h"
 #include "common.h"
+#include "user.h"
 
 #include <iostream>
 #include <string>
@@ -39,8 +40,7 @@ private:
     void login();
     void registration();
 
-    std::string username_;
-    std::string password_;
+    user this_user_;
 
     // Connected socket file descriptor
     int server_fd_;

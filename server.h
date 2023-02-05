@@ -3,10 +3,12 @@
 
 #include "chat262_protocol.h"
 #include "common.h"
+#include "user.h"
 
 #include <cstdint>
 #include <netinet/in.h>
 #include <string>
+#include <unordered_map>
 
 class server {
 public:
@@ -47,7 +49,10 @@ private:
     chat262::message_header recv_hdr(int client_fd);
     std::vector<uint8_t> recv_body(int client_fd, uint32_t body_len);
 
+    void handle_registration(const std::vector<uint8_t>& body_data);
     void handle_login(const std::vector<uint8_t>& body_data);
+
+    std::unordered_map<std::string, user> users_;
 
     // Listen socket file descriptor
     int server_fd_;

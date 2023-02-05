@@ -155,31 +155,58 @@ void client::login() {
     std::cout << "*** Chat262 login ***\n"
                  "\n"
                  "Please enter your username.\n\n";
-    username_ = get_user_string(4, 40);
+    std::string username = get_user_string(4, 40);
     clear_screen();
     std::cout << "*** Chat262 login ***\n"
                  "\n"
                  "Username: "
-              << username_
+              << username
               << "\n\n"
                  "Please enter your password.\n\n";
-    password_ = get_user_string(4, 60);
+    std::string password = get_user_string(4, 60);
     clear_screen();
     std::cout << "*** Chat262 login ***\n"
                  "\n"
                  "Username: "
-              << username_
+              << username
               << "\n"
                  "Password: "
-              << password_
+              << password
               << "\n\n"
                  "Logging in...\n";
 
-    auto msg = chat262::login_body::serialize(username_, password_);
+    auto msg = chat262::login_body::serialize(username, password);
     send_msg(msg);
 }
 
 void client::registration() {
+    clear_screen();
+    std::cout << "*** Chat262 registration ***\n"
+                 "\n"
+                 "Please enter a username (between 4 and 40 characters).\n\n";
+    std::string username = get_user_string(4, 40);
+    clear_screen();
+    std::cout
+        << "*** Chat262 registration ***\n"
+           "\n"
+           "Username: "
+        << username
+        << "\n\n"
+           "Please enter your password (between 4 and 60 characters).\n\n";
+    std::string password = get_user_string(4, 60);
+    clear_screen();
+    std::cout << "*** Chat262 registration ***\n"
+                 "\n"
+                 "Username: "
+              << username
+              << "\n"
+                 "Password: "
+              << password
+              << "\n\n"
+                 "Registering...\n";
+
+    auto msg = chat262::registration_body::serialize(username, password);
+    send_msg(msg);
 }
 
 int main(int argc, char** argv) {

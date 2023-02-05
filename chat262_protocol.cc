@@ -25,7 +25,7 @@ std::shared_ptr<message> registration_body::serialize(
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
     msg->hdr_.version_ = version;
-    msg->hdr_.type_ = login;
+    msg->hdr_.type_ = registration;
     msg->hdr_.body_len_ = body_len;
     uint32_t user_len_le = htole32(static_cast<uint32_t>(username.length()));
     uint32_t pass_len_le = htole32(static_cast<uint32_t>(password.length()));
@@ -49,7 +49,7 @@ void registration_body::deserialize(const std::vector<uint8_t>& body,
 
     uint32_t pass_len_le;
     memcpy(&pass_len_le, msg_body + 4, sizeof(uint32_t));
-    uint32_t pass_len = le32toh(user_len_le);
+    uint32_t pass_len = le32toh(pass_len_le);
 
     username.assign(msg_body + 8, msg_body + 8 + user_len);
     password.assign(msg_body + 8 + user_len,
@@ -88,7 +88,7 @@ void login_body::deserialize(const std::vector<uint8_t>& body,
 
     uint32_t pass_len_le;
     memcpy(&pass_len_le, msg_body + 4, sizeof(uint32_t));
-    uint32_t pass_len = le32toh(user_len_le);
+    uint32_t pass_len = le32toh(pass_len_le);
 
     username.assign(msg_body + 8, msg_body + 8 + user_len);
     password.assign(msg_body + 8 + user_len,
