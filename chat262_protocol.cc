@@ -121,7 +121,6 @@ status registration_response::deserialize(const std::vector<uint8_t>& data,
 
     uint32_t stat_code_le;
     memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
-    uint32_t stat_code_he = le32toh(stat_code_le);
     stat_code = le32toh(stat_code_le);
     return status::ok;
 }
@@ -198,7 +197,6 @@ status login_response::deserialize(const std::vector<uint8_t>& data,
 
     uint32_t stat_code_le;
     memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
-    uint32_t stat_code_he = le32toh(stat_code_le);
     stat_code = le32toh(stat_code_le);
     return status::ok;
 }
