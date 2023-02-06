@@ -26,6 +26,4 @@ status str_to_unsigned(std::string const& str, T& res) {
     return str_to_unsigned<T>(str.c_str(), res);
 }
 
-void clear_screen();
-
 #endif
