@@ -46,12 +46,31 @@ private:
     // Handle the accepted connection. Runs in a separate thread.
     void handle_client(int client_fd, sockaddr_in client_addr);
 
-    void send_msg(int client_fd, std::shared_ptr<chat262::message> msg) const;
-    chat262::message_header recv_hdr(int client_fd);
-    std::vector<uint8_t> recv_body(int client_fd, uint32_t body_len);
+    // Send the message `msg` to `client_fd`.
+    // @return ok    - success
+    // @return error - fatal error in sending the message.
+    //                 `errno` is appropriately set.
+    status send_msg(int client_fd, std::shared_ptr<chat262::message> msg) const;
 
-    void handle_registration(int client_fd, const std::vector<uint8_t>& body_data);
-    void handle_login(int client_fd, const std::vector<uint8_t>& body_data);
+    // Receive a message header from `client_fd` into `hdr`.
+    // @return ok    - success
+    // @return error - fatal error in receiving the header.
+    //                 `errno` is appropriately set.
+    status recv_hdr(int client_fd, chat262::message_header& hdr) const;
+
+    // Receive a message body of length `body_len` from the `client_fd` into
+    // `data`. `body_len` should be chosen depending on the header that was
+    // received first.
+    // @return ok    - success
+    // @return error - fatal error in receiving the body.
+    //                 `errno` is appropriately set.
+    status recv_body(int client_fd,
+                     uint32_t body_len,
+                     std::vector<uint8_t>& data) const;
+
+    status handle_registration(int client_fd,
+                               const std::vector<uint8_t>& body_data);
+    status handle_login(int client_fd, const std::vector<uint8_t>& body_data);
 
     std::unordered_map<std::string, user> users_;
 

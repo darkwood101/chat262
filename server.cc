@@ -156,45 +156,67 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
     }
     logger::log_out("Accepted connection from %s\n", client_ip);
 
-    chat262::message_header msg_hdr = recv_hdr(client_fd);
-    if (msg_hdr.version_ != chat262::version) {
-        logger::log_err("Unsupported protocol version %" PRIu16 "\n",
-                        msg_hdr.version_);
-        // TODO
-    }
+    // TODO: must have an exit condition
+    while (true) {
+        chat262::message_header msg_hdr;
+        if (recv_hdr(client_fd, msg_hdr) != status::ok) {
+            logger::log_err("%s", "Failed to receive the header\n");
+            // TODO, have to properly handle
+        }
 
-    std::vector<uint8_t> body_data = recv_body(client_fd, msg_hdr.body_len_);
+        logger::log_out("Received header: version %" PRIu16 ", type %" PRIu16
+                        " (%s), body len %" PRIu32 "\n",
+                        msg_hdr.version_,
+                        msg_hdr.type_,
+                        chat262::message_type_lookup(msg_hdr.type_),
+                        msg_hdr.body_len_);
 
-    switch (msg_hdr.type_) {
-        case chat262::msgtype_registration_request:
-            handle_registration(client_fd, body_data);
-            break;
-        case chat262::msgtype_login_request:
-            handle_login(client_fd, body_data);
-            break;
-        case chat262::msgtype_logout_request:
-            // TODO
-            break;
-        default:
-            logger::log_err("Unknown message type %" PRIu16 "\n",
-                            msg_hdr.type_);
-            // TODO
+        if (msg_hdr.version_ != chat262::version) {
+            logger::log_err("Unsupported protocol version %" PRIu16 "\n",
+                            msg_hdr.version_);
+            // TODO, have to properly handle
+        }
+
+        std::vector<uint8_t> body;
+        if (recv_body(client_fd, msg_hdr.body_len_, body) != status::ok) {
+            logger::log_err("%s", "Failed to receive the body\n");
+            // TODO, have to properly handle
+        }
+
+        switch (msg_hdr.type_) {
+            case chat262::msgtype_registration_request:
+                handle_registration(client_fd, body);
+                break;
+            case chat262::msgtype_login_request:
+                handle_login(client_fd, body);
+                break;
+            case chat262::msgtype_logout_request:
+                // TODO
+                break;
+            default:
+                logger::log_err("Unknown message type %" PRIu16 "\n",
+                                msg_hdr.type_);
+                // TODO, have to properly handle
+        }
     }
 }
 
-void server::send_msg(int client_fd,
-                      std::shared_ptr<chat262::message> msg) const {
+status server::send_msg(int client_fd,
+                        std::shared_ptr<chat262::message> msg) const {
     size_t total_sent = 0;
     ssize_t sent = 0;
     size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
     while (total_sent != total_len) {
         sent = write(client_fd, msg.get(), total_len);
-        // TODO: check for errors
+        if (sent < 0) {
+            return status::error;
+        }
         total_sent += sent;
     }
+    return status::ok;
 }
 
-chat262::message_header server::recv_hdr(int client_fd) {
+status server::recv_hdr(int client_fd, chat262::message_header& hdr) const {
     std::vector<uint8_t> hdr_data;
     hdr_data.resize(sizeof(chat262::message_header));
     size_t total_read = 0;
@@ -202,37 +224,46 @@ chat262::message_header server::recv_hdr(int client_fd) {
     while (total_read != sizeof(chat262::message_header)) {
         readed =
             read(client_fd, hdr_data.data(), sizeof(chat262::message_header));
-        // TODO: handle errors
+        if (readed < 0) {
+            return status::error;
+        }
         total_read += readed;
     }
-    chat262::message_header msg_hdr =
-        chat262::message_header::deserialize(hdr_data);
-    logger::log_out("Received header: version %" PRIu16 ", type %" PRIu16
-                    ", body len %" PRIu32 "\n",
-                    msg_hdr.version_,
-                    msg_hdr.type_,
-                    msg_hdr.body_len_);
-    return msg_hdr;
+    status s = chat262::message_header::deserialize(hdr_data, hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-std::vector<uint8_t> server::recv_body(int client_fd, uint32_t body_len) {
-    std::vector<uint8_t> body_data;
-    body_data.resize(sizeof(body_len));
+status server::recv_body(int client_fd,
+                         uint32_t body_len,
+                         std::vector<uint8_t>& data) const {
+    data.resize(body_len);
     size_t total_read = 0;
     ssize_t readed = 0;
     while (total_read != body_len) {
-        readed = read(client_fd, body_data.data(), body_len);
-        // TODO: handle errors
+        readed = read(client_fd, data.data(), body_len);
+        if (readed < 0) {
+            return status::error;
+        }
         total_read += readed;
     }
-    return body_data;
+    return status::ok;
 }
 
-void server::handle_registration(int client_fd, const std::vector<uint8_t>& body_data) {
+status server::handle_registration(int client_fd,
+                                   const std::vector<uint8_t>& body_data) {
     user u;
-    chat262::registration_request::deserialize(body_data,
-                                               u.username_,
-                                               u.password_);
+    status s = chat262::registration_request::deserialize(body_data,
+                                                          u.username_,
+                                                          u.password_);
+    std::cout << body_data.size() << "\n";
+
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
     users_.insert({u.username_, u});
 
     logger::log_out(
@@ -240,34 +271,54 @@ void server::handle_registration(int client_fd, const std::vector<uint8_t>& body
         u.username_.c_str(),
         u.password_.c_str());
 
-    auto msg = chat262::registration_response::serialize(chat262::status_ok);
+    auto msg =
+        chat262::registration_response::serialize(chat262::status_code_ok);
+    // TODO: check for errors
     send_msg(client_fd, msg);
+
+    return status::ok;
 }
 
-void server::handle_login(int client_fd, const std::vector<uint8_t>& body_data) {
+status server::handle_login(int client_fd,
+                            const std::vector<uint8_t>& body_data) {
     std::string username;
     std::string password;
 
-    chat262::login_request::deserialize(body_data, username, password);
+    status s =
+        chat262::login_request::deserialize(body_data, username, password);
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
+
     logger::log_out(
         "Login requested with username \"%s\" and password \"%s\"\n",
         username.c_str(),
         password.c_str());
+
     if (users_.find(username) == users_.end()) {
         logger::log_out("Username \"%s\" not found\n", username.c_str());
-        auto msg = chat262::registration_response::serialize(chat262::status_invalid_user_pass);
+        auto msg = chat262::registration_response::serialize(
+            chat262::status_code_invalid_credentials);
+        // TODO: check for errors
         send_msg(client_fd, msg);
     } else if (password != users_.at(username).password_) {
         logger::log_out("Password \"%s\" for username \"%s\" incorrect\n",
                         password.c_str(),
                         username.c_str());
-        auto msg = chat262::registration_response::serialize(chat262::status_invalid_user_pass);
+        auto msg = chat262::registration_response::serialize(
+            chat262::status_code_invalid_credentials);
+        // TODO: check for errors
         send_msg(client_fd, msg);
     } else {
         logger::log_out("User \"%s\" logged in\n", username.c_str());
-        auto msg = chat262::registration_response::serialize(chat262::status_ok);
+        auto msg =
+            chat262::registration_response::serialize(chat262::status_code_ok);
+        // TODO: check for errors
         send_msg(client_fd, msg);
     }
+
+    return status::ok;
 }
 
 int main(int argc, char** argv) {
