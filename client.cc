@@ -152,90 +152,93 @@ status client::recv_body(uint32_t body_len, std::vector<uint8_t>& data) const {
 
 void client::start_ui() {
     uint32_t stat_code = 0;
+    interface_.next_ = screen_type::login_registration;
 
-    switch (interface_.next_) {
-        case screen_type::login_registration: {
-            user_choice choice = interface_.login_registration();
-            switch (choice) {
-                case 0:
+    while (true) {
+        switch (interface_.next_) {
+            case screen_type::login_registration: {
+                user_choice choice = interface_.login_registration();
+                switch (choice) {
+                    case 0:
+                        interface_.next_ = screen_type::exit;
+                        break;
+                    case 1:
+                        interface_.next_ = screen_type::login;
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::registration;
+                        break;
+                    default:
+                        break;
+                }
+            } break;
+
+            case screen_type::login: {
+                std::string username;
+                std::string password;
+                interface_.login(username, password);
+                stat_code = login(username, password);
+                if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::exit;
-                    break;
-                case 1:
-                    interface_.next_ = screen_type::login;
-                    break;
-                case 2:
-                    interface_.next_ = screen_type::registration;
-                    break;
-                default:
-                    break;
-            }
-        } break;
+                } else {
+                    interface_.next_ = screen_type::login_fail;
+                }
+            } break;
 
-        case screen_type::login: {
-            std::string username;
-            std::string password;
-            interface_.login(username, password);
-            stat_code = login(username, password);
-            if (stat_code == chat262::status_code_ok) {
-                interface_.next_ = screen_type::exit;
-            } else {
-                interface_.next_ = screen_type::login_fail;
-            }
-        } break;
+            case screen_type::login_fail: {
+                user_choice choice = interface_.login_fail(stat_code);
+                switch (choice) {
+                    case 1:
+                        interface_.next_ = screen_type::login;
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::login_registration;
+                        break;
+                    default:
+                        break;
+                }
+            } break;
 
-        case screen_type::login_fail: {
-            user_choice choice = interface_.login_fail(stat_code);
-            switch (choice) {
-                case 1:
-                    interface_.next_ = screen_type::login;
-                    break;
-                case 2:
-                    interface_.next_ = screen_type::login_registration;
-                    break;
-                default:
-                    break;
-            }
-        } break;
+            case screen_type::registration: {
+                std::string username;
+                std::string password;
+                interface_.registration(username, password);
+                stat_code = registration(username, password);
+                if (stat_code == chat262::status_code_ok) {
+                    interface_.next_ = screen_type::registration_success;
+                } else {
+                    interface_.next_ = screen_type::registration_fail;
+                }
+            } break;
 
-        case screen_type::registration: {
-            std::string username;
-            std::string password;
-            interface_.registration(username, password);
-            stat_code = registration(username, password);
-            if (stat_code == chat262::status_code_ok) {
-                interface_.next_ = screen_type::registration_success;
-            } else {
-                interface_.next_ = screen_type::registration_fail;
-            }
-        } break;
+            case screen_type::registration_success: {
+                user_choice choice = interface_.registration_success();
+                switch (choice) {
+                    case 1:
+                        interface_.next_ = screen_type::login_registration;
+                        break;
+                    default:
+                        break;
+                }
+            } break;
 
-        case screen_type::registration_success: {
-            user_choice choice = interface_.registration_success();
-            switch (choice) {
-                case 1:
-                    interface_.next_ = screen_type::login_registration;
-                    break;
-                default:
-                    break;
-            }
-        } break;
+            case screen_type::registration_fail: {
+                user_choice choice = interface_.registration_fail(stat_code);
+                switch (choice) {
+                    case 1:
+                        interface_.next_ = screen_type::registration;
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::login_registration;
+                        break;
+                    default:
+                        break;
+                }
+            } break;
 
-        case screen_type::registration_fail: {
-            user_choice choice = interface_.registration_fail(stat_code);
-            switch (choice) {
-                case 1:
-                    interface_.next_ = screen_type::registration;
-                    break;
-                case 2:
-                    interface_.next_ = screen_type::login_registration;
-                    break;
-                default:
-                    break;
+            case screen_type::exit: {
+                return;
             }
-        } break;
-
-        case screen_type::exit: {
-            return;
         }
     }
 }
@@ -243,6 +246,7 @@ void client::start_ui() {
 uint32_t client::login(const std::string& username,
                        const std::string& password) {
     auto msg = chat262::login_request::serialize(username, password);
+    // TODO: check for errors
     send_msg(msg);
 
     chat262::message_header msg_hdr;
@@ -269,6 +273,7 @@ uint32_t client::login(const std::string& username,
 uint32_t client::registration(const std::string& username,
                               const std::string& password) {
     auto msg = chat262::registration_request::serialize(username, password);
+    // TODO: check for errors
     send_msg(msg);
 
     chat262::message_header msg_hdr;
