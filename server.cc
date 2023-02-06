@@ -320,7 +320,7 @@ status server::handle_login(int client_fd,
 
     if (users_.find(username) == users_.end()) {
         logger::log_out("Username \"%s\" not found\n", username.c_str());
-        auto msg = chat262::registration_response::serialize(
+        auto msg = chat262::login_response::serialize(
             chat262::status_code_invalid_credentials);
         s = send_msg(client_fd, msg);
         if (s != status::ok) {
@@ -330,7 +330,7 @@ status server::handle_login(int client_fd,
         logger::log_out("Password \"%s\" for username \"%s\" incorrect\n",
                         password.c_str(),
                         username.c_str());
-        auto msg = chat262::registration_response::serialize(
+        auto msg = chat262::login_response::serialize(
             chat262::status_code_invalid_credentials);
         s = send_msg(client_fd, msg);
         if (s != status::ok) {
@@ -338,8 +338,7 @@ status server::handle_login(int client_fd,
         }
     } else {
         logger::log_out("User \"%s\" logged in\n", username.c_str());
-        auto msg =
-            chat262::registration_response::serialize(chat262::status_code_ok);
+        auto msg = chat262::login_response::serialize(chat262::status_code_ok);
         s = send_msg(client_fd, msg);
         if (s != status::ok) {
             return s;
