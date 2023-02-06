@@ -1,8 +1,9 @@
 #include "chat262_protocol.h"
 
+#include "endianness.h"
+
 #include <cstdlib>
 #include <cstring>
-#include <endian.h>
 
 namespace chat262 {
 
@@ -46,9 +47,9 @@ status message_header::deserialize(const std::vector<uint8_t>& data,
         return status::error;
     }
     memcpy(&hdr, data.data(), sizeof(message_header));
-    hdr.version_ = le16toh(hdr.version_);
-    hdr.type_ = le16toh(hdr.type_);
-    hdr.body_len_ = le32toh(hdr.body_len_);
+    hdr.version_ = e_le16toh(hdr.version_);
+    hdr.type_ = e_le16toh(hdr.type_);
+    hdr.body_len_ = e_le32toh(hdr.body_len_);
     return status::ok;
 }
 
@@ -60,11 +61,11 @@ std::shared_ptr<message> registration_request::serialize(
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
-    msg->hdr_.version_ = htole16(version);
-    msg->hdr_.type_ = htole16(msgtype_registration_request);
-    msg->hdr_.body_len_ = htole32(body_len);
-    uint32_t user_len_le = htole32(static_cast<uint32_t>(username.length()));
-    uint32_t pass_len_le = htole32(static_cast<uint32_t>(password.length()));
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_registration_request);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t user_len_le = e_htole32(static_cast<uint32_t>(username.length()));
+    uint32_t pass_len_le = e_htole32(static_cast<uint32_t>(password.length()));
     memcpy(msg->body_, &user_len_le, sizeof(uint32_t));
     memcpy(msg->body_ + 4, &pass_len_le, sizeof(uint32_t));
     memcpy(msg->body_ + 8, username.c_str(), username.length());
@@ -85,11 +86,11 @@ status registration_request::deserialize(const std::vector<uint8_t>& data,
 
     uint32_t user_len_le;
     memcpy(&user_len_le, msg_body, sizeof(uint32_t));
-    uint32_t user_len = le32toh(user_len_le);
+    uint32_t user_len = e_le32toh(user_len_le);
 
     uint32_t pass_len_le;
     memcpy(&pass_len_le, msg_body + 4, sizeof(uint32_t));
-    uint32_t pass_len = le32toh(pass_len_le);
+    uint32_t pass_len = e_le32toh(pass_len_le);
 
     // Cannot proceed if there is a mismatch of size
     if (2 * sizeof(uint32_t) + user_len + pass_len != data.size()) {
@@ -107,10 +108,10 @@ std::shared_ptr<message> registration_response::serialize(uint32_t stat_code) {
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
-    msg->hdr_.version_ = htole16(version);
-    msg->hdr_.type_ = htole16(msgtype_registration_response);
-    msg->hdr_.body_len_ = htole32(body_len);
-    uint32_t stat_code_le = htole32(stat_code);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_registration_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t stat_code_le = e_htole32(stat_code);
     memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
     return msg;
 }
@@ -125,7 +126,7 @@ status registration_response::deserialize(const std::vector<uint8_t>& data,
 
     uint32_t stat_code_le;
     memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
-    stat_code = le32toh(stat_code_le);
+    stat_code = e_le32toh(stat_code_le);
     return status::ok;
 }
 
@@ -136,11 +137,11 @@ std::shared_ptr<message> login_request::serialize(const std::string& username,
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
-    msg->hdr_.version_ = htole16(version);
-    msg->hdr_.type_ = htole16(msgtype_login_request);
-    msg->hdr_.body_len_ = htole32(body_len);
-    uint32_t user_len_le = htole32(static_cast<uint32_t>(username.length()));
-    uint32_t pass_len_le = htole32(static_cast<uint32_t>(password.length()));
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_login_request);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t user_len_le = e_htole32(static_cast<uint32_t>(username.length()));
+    uint32_t pass_len_le = e_htole32(static_cast<uint32_t>(password.length()));
     memcpy(msg->body_, &user_len_le, sizeof(uint32_t));
     memcpy(msg->body_ + 4, &pass_len_le, sizeof(uint32_t));
     memcpy(msg->body_ + 8, username.c_str(), username.length());
@@ -161,11 +162,11 @@ status login_request::deserialize(const std::vector<uint8_t>& data,
 
     uint32_t user_len_le;
     memcpy(&user_len_le, msg_body, sizeof(uint32_t));
-    uint32_t user_len = le32toh(user_len_le);
+    uint32_t user_len = e_le32toh(user_len_le);
 
     uint32_t pass_len_le;
     memcpy(&pass_len_le, msg_body + 4, sizeof(uint32_t));
-    uint32_t pass_len = le32toh(pass_len_le);
+    uint32_t pass_len = e_le32toh(pass_len_le);
 
     // Cannot proceed if there is a mismatch of size
     if (2 * sizeof(uint32_t) + user_len + pass_len != data.size()) {
@@ -183,10 +184,10 @@ std::shared_ptr<message> login_response::serialize(uint32_t stat_code) {
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
-    msg->hdr_.version_ = htole16(version);
-    msg->hdr_.type_ = htole16(msgtype_login_response);
-    msg->hdr_.body_len_ = htole32(body_len);
-    uint32_t stat_code_le = htole32(stat_code);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_login_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t stat_code_le = e_htole32(stat_code);
     memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
     return msg;
 }
@@ -201,7 +202,7 @@ status login_response::deserialize(const std::vector<uint8_t>& data,
 
     uint32_t stat_code_le;
     memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
-    stat_code = le32toh(stat_code_le);
+    stat_code = e_le32toh(stat_code_le);
     return status::ok;
 }
 
@@ -209,9 +210,9 @@ std::shared_ptr<message> accounts_request::serialize() {
     std::shared_ptr<message> msg(
         static_cast<message*>(malloc(sizeof(message_header))),
         free);
-    msg->hdr_.version_ = htole16(version);
-    msg->hdr_.type_ = htole16(msgtype_accounts_request);
-    msg->hdr_.body_len_ = htole32(static_cast<uint32_t>(0));
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_accounts_request);
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
     return msg;
 }
 
@@ -236,18 +237,18 @@ std::shared_ptr<message> accounts_response::serialize(
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
-    msg->hdr_.version_ = htole16(version);
-    msg->hdr_.type_ = htole16(msgtype_accounts_response);
-    msg->hdr_.body_len_ = htole32(body_len);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_accounts_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
 
     // The status code is always serialized
-    uint32_t stat_code_le = htole32(stat_code);
+    uint32_t stat_code_le = e_htole32(stat_code);
     memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
 
     if (stat_code == status_code_ok) {
         // Copy the number of acconts
         uint32_t num_accounts_le =
-            htole32(static_cast<uint32_t>(usernames.size()));
+            e_htole32(static_cast<uint32_t>(usernames.size()));
         memcpy(msg->body_ + 4, &num_accounts_le, sizeof(uint32_t));
 
         // Points to the next username length to copy
@@ -256,7 +257,7 @@ std::shared_ptr<message> accounts_response::serialize(
         uint8_t* u_ptr = u_lengths_ptr + usernames.size() * sizeof(uint32_t);
         for (const std::string& u : usernames) {
             uint32_t u_length = static_cast<uint32_t>(u.length());
-            uint32_t u_length_le = htole32(u_length);
+            uint32_t u_length_le = e_htole32(u_length);
             // Copy the username length
             memcpy(u_lengths_ptr, &u_length_le, sizeof(uint32_t));
             u_lengths_ptr += sizeof(uint32_t);
@@ -281,7 +282,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     uint32_t stat_code_le;
     memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
     msg_body += sizeof(uint32_t);
-    uint32_t stat_code_h = le32toh(stat_code_le);
+    uint32_t stat_code_h = e_le32toh(stat_code_le);
     // If the status code is not OK, we're done
     if (stat_code_h != status_code_ok) {
         stat_code = stat_code_h;
@@ -297,7 +298,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     uint32_t num_accounts_le;
     memcpy(&num_accounts_le, msg_body, sizeof(uint32_t));
     msg_body += sizeof(uint32_t);
-    uint32_t num_accounts_h = le32toh(num_accounts_le);
+    uint32_t num_accounts_h = e_le32toh(num_accounts_le);
 
     // Make sure we can read the username lengths
     if (data.size() <
@@ -314,7 +315,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
         const uint8_t* u_len_ptr = msg_body;
         uint32_t u_len_le;
         memcpy(&u_len_le, u_len_ptr, sizeof(uint32_t));
-        u_lens[i] = le32toh(u_len_le);
+        u_lens[i] = e_le32toh(u_len_le);
         total_u_len += u_lens[i];
     }
 
