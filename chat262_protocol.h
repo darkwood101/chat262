@@ -21,11 +21,13 @@ enum message_type : uint16_t {
     msgtype_registration_request = 101,
     msgtype_login_request = 102,
     msgtype_logout_request = 103,
+    msgtype_accounts_request = 104,
 
     // Server responses
     msgtype_registration_response = 201,
     msgtype_login_response = 202,
     msgtype_logout_response = 203,
+    msgtype_accounts_response = 204
 };
 
 // Server response status codes
@@ -148,6 +150,54 @@ struct login_response {
     //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code);
+};
+
+struct accounts_request {
+    // Form a complete accounts request message. There is no body in this
+    // request.
+    static std::shared_ptr<message> serialize();
+
+    // Do nothing because there is no body in the request. `data` must be an
+    // empty vector.
+    // @return ok    - success
+    // @return error - `data.size() != 0`
+    //                 This is the fault of the local implementation, never of
+    //                 the remote party.
+    static status deserialize(const std::vector<uint8_t>& data);
+};
+
+struct accounts_response {
+    uint32_t stat_code_;
+    // uint32_t num_accounts_;
+    // uint32_t username_lens_[];
+    // uint8_t usernames_[];
+
+    // Form a complete accounts response from `stat_code` and `usernames`.
+    // If `stat_code` is `status_code_ok`, then the message is properly formed.
+    // If `stat_code` is anything else, then `usernames` is ignored and no
+    // actual usernames are serialized into the message; the message contains
+    // only the status code.
+    static std::shared_ptr<message> serialize(
+        uint32_t stat_code,
+        const std::vector<std::string>& usernames);
+
+    // Extract the status code and the usernames from `data`.
+    // If `stat_code` is `status_code_ok`, then the data is properly extracted.
+    // If `stat_code` is anything else, then `usernames` is ignored.
+    // The caller must first check `stat_code` before accessing `usernames`.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size()` does not reflect the contents of
+    //                 `accounts_response`
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
+    static status deserialize(const std::vector<uint8_t>& data,
+                              uint32_t& stat_code,
+                              std::vector<std::string>& usernames);
 };
 
 struct logout_body {};
