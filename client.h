@@ -3,6 +3,7 @@
 
 #include "chat262_protocol.h"
 #include "common.h"
+#include "interface.h"
 #include "user.h"
 
 #include <iostream>
@@ -27,20 +28,34 @@ private:
     // Print usage information to standard error
     void usage(char const* prog) const;
 
-    template <typename T>
-    T get_user_unsigned();
-
-    std::string get_user_string(size_t min_len, size_t max_len);
-
     status connect_server();
 
-    void send_msg(std::shared_ptr<chat262::message> msg) const;
-    chat262::message_header recv_hdr() const;
-    std::vector<uint8_t> recv_body(uint32_t body_len);
+    // Send the message `msg` to the server.
+    // @return ok    - success
+    // @return error - fatal error in sending the message.
+    //                 `errno` is appropriately set.
+    status send_msg(std::shared_ptr<chat262::message> msg) const;
+
+    // Receive a message header from the server into `hdr`.
+    // @return ok    - success
+    // @return error - fatal error in receiving the header.
+    //                 `errno` is appropriately set.
+    status recv_hdr(chat262::message_header& hdr) const;
+
+    // Receive a message body of length `body_len` from the server into `data`.
+    // `body_len` should be chosen depending on the header that was received
+    // first.
+    // @return ok    - success
+    // @return error - fatal error in receiving the body.
+    //                 `errno` is appropriately set.
+    status recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
 
     void start_ui();
-    void login();
-    void registration();
+    uint32_t login(const std::string& username, const std::string& password);
+    uint32_t registration(const std::string& username,
+                          const std::string& password);
+
+    interface interface_;
 
     user this_user_;
 
@@ -51,24 +66,5 @@ private:
     // IP address in string format
     std::string str_ip_addr_;
 };
-
-template <typename T>
-T client::get_user_unsigned() {
-    std::string line;
-    T num;
-    while (true) {
-        std::cout << "Chat262> " << std::flush;
-        std::getline(std::cin, line);
-        if (std::cin.eof()) {
-            std::cout << "\n";
-            std::cin.clear();
-            clearerr(stdin);
-        }
-        if (str_to_unsigned<T>(line, num) == status::ok) {
-            break;
-        }
-    }
-    return num;
-}
 
 #endif
