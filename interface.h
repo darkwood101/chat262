@@ -1,11 +1,11 @@
 #ifndef _INTERFACE_H_
 #define _INTERFACE_H_
 
+#include "common.h"
+
 #include <cstdint>
 #include <iostream>
 #include <string>
-
-#include "common.h"
 
 using user_choice = uint32_t;
 
