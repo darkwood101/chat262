@@ -282,7 +282,7 @@ void client::start_ui() {
                             break;
                     }
                 }
-            }
+            } break;
 
             case screen_type::exit: {
                 return;
