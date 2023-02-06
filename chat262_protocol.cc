@@ -305,7 +305,8 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     std::vector<uint32_t> u_lens;
     u_lens.resize(num_accounts_h);
     uint32_t total_u_len = 0;
-    for (uint32_t i = 0; i != num_accounts_h; ++i, msg_body += sizeof(uint32_t)) {
+    for (uint32_t i = 0; i != num_accounts_h;
+         ++i, msg_body += sizeof(uint32_t)) {
         const uint8_t* u_len_ptr = msg_body;
         uint32_t u_len_le;
         memcpy(&u_len_le, u_len_ptr, sizeof(uint32_t));
@@ -323,7 +324,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     usernames.resize(num_accounts_h);
     for (uint32_t i = 0; i != num_accounts_h; ++i) {
         const uint8_t* u_ptr = msg_body;
-        usernames.assign(u_ptr, u_ptr + u_lens[i]);
+        usernames[i].assign(u_ptr, u_ptr + u_lens[i]);
         msg_body += u_lens[i];
     }
     stat_code = stat_code_h;
