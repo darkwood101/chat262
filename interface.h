@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <vector>
 
 using user_choice = uint32_t;
 
@@ -16,6 +17,8 @@ enum class screen_type {
     registration,
     registration_success,
     registration_fail,
+    main_menu,
+    list_accounts,
     exit
 };
 
@@ -27,6 +30,8 @@ public:
     void registration(std::string& username, std::string& password) const;
     user_choice registration_success() const;
     user_choice registration_fail(uint32_t stat_code) const;
+    user_choice main_menu() const;
+    user_choice list_accounts(const std::vector<std::string>& usernames) const;
     screen_type next_;
 
 private:
