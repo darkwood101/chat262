@@ -372,13 +372,13 @@ uint32_t client::list_accounts(std::vector<std::string>& usernames) {
         throw std::runtime_error(
             std::string("Accounts response: Unsupported protocol version ") +
             std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_registration_response) {
+    } else if (msg_hdr.type_ != chat262::msgtype_accounts_response) {
         throw std::runtime_error(
             std::string("Accounts response: Wrong message type, expected ") +
             std::string(chat262::message_type_lookup(
-                chat262::msgtype_registration_response)) +
+                chat262::msgtype_accounts_response)) +
             std::string(" (") +
-            std::to_string(chat262::msgtype_registration_response) +
+            std::to_string(chat262::msgtype_accounts_response) +
             std::string("), got ") +
             std::string(chat262::message_type_lookup(msg_hdr.type_)) +
             std::string(" (") + std::to_string(msg_hdr.type_) +
@@ -391,7 +391,7 @@ uint32_t client::list_accounts(std::vector<std::string>& usernames) {
     if (chat262::accounts_response::deserialize(body, stat_code, usernames) !=
         status::ok) {
         throw std::runtime_error(
-            "Registration response: Unable to deserialize the message body\n");
+            "Accounts response: Unable to deserialize the message body\n");
     }
     return stat_code;
 }
