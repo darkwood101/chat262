@@ -221,7 +221,7 @@ status accounts_request::deserialize(const std::vector<uint8_t>& data) {
 std::shared_ptr<message> accounts_response::serialize(
     uint32_t stat_code,
     const std::vector<std::string>& usernames) {
-    uint32_t body_len = sizeof(chat262::msgtype_accounts_response);
+    uint32_t body_len = sizeof(uint32_t);
     // Add usernames to body length only if status code is ok
     if (stat_code == status_code_ok) {
         body_len += sizeof(uint32_t) + usernames.size() * sizeof(uint32_t);
