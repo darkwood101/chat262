@@ -53,9 +53,11 @@ private:
     status send_msg(int client_fd, std::shared_ptr<chat262::message> msg) const;
 
     // Receive a message header from `client_fd` into `hdr`.
-    // @return ok    - success
-    // @return error - fatal error in receiving the header.
-    //                 `errno` is appropriately set.
+    // @return ok     - success
+    // @return error  - fatal error in receiving the header.
+    //                  `errno` is appropriately set.
+    // @return closed - the client closed the connection before
+    //                  the header was received
     status recv_hdr(int client_fd, chat262::message_header& hdr) const;
 
     // Receive a message body of length `body_len` from the `client_fd` into

@@ -156,12 +156,11 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
     }
     logger::log_out("Accepted connection from %s\n", client_ip);
 
-    // TODO: must have an exit condition
     while (true) {
         chat262::message_header msg_hdr;
-        if (recv_hdr(client_fd, msg_hdr) != status::ok) {
-            logger::log_err("%s", "Failed to receive the header\n");
-            // TODO, have to properly handle
+        status s = recv_hdr(client_fd, msg_hdr);
+        if (s == status::error) {
+            break;
         }
 
         logger::log_out("Received header: version %" PRIu16 ", type %" PRIu16
@@ -174,14 +173,16 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
         if (msg_hdr.version_ != chat262::version) {
             logger::log_err("Unsupported protocol version %" PRIu16 "\n",
                             msg_hdr.version_);
-            // TODO, have to properly handle
+            break;
         }
 
         std::vector<uint8_t> body;
-        if (recv_body(client_fd, msg_hdr.body_len_, body) != status::ok) {
-            logger::log_err("%s", "Failed to receive the body\n");
-            // TODO, have to properly handle
+        s = recv_body(client_fd, msg_hdr.body_len_, body);
+        if (s == status::error) {
+            break;
         }
+
+        logger::log_out("%s", "Received the body\n");
 
         switch (msg_hdr.type_) {
             case chat262::msgtype_registration_request:
@@ -196,9 +197,13 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
-                // TODO, have to properly handle
+                // TODO: notify the client about this?
+                break;
         }
     }
+    shutdown(client_fd, SHUT_RDWR);
+    close(client_fd);
+    logger::log_out("Terminated connection from %s\n", client_ip);
 }
 
 status server::send_msg(int client_fd,
@@ -209,6 +214,7 @@ status server::send_msg(int client_fd,
     while (total_sent != total_len) {
         sent = write(client_fd, msg.get(), total_len);
         if (sent < 0) {
+            logger::log_err("Unable to send the message: %s\n", strerror(errno));
             return status::error;
         }
         total_sent += sent;
@@ -225,6 +231,13 @@ status server::recv_hdr(int client_fd, chat262::message_header& hdr) const {
         readed =
             read(client_fd, hdr_data.data(), sizeof(chat262::message_header));
         if (readed < 0) {
+            logger::log_err("Failed to receive the header: %s\n",
+                            strerror(errno));
+            return status::error;
+        } else if (readed == 0) {
+            logger::log_err(
+                "%s",
+                "Failed to receive the header: Client closed the connection\n");
             return status::error;
         }
         total_read += readed;
@@ -245,6 +258,13 @@ status server::recv_body(int client_fd,
     while (total_read != body_len) {
         readed = read(client_fd, data.data(), body_len);
         if (readed < 0) {
+            logger::log_err("Failed to receive the body: %s\n",
+                            strerror(errno));
+            return status::error;
+        } else if (readed == 0) {
+            logger::log_err(
+                "%s",
+                "Failed to receive the body: Client closed the connection\n");
             return status::error;
         }
         total_read += readed;
@@ -258,8 +278,6 @@ status server::handle_registration(int client_fd,
     status s = chat262::registration_request::deserialize(body_data,
                                                           u.username_,
                                                           u.password_);
-    std::cout << body_data.size() << "\n";
-
     if (s != status::ok) {
         logger::log_err("%s", "Unable to deserialize request body\n");
         return s;
@@ -273,8 +291,10 @@ status server::handle_registration(int client_fd,
 
     auto msg =
         chat262::registration_response::serialize(chat262::status_code_ok);
-    // TODO: check for errors
-    send_msg(client_fd, msg);
+    s = send_msg(client_fd, msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     return status::ok;
 }
@@ -300,22 +320,28 @@ status server::handle_login(int client_fd,
         logger::log_out("Username \"%s\" not found\n", username.c_str());
         auto msg = chat262::registration_response::serialize(
             chat262::status_code_invalid_credentials);
-        // TODO: check for errors
-        send_msg(client_fd, msg);
+        s = send_msg(client_fd, msg);
+        if (s != status::ok) {
+            return s;
+        }
     } else if (password != users_.at(username).password_) {
         logger::log_out("Password \"%s\" for username \"%s\" incorrect\n",
                         password.c_str(),
                         username.c_str());
         auto msg = chat262::registration_response::serialize(
             chat262::status_code_invalid_credentials);
-        // TODO: check for errors
-        send_msg(client_fd, msg);
+        s = send_msg(client_fd, msg);
+        if (s != status::ok) {
+            return s;
+        }
     } else {
         logger::log_out("User \"%s\" logged in\n", username.c_str());
         auto msg =
             chat262::registration_response::serialize(chat262::status_code_ok);
-        // TODO: check for errors
-        send_msg(client_fd, msg);
+        s = send_msg(client_fd, msg);
+        if (s != status::ok) {
+            return s;
+        }
     }
 
     return status::ok;
