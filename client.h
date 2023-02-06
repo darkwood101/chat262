@@ -31,24 +31,18 @@ private:
     status connect_server();
 
     // Send the message `msg` to the server.
-    // @return ok    - success
-    // @return error - fatal error in sending the message.
-    //                 `errno` is appropriately set.
-    status send_msg(std::shared_ptr<chat262::message> msg) const;
+    // Throws `std::runtime_error` if the message cannot be sent (fatal).
+    void send_msg(std::shared_ptr<chat262::message> msg) const;
 
     // Receive a message header from the server into `hdr`.
-    // @return ok    - success
-    // @return error - fatal error in receiving the header.
-    //                 `errno` is appropriately set.
-    status recv_hdr(chat262::message_header& hdr) const;
+    // Throws `std::runtime_error` if the header cannot be received (fatal).
+    void recv_hdr(chat262::message_header& hdr) const;
 
     // Receive a message body of length `body_len` from the server into `data`.
     // `body_len` should be chosen depending on the header that was received
     // first.
-    // @return ok    - success
-    // @return error - fatal error in receiving the body.
-    //                 `errno` is appropriately set.
-    status recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
+    // Throws `std::runtime_error` if the body cannot be received (fatal).
+    void recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
 
     void start_ui();
     uint32_t login(const std::string& username, const std::string& password);
