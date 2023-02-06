@@ -73,6 +73,8 @@ private:
     status handle_registration(int client_fd,
                                const std::vector<uint8_t>& body_data);
     status handle_login(int client_fd, const std::vector<uint8_t>& body_data);
+    status handle_list_accounts(int client_fd,
+                                const std::vector<uint8_t>& body_data);
 
     std::unordered_map<std::string, user> users_;
 

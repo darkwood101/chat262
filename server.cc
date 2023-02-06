@@ -194,6 +194,9 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             case chat262::msgtype_logout_request:
                 // TODO
                 break;
+            case chat262::msgtype_accounts_request:
+                handle_list_accounts(client_fd, body);
+                break;
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
@@ -345,6 +348,30 @@ status server::handle_login(int client_fd,
         }
     }
 
+    return status::ok;
+}
+
+status server::handle_list_accounts(int client_fd,
+                                    const std::vector<uint8_t>& body_data) {
+    status s = chat262::accounts_request::deserialize(body_data);
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
+
+    logger::log_out("%s", "List accounts requested\n");
+
+    std::vector<std::string> usernames;
+    for (const auto& it : users_) {
+        usernames.push_back(it.first);
+    }
+
+    auto msg = chat262::accounts_response::serialize(chat262::status_code_ok,
+                                                     usernames);
+    s = send_msg(client_fd, msg);
+    if (s != status::ok) {
+        return s;
+    }
     return status::ok;
 }
 
