@@ -20,6 +20,10 @@ const char* message_type_lookup(uint16_t msg_type) {
             return "Logout request";
         case msgtype_logout_response:
             return "Logout response";
+        case msgtype_accounts_request:
+            return "List accounts request";
+        case msgtype_accounts_response:
+            return "List accounts response";
         default:
             return "Unknown";
     }
