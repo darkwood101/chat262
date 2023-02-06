@@ -5,7 +5,6 @@
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
-#include <endian.h>
 #include <iostream>
 #include <limits>
 #include <sstream>

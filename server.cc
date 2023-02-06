@@ -7,7 +7,6 @@
 #include <cerrno>
 #include <cinttypes>
 #include <cstring>
-#include <endian.h>
 #include <iostream>
 #include <stdexcept>
 #include <sys/socket.h>
