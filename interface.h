@@ -31,7 +31,9 @@ public:
     user_choice registration_success() const;
     user_choice registration_fail(uint32_t stat_code) const;
     user_choice main_menu() const;
-    user_choice list_accounts(const std::vector<std::string>& usernames) const;
+    user_choice list_accounts_success(
+        const std::vector<std::string>& usernames) const;
+    user_choice list_accounts_fail(uint32_t stat_code) const;
     screen_type next_;
 
 private:

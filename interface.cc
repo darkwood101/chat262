@@ -128,7 +128,7 @@ user_choice interface::main_menu() const {
     return get_user_unsigned<uint32_t>();
 }
 
-user_choice interface::list_accounts(
+user_choice interface::list_accounts_success(
     const std::vector<std::string>& usernames) const {
     clear_screen();
     std::cout << "\n*** Chat262 accounts ***\n"
@@ -139,6 +139,25 @@ user_choice interface::list_accounts(
     }
     std::cout << "\n"
                  "[1] Main menu\n\n";
+    return get_user_unsigned<uint32_t>();
+}
+
+user_choice interface::list_accounts_fail(uint32_t stat_code) const {
+    clear_screen();
+    const char* description = chat262::status_code_lookup(stat_code);
+    std::cout << "\n*** Chat262 accounts ***\n"
+                 "\n"
+                 "Failed to get accounts: ";
+    if (strcmp(description, "Unknown") == 0) {
+        std::cout << description << " (status code " << stat_code << ")\n";
+    } else {
+        std::cout << description << "\n";
+    }
+    std::cout << "\n"
+                 "Try again?\n"
+                 "\n"
+                 "[1] Yes\n"
+                 "[2] No\n\n";
     return get_user_unsigned<uint32_t>();
 }
 
