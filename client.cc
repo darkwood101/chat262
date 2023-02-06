@@ -184,7 +184,7 @@ void client::start_ui() {
                 interface_.login(username, password);
                 stat_code = login(username, password);
                 if (stat_code == chat262::status_code_ok) {
-                    interface_.next_ = screen_type::exit;
+                    interface_.next_ = screen_type::main_menu;
                 } else {
                     interface_.next_ = screen_type::login_fail;
                 }
@@ -240,6 +240,49 @@ void client::start_ui() {
                         break;
                 }
             } break;
+
+            case screen_type::main_menu: {
+                user_choice choice = interface_.main_menu();
+                switch (choice) {
+                    case 1:
+                        // TODO
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::list_accounts;
+                        break;
+                    default:
+                        break;
+                }
+            } break;
+
+            case screen_type::list_accounts: {
+                std::vector<std::string> usernames;
+                stat_code = list_accounts(usernames);
+                if (stat_code == chat262::status_code_ok) {
+                    user_choice choice =
+                        interface_.list_accounts_success(usernames);
+                    switch (choice) {
+                        case 1:
+                            interface_.next_ = screen_type::main_menu;
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    user_choice choice =
+                        interface_.list_accounts_fail(stat_code);
+                    switch (choice) {
+                        case 1:
+                            interface_.next_ = screen_type::list_accounts;
+                            break;
+                        case 2:
+                            interface_.next_ = screen_type::main_menu;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
 
             case screen_type::exit: {
                 return;
@@ -312,6 +355,40 @@ uint32_t client::registration(const std::string& username,
 
     uint32_t stat_code;
     if (chat262::registration_response::deserialize(body, stat_code) !=
+        status::ok) {
+        throw std::runtime_error(
+            "Registration response: Unable to deserialize the message body\n");
+    }
+    return stat_code;
+}
+
+uint32_t client::list_accounts(std::vector<std::string>& usernames) {
+    auto msg = chat262::accounts_request::serialize();
+    send_msg(msg);
+
+    chat262::message_header msg_hdr;
+    recv_hdr(msg_hdr);
+    if (msg_hdr.version_ != chat262::version) {
+        throw std::runtime_error(
+            std::string("Accounts response: Unsupported protocol version ") +
+            std::to_string(msg_hdr.version_) + std::string("\n"));
+    } else if (msg_hdr.type_ != chat262::msgtype_registration_response) {
+        throw std::runtime_error(
+            std::string("Accounts response: Wrong message type, expected ") +
+            std::string(chat262::message_type_lookup(
+                chat262::msgtype_registration_response)) +
+            std::string(" (") +
+            std::to_string(chat262::msgtype_registration_response) +
+            std::string("), got ") +
+            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
+            std::string(" (") + std::to_string(msg_hdr.type_) +
+            std::string(")\n"));
+    }
+    std::vector<uint8_t> body;
+    recv_body(msg_hdr.body_len_, body);
+
+    uint32_t stat_code;
+    if (chat262::accounts_response::deserialize(body, stat_code, usernames) !=
         status::ok) {
         throw std::runtime_error(
             "Registration response: Unable to deserialize the message body\n");
