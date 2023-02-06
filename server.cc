@@ -214,7 +214,8 @@ status server::send_msg(int client_fd,
     while (total_sent != total_len) {
         sent = write(client_fd, msg.get(), total_len);
         if (sent < 0) {
-            logger::log_err("Unable to send the message: %s\n", strerror(errno));
+            logger::log_err("Unable to send the message: %s\n",
+                            strerror(errno));
             return status::error;
         }
         total_sent += sent;
@@ -242,6 +243,7 @@ status server::recv_hdr(int client_fd, chat262::message_header& hdr) const {
         }
         total_read += readed;
     }
+    // This should never happen
     status s = chat262::message_header::deserialize(hdr_data, hdr);
     if (s != status::ok) {
         return s;
