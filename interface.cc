@@ -3,6 +3,8 @@
 #include "chat262_protocol.h"
 #include "common.h"
 
+#include <cstring>
+
 user_choice interface::login_registration() const {
     clear_screen();
     std::cout << "\n*** Welcome to Chat262 ***\n"
@@ -41,12 +43,16 @@ void interface::login(std::string& username, std::string& password) const {
 
 user_choice interface::login_fail(uint32_t stat_code) const {
     clear_screen();
+    const char* description = chat262::status_code_lookup(stat_code);
     std::cout << "*** Chat262 login ***\n"
                  "\n"
-                 "Login failed: "
-              << chat262::status_code_lookup(stat_code) << "(" << stat_code
-              << ")\n"
-                 "\n"
+                 "Login failed: ";
+    if (strcmp(description, "Unknown") == 0) {
+        std::cout << description << " (status code " << stat_code << ")\n";
+    } else {
+        std::cout << description << "\n";
+    }
+    std::cout << "\n"
                  "Try again?\n"
                  "\n"
                  "[1] Yes\n"
@@ -95,12 +101,16 @@ user_choice interface::registration_success() const {
 
 user_choice interface::registration_fail(uint32_t stat_code) const {
     clear_screen();
+    const char* description = chat262::status_code_lookup(stat_code);
     std::cout << "*** Chat262 registration ***\n"
                  "\n"
-                 "Registration failed: "
-              << chat262::status_code_lookup(stat_code) << "(" << stat_code
-              << ")\n"
-                 "\n"
+                 "Registration failed: ";
+    if (strcmp(description, "Unknown") == 0) {
+        std::cout << description << " (status code " << stat_code << ")\n";
+    } else {
+        std::cout << description << "\n";
+    }
+    std::cout << "\n"
                  "Try again?\n"
                  "\n"
                  "[1] Yes\n"
