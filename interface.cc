@@ -135,7 +135,7 @@ user_choice interface::list_accounts_success(
                  "\n"
                  "The following usernames are registered with Chat262:\n\n";
     for (size_t i = 0; i != usernames.size(); ++i) {
-        std::cout << " " << i << ".\t" << usernames[i] << "\n";
+        std::cout << " " << i + 1 << ".\t" << usernames[i] << "\n";
     }
     std::cout << "\n"
                  "[1] Main menu\n\n";
