@@ -34,6 +34,7 @@ enum message_type : uint16_t {
 enum status_code : uint32_t {
     status_code_ok = 0x0,
     status_code_invalid_credentials = 0x1,
+    status_code_user_exists = 0x2,
 };
 
 // Look up the message type and returns a descriptive string

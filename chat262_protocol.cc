@@ -36,6 +36,8 @@ const char* status_code_lookup(uint32_t stat_code) {
             return "OK";
         case status_code_invalid_credentials:
             return "Invalid username and/or password";
+        case status_code_user_exists:
+            return "Username already exists";
         default:
             return "Unknown";
     }

@@ -288,24 +288,21 @@ status server::handle_registration(int client_fd,
         logger::log_err("%s", "Unable to deserialize request body\n");
         return s;
     }
+
     s = database_.registration(username, password);
-    if (s != status::ok) {
-        // TODO
+    std::shared_ptr<chat262::message> msg;
+    if (s == status::ok) {
+        logger::log_out(
+            "Registered user with username \"%s\" and password \"%s\"\n",
+            username.c_str(),
+            password.c_str());
+        msg = chat262::registration_response::serialize(chat262::status_code_ok);
+    } else {
+        logger::log_out("Username \"%s\" already exists\n", username.c_str());
+        msg = chat262::registration_response::serialize(chat262::status_code_user_exists);
     }
 
-    logger::log_out(
-        "Registered user with username \"%s\" and password \"%s\"\n",
-        username.c_str(),
-        password.c_str());
-
-    auto msg =
-        chat262::registration_response::serialize(chat262::status_code_ok);
-    s = send_msg(client_fd, msg);
-    if (s != status::ok) {
-        return s;
-    }
-
-    return status::ok;
+    return send_msg(client_fd, msg);
 }
 
 status server::handle_login(int client_fd,
