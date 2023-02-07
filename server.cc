@@ -278,20 +278,24 @@ status server::recv_body(int client_fd,
 
 status server::handle_registration(int client_fd,
                                    const std::vector<uint8_t>& body_data) {
-    user u;
+    std::string username;
+    std::string password;
     status s = chat262::registration_request::deserialize(body_data,
-                                                          u.username_,
-                                                          u.password_);
+                                                          username,
+                                                          password);
     if (s != status::ok) {
         logger::log_err("%s", "Unable to deserialize request body\n");
         return s;
     }
-    users_.insert({u.username_, u});
+    s = database_.registration(username, password);
+    if (s != status::ok) {
+        // TODO
+    }
 
     logger::log_out(
         "Registered user with username \"%s\" and password \"%s\"\n",
-        u.username_.c_str(),
-        u.password_.c_str());
+        username.c_str(),
+        password.c_str());
 
     auto msg =
         chat262::registration_response::serialize(chat262::status_code_ok);
@@ -320,34 +324,21 @@ status server::handle_login(int client_fd,
         username.c_str(),
         password.c_str());
 
-    if (users_.find(username) == users_.end()) {
-        logger::log_out("Username \"%s\" not found\n", username.c_str());
-        auto msg = chat262::login_response::serialize(
-            chat262::status_code_invalid_credentials);
-        s = send_msg(client_fd, msg);
-        if (s != status::ok) {
-            return s;
-        }
-    } else if (password != users_.at(username).password_) {
-        logger::log_out("Password \"%s\" for username \"%s\" incorrect\n",
-                        password.c_str(),
-                        username.c_str());
-        auto msg = chat262::login_response::serialize(
-            chat262::status_code_invalid_credentials);
-        s = send_msg(client_fd, msg);
-        if (s != status::ok) {
-            return s;
-        }
-    } else {
-        logger::log_out("User \"%s\" logged in\n", username.c_str());
-        auto msg = chat262::login_response::serialize(chat262::status_code_ok);
-        s = send_msg(client_fd, msg);
-        if (s != status::ok) {
-            return s;
-        }
+    if (database_.is_logged_in()) {
+        // TODO
     }
 
-    return status::ok;
+    s = database_.login(username, password);
+    std::shared_ptr<chat262::message> msg;
+    if (s == status::ok) {
+        logger::log_out("%s", "Correct credentials\n");
+        msg = chat262::login_response::serialize(chat262::status_code_ok);
+    } else {
+        logger::log_out("%s", "Invalid credentials\n");
+        msg = chat262::login_response::serialize(
+            chat262::status_code_invalid_credentials);
+    }
+    return send_msg(client_fd, msg);
 }
 
 status server::handle_list_accounts(int client_fd,
@@ -360,10 +351,10 @@ status server::handle_list_accounts(int client_fd,
 
     logger::log_out("%s", "List accounts requested\n");
 
-    std::vector<std::string> usernames;
-    for (const auto& it : users_) {
-        usernames.push_back(it.first);
+    if (!database_.is_logged_in()) {
+        // TODO
     }
+    std::vector<std::string> usernames = database_.get_usernames();
 
     auto msg = chat262::accounts_response::serialize(chat262::status_code_ok,
                                                      usernames);

@@ -3,12 +3,12 @@
 
 #include "chat262_protocol.h"
 #include "common.h"
+#include "database.h"
 #include "user.h"
 
 #include <cstdint>
 #include <netinet/in.h>
 #include <string>
-#include <unordered_map>
 
 class server {
 public:
@@ -76,7 +76,8 @@ private:
     status handle_list_accounts(int client_fd,
                                 const std::vector<uint8_t>& body_data);
 
-    std::unordered_map<std::string, user> users_;
+    // The users database
+    database database_;
 
     // Listen socket file descriptor
     int server_fd_;
