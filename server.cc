@@ -191,7 +191,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
                 handle_login(client_fd, body);
                 break;
             case chat262::msgtype_logout_request:
-                // TODO
+                handle_logout(client_fd, body);
                 break;
             case chat262::msgtype_accounts_request:
                 handle_list_accounts(client_fd, body);
@@ -338,6 +338,24 @@ status server::handle_login(int client_fd,
         msg = chat262::login_response::serialize(
             chat262::status_code_invalid_credentials);
     }
+    return send_msg(client_fd, msg);
+}
+
+status server::handle_logout(int client_fd, const std::vector<uint8_t>& body_data) {
+    status s = chat262::logout_request::deserialize(body_data);
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
+
+    logger::log_out("%s", "Logout requested\n");
+
+    if (!database_.is_logged_in()) {
+        // TODO
+    }
+    database_.logout();
+
+    auto msg = chat262::logout_response::serialize(chat262::status_code_ok);
     return send_msg(client_fd, msg);
 }
 

@@ -249,6 +249,12 @@ void client::start_ui() {
                     case 2:
                         interface_.next_ = screen_type::list_accounts;
                         break;
+                    case 0:
+                        stat_code = logout();
+                        if (stat_code == chat262::status_code_ok) {
+                            interface_.next_ = screen_type::login_registration;
+                        }
+                        // TODO: handle logout fail
                     default:
                         break;
                 }
@@ -359,6 +365,40 @@ uint32_t client::registration(const std::string& username,
             "Registration response: Unable to deserialize the message body\n");
     }
     return stat_code;
+}
+
+uint32_t client::logout() {
+    auto msg = chat262::logout_request::serialize();
+    send_msg(msg);
+
+    chat262::message_header msg_hdr;
+    recv_hdr(msg_hdr);
+    if (msg_hdr.version_ != chat262::version) {
+        throw std::runtime_error(
+            std::string("Logout response: Unsupported protocol version ") +
+            std::to_string(msg_hdr.version_) + std::string("\n"));
+    } else if (msg_hdr.type_ != chat262::msgtype_logout_response) {
+        throw std::runtime_error(
+            std::string("Logout response: Wrong message type, expected ") +
+            std::string(chat262::message_type_lookup(
+                chat262::msgtype_logout_response)) +
+            std::string(" (") +
+            std::to_string(chat262::msgtype_logout_response) +
+            std::string("), got ") +
+            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
+            std::string(" (") + std::to_string(msg_hdr.type_) +
+            std::string(")\n"));
+    }
+    std::vector<uint8_t> body;
+    recv_body(msg_hdr.body_len_, body);
+
+    uint32_t stat_code;
+    if (chat262::logout_response::deserialize(body, stat_code) !=
+        status::ok) {
+        throw std::runtime_error(
+            "Logout response: Unable to deserialize the message body\n");
+    }
+    return stat_code;    
 }
 
 uint32_t client::list_accounts(std::vector<std::string>& usernames) {

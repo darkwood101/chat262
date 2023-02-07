@@ -48,6 +48,7 @@ private:
     uint32_t login(const std::string& username, const std::string& password);
     uint32_t registration(const std::string& username,
                           const std::string& password);
+    uint32_t logout();
     uint32_t list_accounts(std::vector<std::string>& usernames);
 
     interface interface_;
