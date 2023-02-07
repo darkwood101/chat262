@@ -203,6 +203,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
                 break;
         }
     }
+    database_.logout();
     shutdown(client_fd, SHUT_RDWR);
     close(client_fd);
     logger::log_out("Terminated connection from %s\n", client_ip);
