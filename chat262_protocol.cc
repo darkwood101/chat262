@@ -229,7 +229,7 @@ std::shared_ptr<message> logout_response::serialize(uint32_t stat_code) {
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
     msg->hdr_.version_ = e_htole16(version);
-    msg->hdr_.type_ = e_htole16(msgtype_login_response);
+    msg->hdr_.type_ = e_htole16(msgtype_logout_response);
     msg->hdr_.body_len_ = e_htole32(body_len);
     uint32_t stat_code_le = e_htole32(stat_code);
     memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
