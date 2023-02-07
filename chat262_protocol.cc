@@ -206,6 +206,50 @@ status login_response::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
+std::shared_ptr<message> logout_request::serialize() {
+    std::shared_ptr<message> msg(
+        static_cast<message*>(malloc(sizeof(message_header))),
+        free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_logout_request);
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
+    return msg;
+}
+
+status logout_request::deserialize(const std::vector<uint8_t>& data) {
+    if (data.size() != 0) {
+        return status::error;
+    }
+    return status::ok;
+}
+
+std::shared_ptr<message> logout_response::serialize(uint32_t stat_code) {
+    uint32_t body_len = sizeof(logout_response);
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_login_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t stat_code_le = e_htole32(stat_code);
+    memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
+    return msg;
+}
+
+status logout_response::deserialize(const std::vector<uint8_t>& data,
+                                   uint32_t& stat_code) {
+    // We know the size upfront
+    if (data.size() != sizeof(logout_response)) {
+        return status::error;
+    }
+    const uint8_t* msg_body = data.data();
+
+    uint32_t stat_code_le;
+    memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
+    stat_code = e_le32toh(stat_code_le);
+    return status::ok;
+}
+
 std::shared_ptr<message> accounts_request::serialize() {
     std::shared_ptr<message> msg(
         static_cast<message*>(malloc(sizeof(message_header))),

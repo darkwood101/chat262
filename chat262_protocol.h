@@ -152,6 +152,40 @@ struct login_response {
                               uint32_t& stat_code);
 };
 
+struct logout_request {
+    // Form a complete logout request message. There is no body in this request.
+    static std::shared_ptr<message> serialize();
+
+    // Do nothing because there is no body in the request. `data` must be an
+    // empty vector.
+    // @return ok    - success
+    // @return error - `data.size() != 0`
+    //                 This is the fault of the local implementation, never of
+    //                 the remote party.
+    static status deserialize(const std::vector<uint8_t>& data);
+};
+
+struct logout_response {
+    uint32_t stat_code;
+
+    // Form a complete logout response message from `stat_code`.
+    static std::shared_ptr<message> serialize(uint32_t stat_code);
+
+    // Extract the status code from `data`.
+    // `data` must contain the `logout_response` structure.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size() != sizeof(logout_response)`
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
+    static status deserialize(const std::vector<uint8_t>& data,
+                              uint32_t& stat_code);
+};
+
 struct accounts_request {
     // Form a complete accounts request message. There is no body in this
     // request.
