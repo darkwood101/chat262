@@ -22,12 +22,14 @@ enum message_type : uint16_t {
     msgtype_login_request = 102,
     msgtype_logout_request = 103,
     msgtype_accounts_request = 104,
+    msgtype_send_txt_request = 105,
 
     // Server responses
     msgtype_registration_response = 201,
     msgtype_login_response = 202,
     msgtype_logout_response = 203,
-    msgtype_accounts_response = 204
+    msgtype_accounts_response = 204,
+    msgtype_send_txt_response = 205
 };
 
 // Server response status codes
@@ -233,6 +235,26 @@ struct accounts_response {
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code,
                               std::vector<std::string>& usernames);
+};
+
+struct send_txt_request {
+    uint32_t user_len_;
+    uint32_t msg_len_;
+    uint8_t user_txt_[];
+
+    static std::shared_ptr<message> serialize(const std::string& sender,
+                                              const std::string& txt);
+    static status deserialize(const std::vector<uint8_t>& data,
+                              std::string& sender,
+                              std::string& txt);
+};
+
+struct send_txt_response {
+    uint32_t stat_code_;
+
+    static std::shared_ptr<message> serialize(uint32_t stat_code);
+    static status deserialize(const std::vector<uint8_t>& data,
+                              uint32_t& stat_code);
 };
 
 struct logout_body {};
