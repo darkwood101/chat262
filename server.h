@@ -4,7 +4,6 @@
 #include "chat262_protocol.h"
 #include "common.h"
 #include "database.h"
-#include "user.h"
 
 #include <cstdint>
 #include <netinet/in.h>

@@ -4,7 +4,6 @@
 #include "chat262_protocol.h"
 #include "common.h"
 #include "interface.h"
-#include "user.h"
 
 #include <iostream>
 #include <string>
@@ -52,8 +51,6 @@ private:
     uint32_t list_accounts(std::vector<std::string>& usernames);
 
     interface interface_;
-
-    user this_user_;
 
     // Connected socket file descriptor
     int server_fd_;
