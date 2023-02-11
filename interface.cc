@@ -161,6 +161,78 @@ user_choice interface::list_accounts_fail(uint32_t stat_code) const {
     return get_user_unsigned<uint32_t>();
 }
 
+void interface::open_chat(std::string& username) const {
+    clear_screen();
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Enter the username of the person you wish to chat with.\n\n";
+    username = get_user_string(4, 40);
+    clear_screen();
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Retrieving the requested chat...\n";
+}
+
+user_choice interface::open_chat_fail(uint32_t stat_code) const {
+    clear_screen();
+    const char* description = chat262::status_code_lookup(stat_code);
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Failed to retrieve the requested chat: ";
+    if (strcmp(description, "Unknown") == 0) {
+        std::cout << description << " (status code " << stat_code << ")\n";
+    } else {
+        std::cout << description << "\n";
+    }
+    std::cout << "\n"
+                 "Try again?\n"
+                 "\n"
+                 "[1] Yes\n"
+                 "[2] No\n\n";
+    return get_user_unsigned<uint32_t>();
+}
+
+void interface::send_txt(const std::string& me,
+                         const std::string& correspondent,
+                         const chat& c,
+                         std::string& txt) const {
+    clear_screen();
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "============================================================="
+                 "===================\n";
+
+    for (const text& t : c.texts_) {
+        if (t.sender_ == text::sender_you) {
+            std::cout << me << ": " << t.content_ << "\n\n";
+        } else {
+            std::cout << correspondent << ": " << t.content_ << "\n\n";
+        }
+    }
+    std::cout << "============================================================="
+                 "===================\n\n";
+    txt = get_user_string(1, std::numeric_limits<uint32_t>::max());
+}
+
+user_choice interface::send_txt_fail(uint32_t stat_code) const {
+    clear_screen();
+    const char* description = chat262::status_code_lookup(stat_code);
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Failed to send the text: ";
+    if (strcmp(description, "Unknown") == 0) {
+        std::cout << description << " (status code " << stat_code << ")\n";
+    } else {
+        std::cout << description << "\n";
+    }
+    std::cout << "\n"
+                 "Try again?\n"
+                 "\n"
+                 "[1] Yes\n"
+                 "[2] No\n\n";
+    return get_user_unsigned<uint32_t>();
+}
+
 void interface::clear_screen() const {
     int s = system("clear");
     (void) s;

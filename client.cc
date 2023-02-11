@@ -157,6 +157,9 @@ void client::recv_body(uint32_t body_len, std::vector<uint8_t>& data) const {
 void client::start_ui() {
     uint32_t stat_code = 0;
     interface_.next_ = screen_type::login_registration;
+    chat curr_chat;
+    std::string me;
+    std::string correspondent;
 
     while (true) {
         switch (interface_.next_) {
@@ -178,10 +181,9 @@ void client::start_ui() {
             } break;
 
             case screen_type::login: {
-                std::string username;
                 std::string password;
-                interface_.login(username, password);
-                stat_code = login(username, password);
+                interface_.login(me, password);
+                stat_code = login(me, password);
                 if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::main_menu;
                 } else {
@@ -244,7 +246,7 @@ void client::start_ui() {
                 user_choice choice = interface_.main_menu();
                 switch (choice) {
                     case 1:
-                        // TODO
+                        interface_.next_ = screen_type::open_chat;
                         break;
                     case 2:
                         interface_.next_ = screen_type::list_accounts;
@@ -255,6 +257,54 @@ void client::start_ui() {
                             interface_.next_ = screen_type::login_registration;
                         }
                         // TODO: handle logout fail
+                    default:
+                        break;
+                }
+            } break;
+
+            case screen_type::open_chat: {
+                interface_.open_chat(correspondent);
+                interface_.next_ = screen_type::send_txt;
+            } break;
+
+            case screen_type::open_chat_fail: {
+                user_choice choice = interface_.open_chat_fail(stat_code);
+                switch (choice) {
+                    case 1:
+                        interface_.next_ = screen_type::open_chat;
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::main_menu;
+                        break;
+                    default:
+                        break;
+                }
+            } break;
+
+            case screen_type::send_txt: {
+                stat_code = recv_txt(correspondent, curr_chat);
+                if (stat_code != chat262::status_code_ok) {
+                    interface_.next_ = screen_type::open_chat_fail;
+                    break;
+                }
+                std::string txt;
+                interface_.send_txt(me, correspondent, curr_chat, txt);
+                stat_code = send_txt(correspondent, txt);
+                if (stat_code != chat262::status_code_ok) {
+                    interface_.next_ = screen_type::send_txt_fail;
+                    break;
+                }
+            } break;
+
+            case screen_type::send_txt_fail: {
+                user_choice choice = interface_.send_txt_fail(stat_code);
+                switch (choice) {
+                    case 1:
+                        interface_.next_ = screen_type::open_chat;
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::main_menu;
+                        break;
                     default:
                         break;
                 }

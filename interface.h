@@ -1,6 +1,7 @@
 #ifndef _INTERFACE_H_
 #define _INTERFACE_H_
 
+#include "chat.h"
 #include "common.h"
 
 #include <cstdint>
@@ -19,6 +20,10 @@ enum class screen_type {
     registration_fail,
     main_menu,
     list_accounts,
+    open_chat,
+    open_chat_fail,
+    send_txt,
+    send_txt_fail,
     exit
 };
 
@@ -34,6 +39,13 @@ public:
     user_choice list_accounts_success(
         const std::vector<std::string>& usernames) const;
     user_choice list_accounts_fail(uint32_t stat_code) const;
+    void open_chat(std::string& username) const;
+    user_choice open_chat_fail(uint32_t stat_code) const;
+    void send_txt(const std::string& me,
+                  const std::string& correspondent,
+                  const chat& c,
+                  std::string& txt) const;
+    user_choice send_txt_fail(uint32_t stat_code) const;
     screen_type next_;
 
 private:
