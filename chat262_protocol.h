@@ -12,7 +12,7 @@
 
 namespace chat262 {
 
-static constexpr uint16_t version = 0x1;
+static constexpr uint16_t version = 1;
 static constexpr uint16_t port = 45171;
 
 // Message types. Types in the range [101, 199] are client requestes. Types in
@@ -37,10 +37,10 @@ enum message_type : uint16_t {
 
 // Server response status codes
 enum status_code : uint32_t {
-    status_code_ok = 0x0,
-    status_code_invalid_credentials = 0x1,
-    status_code_user_exists = 0x2,
-    status_code_user_noexist = 0x3
+    status_code_ok = 0,
+    status_code_invalid_credentials = 1,
+    status_code_user_exists = 2,
+    status_code_user_noexist = 3
 };
 
 // Look up the message type and returns a descriptive string
