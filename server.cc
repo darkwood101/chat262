@@ -201,6 +201,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
                 break;
             case chat262::msgtype_recv_txt_request:
                 handle_recv_txt(client_fd, body);
+                break;
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
