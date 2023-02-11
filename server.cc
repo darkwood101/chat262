@@ -199,6 +199,8 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             case chat262::msgtype_send_txt_request:
                 handle_send_txt(client_fd, body);
                 break;
+            case chat262::msgtype_recv_txt_request:
+                handle_recv_txt(client_fd, body);
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
@@ -398,7 +400,7 @@ status server::handle_send_txt(int client_fd,
         return s;
     }
 
-    logger::log_out("%s", "Send text requested\n");
+    logger::log_out("Send text requested to user \"%s\"\n", recipient);
 
     if (!database_.is_logged_in()) {
         // TODO, unauthorized
@@ -408,6 +410,30 @@ status server::handle_send_txt(int client_fd,
         // TODO, recipient non-existent
     }
     auto msg = chat262::send_txt_response::serialize(chat262::status_code_ok);
+    return send_msg(client_fd, msg);
+}
+
+status server::handle_recv_txt(int client_fd,
+                               const std::vector<uint8_t>& body_data) {
+    std::string sender;
+    status s = chat262::recv_txt_request::deserialize(body_data, sender);
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
+
+    logger::log_out("Receive text requested from user \"%s\"\n", sender);
+
+    if (!database_.is_logged_in()) {
+        // TODO, unauthorized
+    }
+    chat c;
+    s = database_.recv_txt(sender, c);
+    if (s != status::ok) {
+        // TODO, sender non-existent
+    }
+    auto msg =
+        chat262::recv_txt_response::serialize(chat262::status_code_ok, c);
     return send_msg(client_fd, msg);
 }
 
