@@ -25,6 +25,14 @@ const char* message_type_lookup(uint16_t msg_type) {
             return "List accounts request";
         case msgtype_accounts_response:
             return "List accounts response";
+        case msgtype_send_txt_request:
+            return "Send text request";
+        case msgtype_send_txt_response:
+            return "Send text response";
+        case msgtype_recv_txt_request:
+            return "Receive text request";
+        case msgtype_recv_txt_response:
+            return "Receive text response";
         default:
             return "Unknown";
     }
