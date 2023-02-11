@@ -245,10 +245,10 @@ struct send_txt_request {
     uint32_t msg_len_;
     uint8_t user_txt_[];
 
-    static std::shared_ptr<message> serialize(const std::string& sender,
+    static std::shared_ptr<message> serialize(const std::string& recipient,
                                               const std::string& txt);
     static status deserialize(const std::vector<uint8_t>& data,
-                              std::string& sender,
+                              std::string& recipient,
                               std::string& txt);
 };
 
@@ -264,9 +264,9 @@ struct recv_txt_request {
     uint32_t user_len_;
     uint8_t user_[];
 
-    static std::shared_ptr<message> serialize(const std::string& username);
+    static std::shared_ptr<message> serialize(const std::string& sender);
     static status deserialize(const std::vector<uint8_t>& data,
-                              std::string& username);
+                              std::string& sender);
 };
 
 struct recv_txt_response {

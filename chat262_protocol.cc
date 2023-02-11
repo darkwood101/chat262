@@ -383,48 +383,50 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> send_txt_request::serialize(const std::string& sender,
-                                                     const std::string& txt) {
+std::shared_ptr<message> send_txt_request::serialize(
+    const std::string& recipient,
+    const std::string& txt) {
     uint32_t body_len =
-        sizeof(chat262::send_txt_request) + sender.length() + txt.length();
+        sizeof(chat262::send_txt_request) + recipient.length() + txt.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
     msg->hdr_.version_ = e_htole16(version);
     msg->hdr_.type_ = e_htole16(msgtype_send_txt_request);
     msg->hdr_.body_len_ = e_htole32(body_len);
-    uint32_t sender_len_le = e_htole32(static_cast<uint32_t>(sender.length()));
+    uint32_t recipient_len_le =
+        e_htole32(static_cast<uint32_t>(recipient.length()));
     uint32_t txt_len_le = e_htole32(static_cast<uint32_t>(txt.length()));
-    memcpy(msg->body_, &sender_len_le, sizeof(uint32_t));
+    memcpy(msg->body_, &recipient_len_le, sizeof(uint32_t));
     memcpy(msg->body_ + 4, &txt_len_le, sizeof(uint32_t));
-    memcpy(msg->body_ + 8, sender.c_str(), sender.length());
-    memcpy(msg->body_ + 8 + sender.length(), txt.c_str(), txt.length());
+    memcpy(msg->body_ + 8, recipient.c_str(), recipient.length());
+    memcpy(msg->body_ + 8 + recipient.length(), txt.c_str(), txt.length());
     return msg;
 }
 
 status send_txt_request::deserialize(const std::vector<uint8_t>& data,
-                                     std::string& sender,
+                                     std::string& recipient,
                                      std::string& txt) {
     if (data.size() < sizeof(send_txt_request)) {
         return status::error;
     }
     const uint8_t* msg_body = data.data();
 
-    uint32_t sender_len_le;
-    memcpy(&sender_len_le, msg_body, sizeof(uint32_t));
-    uint32_t sender_len = e_le32toh(sender_len_le);
+    uint32_t recipient_len_le;
+    memcpy(&recipient_len_le, msg_body, sizeof(uint32_t));
+    uint32_t recipient_len = e_le32toh(recipient_len_le);
 
     uint32_t txt_len_le;
     memcpy(&txt_len_le, msg_body + 4, sizeof(uint32_t));
     uint32_t txt_len = e_le32toh(txt_len_le);
 
     // Cannot proceed if there is a mismatch of size
-    if (2 * sizeof(uint32_t) + sender_len + txt_len != data.size()) {
+    if (2 * sizeof(uint32_t) + recipient_len + txt_len != data.size()) {
         return status::error;
     }
 
-    sender.assign(msg_body + 8, msg_body + 8 + sender_len);
-    txt.assign(msg_body + 8 + txt_len, msg_body + 8 + sender_len + txt_len);
+    recipient.assign(msg_body + 8, msg_body + 8 + recipient_len);
+    txt.assign(msg_body + 8 + txt_len, msg_body + 8 + recipient_len + txt_len);
     return status::ok;
 }
 
@@ -456,41 +458,42 @@ status send_txt_response::deserialize(const std::vector<uint8_t>& data,
 }
 
 std::shared_ptr<message> recv_txt_request::serialize(
-    const std::string& username) {
-    uint32_t body_len = sizeof(chat262::recv_txt_request) + username.length();
+    const std::string& sender) {
+    uint32_t body_len = sizeof(chat262::recv_txt_request) + sender.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
     msg->hdr_.version_ = e_htole16(version);
     msg->hdr_.type_ = e_htole16(msgtype_recv_txt_request);
     msg->hdr_.body_len_ = e_htole32(body_len);
-    uint32_t user_len_le = e_htole32(static_cast<uint32_t>(username.length()));
-    memcpy(msg->body_, &user_len_le, sizeof(uint32_t));
-    memcpy(msg->body_ + 4, username.c_str(), username.length());
+    uint32_t sender_len_le = e_htole32(static_cast<uint32_t>(sender.length()));
+    memcpy(msg->body_, &sender_len_le, sizeof(uint32_t));
+    memcpy(msg->body_ + 4, sender.c_str(), sender.length());
     return msg;
 }
 
 status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
-                                     std::string& username) {
+                                     std::string& sender) {
     if (data.size() < sizeof(recv_txt_request)) {
         return status::error;
     }
     const uint8_t* msg_body = data.data();
 
-    uint32_t user_len_le;
-    memcpy(&user_len_le, msg_body, sizeof(uint32_t));
-    uint32_t user_len = e_le32toh(user_len_le);
+    uint32_t sender_len_le;
+    memcpy(&sender_len_le, msg_body, sizeof(uint32_t));
+    uint32_t sender_len = e_le32toh(sender_len_le);
 
     // Cannot proceed if there is a mismatch of size
-    if (sizeof(uint32_t) + user_len != data.size()) {
+    if (sizeof(uint32_t) + sender_len != data.size()) {
         return status::error;
     }
 
-    username.assign(msg_body + 4, msg_body + 4 + user_len);
+    sender.assign(msg_body + 4, msg_body + 4 + sender_len);
     return status::ok;
 }
 
-std::shared_ptr<message> recv_txt_response::serialize(uint32_t stat_code, const chat& c) {
+std::shared_ptr<message> recv_txt_response::serialize(uint32_t stat_code,
+                                                      const chat& c) {
     uint32_t body_len = sizeof(uint32_t);
     if (stat_code == status_code_ok) {
         body_len += sizeof(uint32_t) +
