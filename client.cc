@@ -434,6 +434,41 @@ uint32_t client::list_accounts(std::vector<std::string>& usernames) {
     return stat_code;
 }
 
+uint32_t client::send_txt(const std::string& recipient,
+                          const std::string& txt) {
+    auto msg = chat262::send_txt_request::serialize(recipient, txt);
+    send_msg(msg);
+
+    chat262::message_header msg_hdr;
+    recv_hdr(msg_hdr);
+    if (msg_hdr.version_ != chat262::version) {
+        throw std::runtime_error(
+            std::string("Send text response: Unsupported protocol version ") +
+            std::to_string(msg_hdr.version_) + std::string("\n"));
+    } else if (msg_hdr.type_ != chat262::msgtype_send_txt_response) {
+        throw std::runtime_error(
+            std::string("Send text response: Wrong message type, expected ") +
+            std::string(chat262::message_type_lookup(
+                chat262::msgtype_send_txt_response)) +
+            std::string(" (") +
+            std::to_string(chat262::msgtype_send_txt_response) +
+            std::string("), got ") +
+            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
+            std::string(" (") + std::to_string(msg_hdr.type_) +
+            std::string(")\n"));
+    }
+    std::vector<uint8_t> body;
+    recv_body(msg_hdr.body_len_, body);
+
+    uint32_t stat_code;
+    if (chat262::send_txt_response::deserialize(body, stat_code) !=
+        status::ok) {
+        throw std::runtime_error(
+            "Send text response: Unable to deserialize the message body\n");
+    }
+    return stat_code;
+}
+
 uint32_t client::recv_txt(const std::string& sender, chat& c) {
     auto msg = chat262::recv_txt_request::serialize(sender);
     send_msg(msg);
@@ -452,7 +487,7 @@ uint32_t client::recv_txt(const std::string& sender, chat& c) {
             std::string(chat262::message_type_lookup(
                 chat262::msgtype_recv_txt_response)) +
             std::string(" (") +
-            std::to_string(chat262::msgtype_accounts_response) +
+            std::to_string(chat262::msgtype_recv_txt_response) +
             std::string("), got ") +
             std::string(chat262::message_type_lookup(msg_hdr.type_)) +
             std::string(" (") + std::to_string(msg_hdr.type_) +
