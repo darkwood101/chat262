@@ -490,7 +490,7 @@ status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> serialize(uint32_t stat_code, const chat& c) {
+std::shared_ptr<message> recv_txt_response::serialize(uint32_t stat_code, const chat& c) {
     uint32_t body_len = sizeof(uint32_t);
     if (stat_code == status_code_ok) {
         body_len += sizeof(uint32_t) +
