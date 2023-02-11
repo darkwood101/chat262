@@ -423,7 +423,8 @@ status server::handle_recv_txt(int client_fd,
         return s;
     }
 
-    logger::log_out("Receive text requested from user \"%s\"\n", sender.c_str());
+    logger::log_out("Receive text requested from user \"%s\"\n",
+                    sender.c_str());
 
     if (!database_.is_logged_in()) {
         // TODO, unauthorized
@@ -437,7 +438,9 @@ status server::handle_recv_txt(int client_fd,
         msg = chat262::recv_txt_response::serialize(chat262::status_code_ok, c);
     } else {
         logger::log_out("User \"%s\" does not exist\n", sender.c_str());
-        msg = chat262::recv_txt_response::serialize(chat262::status_code_user_noexist, c);
+        msg = chat262::recv_txt_response::serialize(
+            chat262::status_code_user_noexist,
+            c);
     }
     return send_msg(client_fd, msg);
 }
