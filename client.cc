@@ -393,12 +393,11 @@ uint32_t client::logout() {
     recv_body(msg_hdr.body_len_, body);
 
     uint32_t stat_code;
-    if (chat262::logout_response::deserialize(body, stat_code) !=
-        status::ok) {
+    if (chat262::logout_response::deserialize(body, stat_code) != status::ok) {
         throw std::runtime_error(
             "Logout response: Unable to deserialize the message body\n");
     }
-    return stat_code;    
+    return stat_code;
 }
 
 uint32_t client::list_accounts(std::vector<std::string>& usernames) {
