@@ -401,7 +401,7 @@ status server::handle_send_txt(int client_fd,
         return s;
     }
 
-    logger::log_out("Send text requested to user \"%s\"\n", recipient);
+    logger::log_out("Send text requested to user \"%s\"\n", recipient.c_str());
 
     if (!database_.is_logged_in()) {
         // TODO, unauthorized
@@ -423,7 +423,7 @@ status server::handle_recv_txt(int client_fd,
         return s;
     }
 
-    logger::log_out("Receive text requested from user \"%s\"\n", sender);
+    logger::log_out("Receive text requested from user \"%s\"\n", sender.c_str());
 
     if (!database_.is_logged_in()) {
         // TODO, unauthorized
