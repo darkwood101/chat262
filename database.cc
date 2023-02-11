@@ -71,3 +71,61 @@ std::vector<std::string> database::get_usernames() {
     }
     return usernames;
 }
+
+status database::send_txt(const std::string& recipient_username,
+                          const std::string& txt) {
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    auto thread_it = threads_.find(std::this_thread::get_id());
+    if (thread_it == threads_.end()) {
+        return status::error;
+    }
+    user& sender = users_.at((*thread_it).second);
+
+    auto recipient_it = users_.find(recipient_username);
+    if (recipient_it == users_.end()) {
+        return status::error;
+    }
+    user& recipient = (*recipient_it).second;
+
+    if (sender.chats_.find(recipient_username) == sender.chats_.end()) {
+        sender.chats_.insert({recipient_username, {}});
+    }
+    if (recipient.chats_.find(sender.username_) == recipient.chats_.end()) {
+        recipient.chats_.insert({sender.username_, {}});
+    }
+
+    text sender_txt;
+    sender_txt.sender_ = text::sender_you;
+    sender_txt.content_ = txt;
+    sender.chats_.at(recipient_username).texts_.push_back(sender_txt);
+
+    text recipient_txt;
+    recipient_txt.sender_ = text::sender_other;
+    recipient_txt.content_ = txt;
+    recipient.chats_.at(sender.username_).texts_.push_back(recipient_txt);
+
+    return status::ok;
+}
+
+status database::recv_txt(const std::string& sender_username, chat& c) {
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    auto thread_it = threads_.find(std::this_thread::get_id());
+    if (thread_it == threads_.end()) {
+        return status::error;
+    }
+    const user& recipient = users_.at((*thread_it).second);
+
+    if (users_.find(sender_username) == users_.end()) {
+        return status::error;
+    }
+
+    if (recipient.chats_.find(sender_username) == recipient.chats_.end()) {
+        c.texts_.clear();
+    } else {
+        c = recipient.chats_.at(sender_username);
+    }
+
+    return status::ok;
+}

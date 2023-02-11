@@ -1,6 +1,7 @@
 #ifndef _DATABASE_H_
 #define _DATABASE_H_
 
+#include "chat.h"
 #include "common.h"
 
 #include <cstdint>
@@ -42,10 +43,30 @@ public:
     // Returns a vector of all usernames.
     std::vector<std::string> get_usernames();
 
+    // Stores `txt` into recipient's chat with the sender and into the sender's
+    // chat with the recipient. Recipient is identified via
+    // `recipient_username`, and sender is identified via the currently logged
+    // in thread.
+    // @return ok    - The text was successfully stored.
+    // @return error - The current thread does not have an associated user (not
+    //                 logged in).
+    // @return error - The recipient doesn't exist.
+    status send_txt(const std::string& recipient_username,
+                    const std::string& txt);
+
+    // Retrieves the recipient's chat with the sender and stores it into `c`.
+    // Sender is identified via `sender_username`, and recipient is identified via the currently logged in thread.
+    // @return ok    - The chat was successfully retrieved (it could contain no texts).
+    // @return error - The current thread does not have an associated user (not
+    //                 logged in).
+    // @return error - The sender doesn't exist.
+    status recv_txt(const std::string& sender_username, chat& c);
+
 private:
     struct user {
         std::string username_;
         std::string password_;
+        std::unordered_map<std::string, chat> chats_;
     };
 
     // Protects everything. We don't care about the performance, so we go for
