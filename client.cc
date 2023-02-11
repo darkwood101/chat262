@@ -11,6 +11,14 @@
 #include <stdexcept>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+#include <termios.h>
+#include <unistd.h>
+#include <poll.h>
 
 status client::run(int argc, char const* const* argv) {
     cmdline_args args;
@@ -283,13 +291,109 @@ void client::start_ui() {
 
             case screen_type::send_txt: {
                 stat_code = recv_txt(correspondent, curr_chat);
+
                 if (stat_code != chat262::status_code_ok) {
                     interface_.next_ = screen_type::open_chat_fail;
                     break;
                 }
-                std::string txt;
-                interface_.send_txt(me, correspondent, curr_chat, txt);
-                stat_code = send_txt(correspondent, txt);
+
+                std::mutex m;
+                std::condition_variable cv;
+                bool should_exit = false;
+                using std::chrono::high_resolution_clock;
+                using std::chrono::seconds;
+                std::string partial_txt;
+                int ss = system("clear");
+                (void) ss;
+                std::cout << "\n*** Chat262 ***\n"
+                            "\n"
+                            "============================================================="
+                            "===================\n";
+                for (const text& t : curr_chat.texts_) {
+                    if (t.sender_ == text::sender_you) {
+                        std::cout << me << ": " << t.content_ << "\n\n";
+                    } else {
+                        std::cout << correspondent << ": " << t.content_ << "\n\n";
+                    }
+                }
+                std::cout << "============================================================="
+                                "===================\n\n";
+                std::cout << "Chat262> " << partial_txt << std::flush;
+
+                std::thread listener([&]() {
+                    std::unique_lock<std::mutex> lock(m);
+                    while (!should_exit) {
+                        auto end_time = high_resolution_clock::now() + seconds(2);
+                        auto cv_status = cv.wait_until(lock, end_time);
+                        if (cv_status == std::cv_status::timeout) {
+                            std::string tl_correspondent = correspondent;
+                            chat tl_curr_chat;
+                            lock.unlock();
+                            recv_txt(tl_correspondent, tl_curr_chat);
+                            if (tl_curr_chat.texts_.size() == curr_chat.texts_.size()) {
+                                lock.lock();
+                                continue;
+                            }
+                            lock.lock();
+                            curr_chat = tl_curr_chat;
+                            int s = system("clear");
+                            (void) s;
+                            std::cout << "\n*** Chat262 ***\n"
+                                        "\n"
+                                        "============================================================="
+                                        "===================\n";
+                            for (const text& t : curr_chat.texts_) {
+                                if (t.sender_ == text::sender_you) {
+                                    std::cout << me << ": " << t.content_ << "\n\n";
+                                } else {
+                                    std::cout << correspondent << ": " << t.content_ << "\n\n";
+                                }
+                            }
+                            std::cout << "============================================================="
+                                         "===================\n\n";
+                            std::cout << "Chat262> " << partial_txt << std::flush;
+                        }
+                    }
+                });
+                termios old_t;
+                tcgetattr(STDIN_FILENO, &old_t);
+                termios new_t = old_t;
+                new_t.c_lflag &= ~ICANON;
+                new_t.c_lflag &= ~ECHO;
+                new_t.c_cc[VMIN] = 1;
+                new_t.c_cc[VTIME] = 0;
+                tcsetattr(0, TCSANOW, &old_t);
+                pollfd fd;
+                memset(&fd, 0, sizeof(pollfd));
+                fd.fd = STDIN_FILENO;
+                fd.events |= POLLIN;
+                char c = 0;
+                while (true) {
+                    if (poll(&fd, 1, -1) != 0) {
+                        std::unique_lock<std::mutex> lock(m);
+                        ssize_t s = read(STDIN_FILENO, &c, 1);
+                        (void) s;
+                        if (c == old_t.c_cc[VERASE]) {
+                            s = write(STDOUT_FILENO, "\b \b", 3);
+                            (void) s;
+                            partial_txt.pop_back();
+                        } else if (c == '\n') {
+                            break;
+                        } else {
+                            s = write(STDOUT_FILENO, &c, 1);
+                            (void) s;
+                            partial_txt.push_back(c);
+                        }
+                    }
+                }
+                std::unique_lock<std::mutex> lock(m);
+                should_exit = true;
+                cv.notify_all();
+                lock.unlock();
+                listener.join();
+
+                stat_code = send_txt(correspondent, partial_txt);
+                partial_txt.clear();
                 if (stat_code != chat262::status_code_ok) {
                     interface_.next_ = screen_type::send_txt_fail;
                     break;
