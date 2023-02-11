@@ -436,7 +436,8 @@ status send_txt_request::deserialize(const std::vector<uint8_t>& data,
     }
 
     recipient.assign(msg_body + 8, msg_body + 8 + recipient_len);
-    txt.assign(msg_body + 8 + txt_len, msg_body + 8 + recipient_len + txt_len);
+    txt.assign(msg_body + 8 + recipient_len,
+               msg_body + 8 + recipient_len + txt_len);
     return status::ok;
 }
 
