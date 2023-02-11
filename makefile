@@ -1,6 +1,6 @@
 all: server client
 
-CFLAGS := -Wall -Wextra -Werror -O2 -std=c++17
+CFLAGS := -Wall -Wextra -Werror -Wshadow -O2 -std=c++17
 LDFLAGS := -pthread
 
 server: server.o chat262_protocol.o database.o logger.o
