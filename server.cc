@@ -428,13 +428,17 @@ status server::handle_recv_txt(int client_fd,
     if (!database_.is_logged_in()) {
         // TODO, unauthorized
     }
+
     chat c;
     s = database_.recv_txt(sender, c);
-    if (s != status::ok) {
-        // TODO, sender non-existent
+    std::shared_ptr<chat262::message> msg;
+    if (s == status::ok) {
+        logger::log_out("Sending texts from \"%s\"\n", sender.c_str());
+        msg = chat262::recv_txt_response::serialize(chat262::status_code_ok, c);
+    } else {
+        logger::log_out("User \"%s\" does not exist\n", sender.c_str());
+        msg = chat262::recv_txt_response::serialize(chat262::status_code_user_noexist, c);
     }
-    auto msg =
-        chat262::recv_txt_response::serialize(chat262::status_code_ok, c);
     return send_msg(client_fd, msg);
 }
 
