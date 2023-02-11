@@ -455,4 +455,163 @@ status send_txt_response::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
+std::shared_ptr<message> recv_txt_request::serialize(
+    const std::string& username) {
+    uint32_t body_len = sizeof(chat262::recv_txt_request) + username.length();
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_recv_txt_request);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t user_len_le = e_htole32(static_cast<uint32_t>(username.length()));
+    memcpy(msg->body_, &user_len_le, sizeof(uint32_t));
+    memcpy(msg->body_ + 4, username.c_str(), username.length());
+    return msg;
+}
+
+status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
+                                     std::string& username) {
+    if (data.size() < sizeof(recv_txt_request)) {
+        return status::error;
+    }
+    const uint8_t* msg_body = data.data();
+
+    uint32_t user_len_le;
+    memcpy(&user_len_le, msg_body, sizeof(uint32_t));
+    uint32_t user_len = e_le32toh(user_len_le);
+
+    // Cannot proceed if there is a mismatch of size
+    if (sizeof(uint32_t) + user_len != data.size()) {
+        return status::error;
+    }
+
+    username.assign(msg_body + 4, msg_body + 4 + user_len);
+    return status::ok;
+}
+
+std::shared_ptr<message> serialize(uint32_t stat_code, const chat& c) {
+    uint32_t body_len = sizeof(uint32_t);
+    if (stat_code == status_code_ok) {
+        body_len += sizeof(uint32_t) +
+                    c.texts_.size() * (sizeof(uint8_t) + sizeof(uint32_t));
+        for (const text& txt : c.texts_) {
+            body_len += txt.content_.length();
+        }
+    }
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_recv_txt_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+
+    // The status code is always serialized
+    uint32_t stat_code_le = e_htole32(stat_code);
+    memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
+
+    // The rest is serialized only if status code is OK
+    if (stat_code == status_code_ok) {
+        // Copy the number of texts
+        uint32_t num_accounts_le =
+            e_htole32(static_cast<uint32_t>(c.texts_.size()));
+        memcpy(msg->body_ + 4, &num_accounts_le, sizeof(uint32_t));
+
+        // Points to the next sender identifier to copy
+        uint8_t* sender_ptr = msg->body_ + 8;
+        // Points to the next text length to copy
+        uint8_t* txt_lens_ptr = sender_ptr + c.texts_.size() * sizeof(uint8_t);
+        // Points to the next text to copy
+        uint8_t* txt_ptr = txt_lens_ptr + c.texts_.size() * sizeof(uint32_t);
+        for (const text& txt : c.texts_) {
+            memcpy(sender_ptr, &(txt.sender_), sizeof(uint8_t));
+            sender_ptr += sizeof(uint8_t);
+
+            uint32_t txt_len = static_cast<uint32_t>(txt.content_.length());
+            uint32_t txt_len_le = e_htole32(txt_len);
+
+            memcpy(txt_lens_ptr, &txt_len_le, sizeof(uint32_t));
+            txt_lens_ptr += sizeof(uint32_t);
+
+            memcpy(txt_ptr, txt.content_.c_str(), txt_len);
+            txt_ptr += txt_len;
+        }
+    }
+    return msg;
+}
+
+status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
+                                      uint32_t stat_code,
+                                      chat& c) {
+    // Make sure we can read the status code
+    if (data.size() < sizeof(uint32_t)) {
+        return status::error;
+    }
+
+    const uint8_t* msg_body = data.data();
+    // Copy the status code
+    uint32_t stat_code_le;
+    memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
+    msg_body += sizeof(uint32_t);
+    uint32_t stat_code_h = e_le32toh(stat_code_le);
+    // If the status code is not OK, we're done
+    if (stat_code_h != status_code_ok) {
+        stat_code = stat_code_h;
+        return status::ok;
+    }
+
+    // Make sure we can read the number of texts
+    if (data.size() < 2 * sizeof(uint32_t)) {
+        return status::error;
+    }
+
+    // Copy the number of texts
+    uint32_t num_txts_le;
+    memcpy(&num_txts_le, msg_body, sizeof(uint32_t));
+    msg_body += sizeof(uint32_t);
+    uint32_t num_txts_h = e_le32toh(num_txts_le);
+
+    // Make sure we can read senders and text lengths
+    if (data.size() < 2 * sizeof(uint32_t) +
+                          num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t))) {
+        return status::error;
+    }
+
+    // Store all senders and text lengths, and compute total text length
+    std::vector<uint8_t> senders;
+    std::vector<uint32_t> txt_lens;
+    senders.resize(num_txts_h);
+    txt_lens.resize(num_txts_h);
+    uint32_t total_txt_len = 0;
+    const uint8_t* sender_ptr = msg_body;
+    const uint8_t* txt_lens_ptr = msg_body + num_txts_h * sizeof(uint8_t);
+    for (uint32_t i = 0; i != num_txts_h;
+         ++i, sender_ptr += sizeof(uint8_t), txt_lens_ptr += sizeof(uint32_t)) {
+        memcpy(&(senders[i]), sender_ptr, sizeof(uint8_t));
+        uint32_t txt_len_le;
+        memcpy(&txt_len_le, txt_lens_ptr, sizeof(uint32_t));
+        txt_lens[i] = e_le32toh(txt_len_le);
+        total_txt_len += txt_lens[i];
+    }
+    msg_body += num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t));
+
+    // Make sure we can read all texts
+    if (data.size() < 2 * sizeof(uint32_t) +
+                          num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t)) +
+                          total_txt_len) {
+        return status::error;
+    }
+
+    // Copy all senders and texts
+    c.texts_.resize(num_txts_h);
+    for (uint32_t i = 0; i != num_txts_h; ++i) {
+        c.texts_[i].sender_ = senders[i];
+        c.texts_[i].content_.assign(msg_body, msg_body + txt_lens[i]);
+        msg_body += txt_lens[i];
+    }
+    stat_code = stat_code_h;
+
+    return status::ok;
+}
+
 }  // namespace chat262

@@ -1,6 +1,7 @@
 #ifndef _CHAT262_PROTOCOL_
 #define _CHAT262_PROTOCOL_
 
+#include "chat.h"
 #include "common.h"
 
 #include <cstddef>
@@ -23,13 +24,15 @@ enum message_type : uint16_t {
     msgtype_logout_request = 103,
     msgtype_accounts_request = 104,
     msgtype_send_txt_request = 105,
+    msgtype_recv_txt_request = 106,
 
     // Server responses
     msgtype_registration_response = 201,
     msgtype_login_response = 202,
     msgtype_logout_response = 203,
     msgtype_accounts_response = 204,
-    msgtype_send_txt_response = 205
+    msgtype_send_txt_response = 205,
+    msgtype_recv_txt_response = 206
 };
 
 // Server response status codes
@@ -255,6 +258,29 @@ struct send_txt_response {
     static std::shared_ptr<message> serialize(uint32_t stat_code);
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code);
+};
+
+struct recv_txt_request {
+    uint32_t user_len_;
+    uint8_t user_[];
+
+    static std::shared_ptr<message> serialize(const std::string& username);
+    static status deserialize(const std::vector<uint8_t>& data,
+                              std::string& username);
+};
+
+struct recv_txt_response {
+    uint32_t stat_code_;
+    // uint32_t num_txts_;
+    // uin8_t senders_[num_txts_];
+    // uint32_t txt_lens_[num_txts_];
+    // uin8_t txts_[num_txts_];
+
+    static std::shared_ptr<message> serialize(uint32_t stat_code,
+                                              const chat& c);
+    static status deserialize(const std::vector<uint8_t>& data,
+                              uint32_t stat_code,
+                              chat& c);
 };
 
 struct logout_body {};
