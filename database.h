@@ -55,8 +55,10 @@ public:
                     const std::string& txt);
 
     // Retrieves the recipient's chat with the sender and stores it into `c`.
-    // Sender is identified via `sender_username`, and recipient is identified via the currently logged in thread.
-    // @return ok    - The chat was successfully retrieved (it could contain no texts).
+    // Sender is identified via `sender_username`, and recipient is identified
+    // via the currently logged in thread.
+    // @return ok    - The chat was successfully retrieved (it could contain no
+    // texts).
     // @return error - The current thread does not have an associated user (not
     //                 logged in).
     // @return error - The sender doesn't exist.
