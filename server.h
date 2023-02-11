@@ -75,6 +75,8 @@ private:
     status handle_logout(int client_fd, const std::vector<uint8_t>& body_data);
     status handle_list_accounts(int client_fd,
                                 const std::vector<uint8_t>& body_data);
+    status handle_send_txt(int client_fd,
+                           const std::vector<uint8_t>& body_data);
 
     // The users database
     database database_;

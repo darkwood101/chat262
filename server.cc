@@ -196,6 +196,9 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             case chat262::msgtype_accounts_request:
                 handle_list_accounts(client_fd, body);
                 break;
+            case chat262::msgtype_send_txt_request:
+                handle_send_txt(client_fd, body);
+                break;
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
@@ -296,10 +299,12 @@ status server::handle_registration(int client_fd,
             "Registered user with username \"%s\" and password \"%s\"\n",
             username.c_str(),
             password.c_str());
-        msg = chat262::registration_response::serialize(chat262::status_code_ok);
+        msg =
+            chat262::registration_response::serialize(chat262::status_code_ok);
     } else {
         logger::log_out("Username \"%s\" already exists\n", username.c_str());
-        msg = chat262::registration_response::serialize(chat262::status_code_user_exists);
+        msg = chat262::registration_response::serialize(
+            chat262::status_code_user_exists);
     }
 
     return send_msg(client_fd, msg);
@@ -339,7 +344,8 @@ status server::handle_login(int client_fd,
     return send_msg(client_fd, msg);
 }
 
-status server::handle_logout(int client_fd, const std::vector<uint8_t>& body_data) {
+status server::handle_logout(int client_fd,
+                             const std::vector<uint8_t>& body_data) {
     status s = chat262::logout_request::deserialize(body_data);
     if (s != status::ok) {
         logger::log_err("%s", "Unable to deserialize request body\n");
@@ -379,6 +385,30 @@ status server::handle_list_accounts(int client_fd,
         return s;
     }
     return status::ok;
+}
+
+status server::handle_send_txt(int client_fd,
+                               const std::vector<uint8_t>& body_data) {
+    std::string recipient;
+    std::string txt;
+    status s =
+        chat262::send_txt_request::deserialize(body_data, recipient, txt);
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
+
+    logger::log_out("%s", "Send text requested\n");
+
+    if (!database_.is_logged_in()) {
+        // TODO, unauthorized
+    }
+    s = database_.send_txt(recipient, txt);
+    if (s != status::ok) {
+        // TODO, recipient non-existent
+    }
+    auto msg = chat262::send_txt_response::serialize(chat262::status_code_ok);
+    return send_msg(client_fd, msg);
 }
 
 int main(int argc, char** argv) {
