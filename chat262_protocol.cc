@@ -544,7 +544,7 @@ std::shared_ptr<message> recv_txt_response::serialize(uint32_t stat_code,
 }
 
 status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
-                                      uint32_t stat_code,
+                                      uint32_t& stat_code,
                                       chat& c) {
     // Make sure we can read the status code
     if (data.size() < sizeof(uint32_t)) {

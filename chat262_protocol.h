@@ -279,7 +279,7 @@ struct recv_txt_response {
     static std::shared_ptr<message> serialize(uint32_t stat_code,
                                               const chat& c);
     static status deserialize(const std::vector<uint8_t>& data,
-                              uint32_t stat_code,
+                              uint32_t& stat_code,
                               chat& c);
 };
 
