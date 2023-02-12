@@ -33,6 +33,10 @@ const char* message_type_lookup(uint16_t msg_type) {
             return "Receive text request";
         case msgtype_recv_txt_response:
             return "Receive text response";
+        case msgtype_correspondents_request:
+            return "Correspondents request";
+        case msgtype_correspondents_response:
+            return "Correspondents response";
         default:
             return "Unknown";
     }
@@ -622,6 +626,138 @@ status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
         c.texts_[i].sender_ = senders[i];
         c.texts_[i].content_.assign(msg_body, msg_body + txt_lens[i]);
         msg_body += txt_lens[i];
+    }
+    stat_code = stat_code_h;
+
+    return status::ok;
+}
+
+std::shared_ptr<message> correspondents_request::serialize() {
+    std::shared_ptr<message> msg(
+        static_cast<message*>(malloc(sizeof(message_header))),
+        free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_correspondents_request);
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
+    return msg;
+}
+
+status correspondents_request::deserialize(const std::vector<uint8_t>& data) {
+    if (data.size() != 0) {
+        return status::error;
+    }
+    return status::ok;
+}
+
+std::shared_ptr<message> correspondents_response::serialize(
+    uint32_t stat_code,
+    const std::vector<std::string>& usernames) {
+    uint32_t body_len = sizeof(uint32_t);
+    // Add usernames to body length only if status code is ok
+    if (stat_code == status_code_ok) {
+        body_len += sizeof(uint32_t) + usernames.size() * sizeof(uint32_t);
+        for (const std::string& u : usernames) {
+            body_len += u.length();
+        }
+    }
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_correspondents_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+
+    // The status code is always serialized
+    uint32_t stat_code_le = e_htole32(stat_code);
+    memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
+
+    if (stat_code == status_code_ok) {
+        // Copy the number of acconts
+        uint32_t num_accounts_le =
+            e_htole32(static_cast<uint32_t>(usernames.size()));
+        memcpy(msg->body_ + 4, &num_accounts_le, sizeof(uint32_t));
+
+        // Points to the next username length to copy
+        uint8_t* u_lengths_ptr = msg->body_ + 8;
+        // Points to the next username to copy
+        uint8_t* u_ptr = u_lengths_ptr + usernames.size() * sizeof(uint32_t);
+        for (const std::string& u : usernames) {
+            uint32_t u_length = static_cast<uint32_t>(u.length());
+            uint32_t u_length_le = e_htole32(u_length);
+            // Copy the username length
+            memcpy(u_lengths_ptr, &u_length_le, sizeof(uint32_t));
+            u_lengths_ptr += sizeof(uint32_t);
+            // Copy the username
+            memcpy(u_ptr, u.c_str(), u_length);
+            u_ptr += u_length;
+        }
+    }
+    return msg;
+}
+
+status correspondents_response::deserialize(
+    const std::vector<uint8_t>& data,
+    uint32_t& stat_code,
+    std::vector<std::string>& usernames) {
+    // Make sure we can read the status code
+    if (data.size() < sizeof(uint32_t)) {
+        return status::error;
+    }
+
+    const uint8_t* msg_body = data.data();
+    // Copy the status code
+    uint32_t stat_code_le;
+    memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
+    msg_body += sizeof(uint32_t);
+    uint32_t stat_code_h = e_le32toh(stat_code_le);
+    // If the status code is not OK, we're done
+    if (stat_code_h != status_code_ok) {
+        stat_code = stat_code_h;
+        return status::ok;
+    }
+
+    // Make sure we can read the number of accounts
+    if (data.size() < 2 * sizeof(uint32_t)) {
+        return status::error;
+    }
+
+    // Copy the number of accounts
+    uint32_t num_accounts_le;
+    memcpy(&num_accounts_le, msg_body, sizeof(uint32_t));
+    msg_body += sizeof(uint32_t);
+    uint32_t num_accounts_h = e_le32toh(num_accounts_le);
+
+    // Make sure we can read the username lengths
+    if (data.size() <
+        2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t)) {
+        return status::error;
+    }
+
+    // Store all username lengths and compute total username length
+    std::vector<uint32_t> u_lens;
+    u_lens.resize(num_accounts_h);
+    uint32_t total_u_len = 0;
+    for (uint32_t i = 0; i != num_accounts_h;
+         ++i, msg_body += sizeof(uint32_t)) {
+        const uint8_t* u_len_ptr = msg_body;
+        uint32_t u_len_le;
+        memcpy(&u_len_le, u_len_ptr, sizeof(uint32_t));
+        u_lens[i] = e_le32toh(u_len_le);
+        total_u_len += u_lens[i];
+    }
+
+    // Make sure we can read all usernames
+    if (data.size() < 2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t) +
+                          total_u_len) {
+        return status::error;
+    }
+
+    // Copy all usernames
+    usernames.resize(num_accounts_h);
+    for (uint32_t i = 0; i != num_accounts_h; ++i) {
+        const uint8_t* u_ptr = msg_body;
+        usernames[i].assign(u_ptr, u_ptr + u_lens[i]);
+        msg_body += u_lens[i];
     }
     stat_code = stat_code_h;
 
