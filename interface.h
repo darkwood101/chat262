@@ -75,7 +75,7 @@ public:
     void prompt_send_txt(std::string& partial_txt,
                          std::mutex& m,
                          bool& hit_escape);
-    user_choice send_txt_fail(uint32_t stat_code) const;
+    void send_txt_fail(uint32_t stat_code);
     screen_type next_;
 
 private:

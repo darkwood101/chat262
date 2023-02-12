@@ -385,18 +385,8 @@ void client::start_ui() {
             } break;
 
             case screen_type::send_txt_fail: {
-                user_choice choice = interface_.send_txt_fail(stat_code);
-                switch (choice) {
-                    case 1:
-                        interface_.next_ = screen_type::open_chats;
-                        break;
-                    case 2:
-                    case ESCAPE:
-                        interface_.next_ = screen_type::main_menu;
-                        break;
-                    default:
-                        break;
-                }
+                interface_.send_txt_fail(stat_code);
+                interface_.next_ = screen_type::open_chats;
             } break;
 
             case screen_type::list_accounts: {

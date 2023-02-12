@@ -410,7 +410,7 @@ void interface::prompt_send_txt(std::string& partial_txt,
     }
 }
 
-user_choice interface::send_txt_fail(uint32_t stat_code) const {
+void interface::send_txt_fail(uint32_t stat_code) {
     clear_screen();
     const char* description = chat262::status_code_lookup(stat_code);
     std::cout << "\n*** Chat262 ***\n"
@@ -422,11 +422,9 @@ user_choice interface::send_txt_fail(uint32_t stat_code) const {
         std::cout << description << "\n";
     }
     std::cout << "\n"
-                 "Try again?\n"
-                 "\n"
-                 "[1] Yes\n"
-                 "[2] No\n\n";
-    return get_user_unsigned<uint32_t>();
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
 }
 
 void interface::clear_screen() const {
