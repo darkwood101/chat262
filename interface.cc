@@ -525,6 +525,6 @@ void interface::draw_choices(const std::string& prefix,
         }
         std::cout << choices[i] << "\n";
     }
-    std::cout << "\nUse W, A, and ENTER to navigate. Press ESC to go back."
+    std::cout << "\nUse W, S, and ENTER to navigate. Press ESC to go back."
               << std::flush;
 }
