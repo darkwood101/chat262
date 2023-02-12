@@ -37,6 +37,10 @@ const char* message_type_lookup(uint16_t msg_type) {
             return "Correspondents request";
         case msgtype_correspondents_response:
             return "Correspondents response";
+        case msgtype_delete_request:
+            return "Delete account request";
+        case msgtype_delete_response:
+            return "Delete account response";
         default:
             return "Unknown";
     }
@@ -761,6 +765,48 @@ status correspondents_response::deserialize(
     }
     stat_code = stat_code_h;
 
+    return status::ok;
+}
+
+std::shared_ptr<message> delete_request::serialize() {
+    std::shared_ptr<message> msg(
+        static_cast<message*>(malloc(sizeof(message_header))),
+        free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_delete_request);
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
+    return msg;
+}
+
+status delete_request::deserialize(const std::vector<uint8_t>& data) {
+    if (data.size() != 0) {
+        return status::error;
+    }
+    return status::ok;
+}
+
+std::shared_ptr<message> delete_response::serialize(uint32_t stat_code) {
+    uint32_t body_len = sizeof(login_response);
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_delete_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t stat_code_le = e_htole32(stat_code);
+    memcpy(msg->body_, &stat_code_le, sizeof(uint32_t));
+    return msg;
+}
+
+status deserialize(const std::vector<uint8_t>& data, uint32_t& stat_code) {
+    if (data.size() != sizeof(delete_response)) {
+        return status::error;
+    }
+    const uint8_t* msg_body = data.data();
+
+    uint32_t stat_code_le;
+    memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
+    stat_code = e_le32toh(stat_code_le);
     return status::ok;
 }
 
