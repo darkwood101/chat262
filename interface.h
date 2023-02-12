@@ -24,8 +24,12 @@ enum class screen_type {
     list_accounts,
     list_accounts_success,
     list_accounts_fail,
-    open_chat,
-    open_chat_fail,
+    open_chats,
+    open_chats_success,
+    open_chats_fail,
+    new_chat,
+    recv_txt,
+    recv_txt_fail,
     send_txt,
     send_txt_fail,
     exit
@@ -55,12 +59,17 @@ public:
     void list_accounts();
     void list_accounts_success(const std::vector<std::string>& usernames);
     user_choice list_accounts_fail(uint32_t stat_code);
-    void open_chat(std::string& username);
-    user_choice open_chat_fail(uint32_t stat_code) const;
-    void send_txt(const std::string& me,
-                  const std::string& correspondent,
-                  const chat& c,
-                  std::string& txt);
+    void open_chats();
+    user_choice open_chats_success(const std::vector<std::string>& usernames);
+    user_choice open_chats_fail(uint32_t stat_code);
+    void new_chat(std::string& correspondent);
+    void recv_txt();
+    void recv_txt_fail(uint32_t stat_code);
+    void draw_send_txt(const std::string& me,
+                       const std::string& correspondent,
+                       const chat& c,
+                       const std::string& partial_txt);
+    void prompt_send_txt(std::string& partial_txt, std::mutex& m);
     user_choice send_txt_fail(uint32_t stat_code) const;
     screen_type next_;
 

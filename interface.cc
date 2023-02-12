@@ -257,41 +257,79 @@ user_choice interface::list_accounts_fail(uint32_t stat_code) {
     return make_selection(prefix, {"Yes", "No"});
 }
 
-void interface::open_chat(std::string& username) {
+void interface::open_chats() {
+    clear_screen();
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Retrieving your chats..."
+              << std::flush;
+}
+
+user_choice interface::open_chats_success(
+    const std::vector<std::string>& usernames) {
+    std::vector<std::string> usernames_copy = usernames;
+    usernames_copy.insert(usernames_copy.begin(), 1, "Start a new chat\n");
+    return make_selection("\n*** Chat 262 ***\n"
+                          "\n"
+                          "Select a chat.\n\n",
+                          usernames_copy);
+}
+
+user_choice interface::open_chats_fail(uint32_t stat_code) {
+    std::string prefix = "\n*** Chat262 ***\n"
+                         "\n"
+                         "Retrieving chats failed: ";
+    const char* description = chat262::status_code_lookup(stat_code);
+    if (strcmp(description, "Unknown") == 0) {
+        prefix.append(description);
+        prefix.append(" (status code " + std::to_string(stat_code) + ")\n");
+    } else {
+        prefix.append(description);
+    }
+    prefix.append("\n"
+                  "\n"
+                  "Try again?\n"
+                  "\n");
+    return make_selection(prefix, {"Yes", "No"});
+}
+
+void interface::new_chat(std::string& correspondent) {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
                  "Enter the username of the person you wish to chat with.\n\n";
-    username = get_user_string(4, 40);
+    correspondent = get_user_string(4, 40);
+}
+
+void interface::recv_txt() {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
-                 "Retrieving the requested chat...\n";
+                 "Opening the requested chat..."
+              << std::flush;
 }
 
-user_choice interface::open_chat_fail(uint32_t stat_code) const {
+void interface::recv_txt_fail(uint32_t stat_code) {
     clear_screen();
     const char* description = chat262::status_code_lookup(stat_code);
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
-                 "Failed to retrieve the requested chat: ";
+                 "Failed to retrieve the chat: ";
     if (strcmp(description, "Unknown") == 0) {
         std::cout << description << " (status code " << stat_code << ")\n";
     } else {
         std::cout << description << "\n";
     }
     std::cout << "\n"
-                 "Try again?\n"
-                 "\n"
-                 "[1] Yes\n"
-                 "[2] No\n\n";
-    return get_user_unsigned<uint32_t>();
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
 }
 
-void interface::send_txt(const std::string& me,
-                         const std::string& correspondent,
-                         const chat& c,
-                         std::string& txt) {
+void interface::draw_send_txt(const std::string& me,
+                              const std::string& correspondent,
+                              const chat& c,
+                              const std::string& partial_txt) {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
@@ -300,14 +338,41 @@ void interface::send_txt(const std::string& me,
 
     for (const text& t : c.texts_) {
         if (t.sender_ == text::sender_you) {
-            std::cout << me << ": " << t.content_ << "\n\n";
+            std::cout << me << " (you): " << t.content_ << "\n\n";
         } else {
             std::cout << correspondent << ": " << t.content_ << "\n\n";
         }
     }
     std::cout << "============================================================="
                  "===================\n\n";
-    txt = get_user_string(1, std::numeric_limits<uint32_t>::max());
+    std::cout << "Chat262> " << partial_txt << std::flush;
+}
+
+void interface::prompt_send_txt(std::string& partial_txt, std::mutex& m) {
+    pollfd fd;
+    memset(&fd, 0, sizeof(pollfd));
+    fd.fd = STDIN_FILENO;
+    fd.events |= POLLIN;
+    char c = 0;
+    while (true) {
+        if (poll(&fd, 1, -1) != 0) {
+            std::unique_lock<std::mutex> lock(m);
+            ssize_t s = read(STDIN_FILENO, &c, 1);
+            (void) s;
+            if (c == new_t_.c_cc[VERASE]) {
+                if (partial_txt.length() > 0) {
+                    std::cout << "\b \b" << std::flush;
+                    partial_txt.pop_back();
+                }
+            } else if (c == '\n') {
+                std::cout << "\n" << std::flush;
+                break;
+            } else {
+                std::cout << c << std::flush;
+                partial_txt.push_back(c);
+            }
+        }
+    }
 }
 
 user_choice interface::send_txt_fail(uint32_t stat_code) const {
@@ -348,8 +413,8 @@ std::string interface::get_user_string(size_t min_len, size_t max_len) {
             ssize_t s = read(STDIN_FILENO, &c, 1);
             (void) s;
             if (c == new_t_.c_cc[VERASE]) {
-                std::cout << "\b \b" << std::flush;
                 if (input.length() > 0) {
+                    std::cout << "\b \b" << std::flush;
                     input.pop_back();
                 }
             } else if (c == '\n') {

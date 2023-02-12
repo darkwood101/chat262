@@ -6,7 +6,9 @@
 #include "common.h"
 #include "interface.h"
 
+#include <condition_variable>
 #include <iostream>
+#include <mutex>
 #include <string>
 
 class client {
@@ -45,6 +47,10 @@ private:
     void recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
 
     void start_ui();
+    void background_listener(const std::string& me,
+                             const std::string& correspondent,
+                             chat& curr_chat,
+                             const std::string& partial_txt);
     uint32_t login(const std::string& username, const std::string& password);
     uint32_t registration(const std::string& username,
                           const std::string& password);
@@ -52,8 +58,13 @@ private:
     uint32_t list_accounts(std::vector<std::string>& usernames);
     uint32_t send_txt(const std::string& recipient, const std::string& txt);
     uint32_t recv_txt(const std::string& sender, chat& c);
+    uint32_t recv_correspondents(std::vector<std::string>& correspondents);
 
     interface interface_;
+
+    std::mutex listener_m_;
+    std::condition_variable listener_cv_;
+    bool listener_should_exit_;
 
     // Connected socket file descriptor
     int server_fd_;

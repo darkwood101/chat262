@@ -168,6 +168,7 @@ void client::start_ui() {
     std::string me;
     std::string correspondent;
     std::vector<std::string> all_usernames;
+    std::vector<std::string> all_correspondents;
 
     while (true) {
         switch (interface_.next_) {
@@ -248,7 +249,7 @@ void client::start_ui() {
                 user_choice choice = interface_.main_menu(me);
                 switch (choice) {
                     case 0:
-                        interface_.next_ = screen_type::open_chat;
+                        interface_.next_ = screen_type::open_chats;
                         break;
                     case 1:
                         interface_.next_ = screen_type::list_accounts;
@@ -264,18 +265,34 @@ void client::start_ui() {
                 }
             } break;
 
-            case screen_type::open_chat: {
-                interface_.open_chat(correspondent);
-                interface_.next_ = screen_type::send_txt;
+            case screen_type::open_chats: {
+                interface_.open_chats();
+                stat_code = recv_correspondents(all_correspondents);
+                if (stat_code == chat262::status_code_ok) {
+                    interface_.next_ = screen_type::open_chats_success;
+                } else {
+                    interface_.next_ = screen_type::open_chats_fail;
+                }
             } break;
 
-            case screen_type::open_chat_fail: {
-                user_choice choice = interface_.open_chat_fail(stat_code);
+            case screen_type::open_chats_success: {
+                user_choice choice =
+                    interface_.open_chats_success(all_correspondents);
+                if (choice == 0) {
+                    interface_.next_ = screen_type::new_chat;
+                } else {
+                    correspondent = all_correspondents[choice - 1];
+                    interface_.next_ = screen_type::recv_txt;
+                }
+            } break;
+
+            case screen_type::open_chats_fail: {
+                user_choice choice = interface_.open_chats_fail(stat_code);
                 switch (choice) {
-                    case 1:
-                        interface_.next_ = screen_type::open_chat;
+                    case 0:
+                        interface_.next_ = screen_type::open_chats;
                         break;
-                    case 2:
+                    case 1:
                         interface_.next_ = screen_type::main_menu;
                         break;
                     default:
@@ -283,117 +300,49 @@ void client::start_ui() {
                 }
             } break;
 
-            case screen_type::send_txt: {
+            case screen_type::new_chat: {
+                interface_.new_chat(correspondent);
+                interface_.next_ = screen_type::recv_txt;
+            } break;
+
+            case screen_type::recv_txt: {
+                interface_.recv_txt();
                 stat_code = recv_txt(correspondent, curr_chat);
-
-                if (stat_code != chat262::status_code_ok) {
-                    interface_.next_ = screen_type::open_chat_fail;
-                    break;
+                if (stat_code == chat262::status_code_ok) {
+                    interface_.next_ = screen_type::send_txt;
+                } else {
+                    interface_.next_ = screen_type::recv_txt_fail;
                 }
+            } break;
 
-                std::mutex m;
-                std::condition_variable cv;
-                bool should_exit = false;
-                using std::chrono::high_resolution_clock;
-                using std::chrono::seconds;
+            case screen_type::recv_txt_fail: {
+                interface_.recv_txt_fail(stat_code);
+                interface_.next_ = screen_type::open_chats;
+            } break;
+
+            case screen_type::send_txt: {
                 std::string partial_txt;
-                int ss = system("clear");
-                (void) ss;
-                std::cout << "\n*** Chat262 ***\n"
-                             "\n"
-                             "================================================="
-                             "============"
-                             "===================\n";
-                for (const text& t : curr_chat.texts_) {
-                    if (t.sender_ == text::sender_you) {
-                        std::cout << me << ": " << t.content_ << "\n\n";
-                    } else {
-                        std::cout << correspondent << ": " << t.content_
-                                  << "\n\n";
-                    }
-                }
-                std::cout << "================================================="
-                             "============"
-                             "===================\n\n";
-                std::cout << "Chat262> " << partial_txt << std::flush;
 
-                std::thread listener([&]() {
-                    std::unique_lock<std::mutex> lock(m);
-                    while (!should_exit) {
-                        auto end_time =
-                            high_resolution_clock::now() + seconds(2);
-                        auto cv_status = cv.wait_until(lock, end_time);
-                        if (cv_status == std::cv_status::timeout) {
-                            std::string tl_correspondent = correspondent;
-                            chat tl_curr_chat;
-                            lock.unlock();
-                            recv_txt(tl_correspondent, tl_curr_chat);
-                            if (tl_curr_chat.texts_.size() ==
-                                curr_chat.texts_.size()) {
-                                lock.lock();
-                                continue;
-                            }
-                            lock.lock();
-                            curr_chat = tl_curr_chat;
-                            int s = system("clear");
-                            (void) s;
-                            std::cout << "\n*** Chat262 ***\n"
-                                         "\n"
-                                         "====================================="
-                                         "========================"
-                                         "===================\n";
-                            for (const text& t : curr_chat.texts_) {
-                                if (t.sender_ == text::sender_you) {
-                                    std::cout << me << ": " << t.content_
-                                              << "\n\n";
-                                } else {
-                                    std::cout << correspondent << ": "
-                                              << t.content_ << "\n\n";
-                                }
-                            }
-                            std::cout << "====================================="
-                                         "========================"
-                                         "===================\n\n";
-                            std::cout << "Chat262> " << partial_txt
-                                      << std::flush;
-                        }
-                    }
-                });
-                termios old_t;
-                tcgetattr(STDIN_FILENO, &old_t);
-                termios new_t = old_t;
-                new_t.c_lflag &= ~ICANON;
-                new_t.c_lflag &= ~ECHO;
-                new_t.c_cc[VMIN] = 1;
-                new_t.c_cc[VTIME] = 0;
-                tcsetattr(0, TCSANOW, &old_t);
-                pollfd fd;
-                memset(&fd, 0, sizeof(pollfd));
-                fd.fd = STDIN_FILENO;
-                fd.events |= POLLIN;
-                char c = 0;
-                while (true) {
-                    if (poll(&fd, 1, -1) != 0) {
-                        std::unique_lock<std::mutex> lock(m);
-                        ssize_t s = read(STDIN_FILENO, &c, 1);
-                        (void) s;
-                        if (c == old_t.c_cc[VERASE]) {
-                            s = write(STDOUT_FILENO, "\b \b", 3);
-                            (void) s;
-                            partial_txt.pop_back();
-                        } else if (c == '\n') {
-                            break;
-                        } else {
-                            s = write(STDOUT_FILENO, &c, 1);
-                            (void) s;
-                            partial_txt.push_back(c);
-                        }
-                    }
-                }
-                std::unique_lock<std::mutex> lock(m);
-                should_exit = true;
-                cv.notify_all();
+                interface_.draw_send_txt(me,
+                                         correspondent,
+                                         curr_chat,
+                                         partial_txt);
+                listener_should_exit_ = false;
+
+                std::thread listener(&client::background_listener,
+                                     this,
+                                     std::ref(me),
+                                     std::ref(correspondent),
+                                     std::ref(curr_chat),
+                                     std::ref(partial_txt));
+
+                interface_.prompt_send_txt(partial_txt, listener_m_);
+
+                std::unique_lock<std::mutex> lock(listener_m_);
+                listener_should_exit_ = true;
+                listener_cv_.notify_all();
                 lock.unlock();
+
                 listener.join();
 
                 stat_code = send_txt(correspondent, partial_txt);
@@ -402,13 +351,18 @@ void client::start_ui() {
                     interface_.next_ = screen_type::send_txt_fail;
                     break;
                 }
+
+                stat_code = recv_txt(correspondent, curr_chat);
+                if (stat_code != chat262::status_code_ok) {
+                    interface_.next_ = screen_type::recv_txt_fail;
+                }
             } break;
 
             case screen_type::send_txt_fail: {
                 user_choice choice = interface_.send_txt_fail(stat_code);
                 switch (choice) {
                     case 1:
-                        interface_.next_ = screen_type::open_chat;
+                        interface_.next_ = screen_type::open_chats;
                         break;
                     case 2:
                         interface_.next_ = screen_type::main_menu;
@@ -451,6 +405,30 @@ void client::start_ui() {
                 return;
             }
         }
+    }
+}
+
+void client::background_listener(const std::string& me,
+                                 const std::string& correspondent,
+                                 chat& curr_chat,
+                                 const std::string& partial_txt) {
+    using std::chrono::high_resolution_clock;
+    using std::chrono::seconds;
+    std::unique_lock<std::mutex> lock(listener_m_);
+    while (!listener_should_exit_) {
+        auto end_time = high_resolution_clock::now() + seconds(2);
+        auto cv_status = listener_cv_.wait_until(lock, end_time);
+        if (cv_status != std::cv_status::timeout) {
+            continue;
+        }
+        lock.unlock();
+        size_t prev_size = curr_chat.texts_.size();
+        recv_txt(correspondent, curr_chat);
+        lock.lock();
+        if (prev_size == curr_chat.texts_.size()) {
+            continue;
+        }
+        interface_.draw_send_txt(me, correspondent, curr_chat, partial_txt);
     }
 }
 
@@ -656,6 +634,44 @@ uint32_t client::recv_txt(const std::string& sender, chat& c) {
 
     uint32_t stat_code;
     if (chat262::recv_txt_response::deserialize(body, stat_code, c) !=
+        status::ok) {
+        throw std::runtime_error(
+            "Receive text response: Unable to deserialize the message body\n");
+    }
+    return stat_code;
+}
+
+uint32_t client::recv_correspondents(std::vector<std::string>& correspondents) {
+    auto msg = chat262::correspondents_request::serialize();
+    send_msg(msg);
+
+    chat262::message_header msg_hdr;
+    recv_hdr(msg_hdr);
+    if (msg_hdr.version_ != chat262::version) {
+        throw std::runtime_error(std::string("Receive correspondents response: "
+                                             "Unsupported protocol version ") +
+                                 std::to_string(msg_hdr.version_) +
+                                 std::string("\n"));
+    } else if (msg_hdr.type_ != chat262::msgtype_correspondents_response) {
+        throw std::runtime_error(
+            std::string("Receive correspondents response: Wrong message type, "
+                        "expected ") +
+            std::string(chat262::message_type_lookup(
+                chat262::msgtype_correspondents_response)) +
+            std::string(" (") +
+            std::to_string(chat262::msgtype_correspondents_response) +
+            std::string("), got ") +
+            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
+            std::string(" (") + std::to_string(msg_hdr.type_) +
+            std::string(")\n"));
+    }
+    std::vector<uint8_t> body;
+    recv_body(msg_hdr.body_len_, body);
+
+    uint32_t stat_code;
+    if (chat262::correspondents_response::deserialize(body,
+                                                      stat_code,
+                                                      correspondents) !=
         status::ok) {
         throw std::runtime_error(
             "Receive text response: Unable to deserialize the message body\n");
