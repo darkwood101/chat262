@@ -240,7 +240,9 @@ user_choice interface::main_menu(const std::string& username) {
                          "Welcome, ";
     prefix.append(username);
     prefix.append("\n\n");
-    return make_selection(prefix, {"Chats", "List all accounts", "Delete account", "Log out"});
+    return make_selection(
+        prefix,
+        {"Chats", "List all accounts", "Delete account", "Log out"});
 }
 
 void interface::list_accounts() {
