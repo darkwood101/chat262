@@ -78,6 +78,14 @@ user_choice interface::make_selection(const std::string& prefix,
                     break;
                 case '\n':
                     return selection;
+                case 27:
+                    if (poll(&fd, 1, 0) == 0) {
+                        std::cout << "\n" << std::flush;
+                        return ESCAPE;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }
@@ -105,20 +113,28 @@ user_choice interface::login_registration() {
                           {"Login", "Register", "Exit"});
 }
 
-void interface::login(std::string& username, std::string& password) {
+void interface::login(std::string& username,
+                      std::string& password,
+                      bool& hit_escape) {
     clear_screen();
     std::cout << "\n*** Chat262 login ***\n"
                  "\n"
-                 "Please enter your username.\n\n";
-    username = get_user_string(4, 40);
+                 "Please enter your username. Press ESC to cancel.\n\n";
+    username = get_user_string(4, 40, hit_escape);
+    if (hit_escape) {
+        return;
+    }
     clear_screen();
     std::cout << "\n*** Chat262 login ***\n"
                  "\n"
                  "Username: "
               << username
               << "\n\n"
-                 "Please enter your password.\n\n";
-    password = get_user_string(4, 60);
+                 "Please enter your password. Press ESC to cancel.\n\n";
+    password = get_user_string(4, 60, hit_escape);
+    if (hit_escape) {
+        return;
+    }
     clear_screen();
     std::cout << "\n*** Chat262 login ***\n"
                  "\n"
@@ -150,21 +166,30 @@ user_choice interface::login_fail(uint32_t stat_code) {
     return make_selection(prefix, {"Yes", "No"});
 }
 
-void interface::registration(std::string& username, std::string& password) {
+void interface::registration(std::string& username,
+                             std::string& password,
+                             bool& hit_escape) {
     clear_screen();
     std::cout << "\n*** Chat262 registration ***\n"
                  "\n"
-                 "Please enter a username (between 4 and 40 characters).\n\n";
-    username = get_user_string(4, 40);
+                 "Please enter a username (between 4 and 40 characters). Press "
+                 "ESC to cancel.\n\n";
+    username = get_user_string(4, 40, hit_escape);
+    if (hit_escape) {
+        return;
+    }
     clear_screen();
-    std::cout
-        << "\n*** Chat262 registration ***\n"
-           "\n"
-           "Username: "
-        << username
-        << "\n\n"
-           "Please enter your password (between 4 and 60 characters).\n\n";
-    password = get_user_string(4, 60);
+    std::cout << "\n*** Chat262 registration ***\n"
+                 "\n"
+                 "Username: "
+              << username
+              << "\n\n"
+                 "Please enter your password (between 4 and 60 characters). "
+                 "Press ESC to cancel.\n\n";
+    password = get_user_string(4, 60, hit_escape);
+    if (hit_escape) {
+        return;
+    }
     clear_screen();
     std::cout << "\n*** Chat262 registration ***\n"
                  "\n"
@@ -268,7 +293,8 @@ void interface::open_chats() {
 user_choice interface::open_chats_success(
     const std::vector<std::string>& usernames) {
     std::vector<std::string> usernames_copy = usernames;
-    usernames_copy.insert(usernames_copy.begin(), 1, "Start a new chat\n");
+    usernames_copy.insert(usernames_copy.begin(), 1, "Go back\n");
+    usernames_copy.insert(usernames_copy.begin(), 1, "Start a new chat");
     return make_selection("\n*** Chat 262 ***\n"
                           "\n"
                           "Select a chat.\n\n",
@@ -293,12 +319,15 @@ user_choice interface::open_chats_fail(uint32_t stat_code) {
     return make_selection(prefix, {"Yes", "No"});
 }
 
-void interface::new_chat(std::string& correspondent) {
+void interface::new_chat(std::string& correspondent, bool& hit_escape) {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
                  "Enter the username of the person you wish to chat with.\n\n";
-    correspondent = get_user_string(4, 40);
+    correspondent = get_user_string(4, 40, hit_escape);
+    if (hit_escape) {
+        return;
+    }
 }
 
 void interface::recv_txt() {
@@ -348,7 +377,9 @@ void interface::draw_send_txt(const std::string& me,
     std::cout << "Chat262> " << partial_txt << std::flush;
 }
 
-void interface::prompt_send_txt(std::string& partial_txt, std::mutex& m) {
+void interface::prompt_send_txt(std::string& partial_txt,
+                                std::mutex& m,
+                                bool& hit_escape) {
     pollfd fd;
     memset(&fd, 0, sizeof(pollfd));
     fd.fd = STDIN_FILENO;
@@ -366,10 +397,14 @@ void interface::prompt_send_txt(std::string& partial_txt, std::mutex& m) {
                 }
             } else if (c == '\n') {
                 std::cout << "\n" << std::flush;
+                hit_escape = false;
                 break;
             } else if (c >= 32 && c <= 126) {
                 std::cout << c << std::flush;
                 partial_txt.push_back(c);
+            } else if (c == 27 && poll(&fd, 1, 0) == 0) {
+                hit_escape = true;
+                break;
             }
         }
     }
@@ -399,7 +434,9 @@ void interface::clear_screen() const {
     (void) s;
 }
 
-std::string interface::get_user_string(size_t min_len, size_t max_len) {
+std::string interface::get_user_string(size_t min_len,
+                                       size_t max_len,
+                                       bool& hit_escape) {
     pollfd fd;
     memset(&fd, 0, sizeof(pollfd));
     fd.fd = STDIN_FILENO;
@@ -420,6 +457,7 @@ std::string interface::get_user_string(size_t min_len, size_t max_len) {
             } else if (c == '\n') {
                 std::cout << "\n" << std::flush;
                 if (input.length() >= min_len && input.length() <= max_len) {
+                    hit_escape = false;
                     break;
                 }
                 std::cout << "Input must be between " << min_len << " and "
@@ -429,6 +467,9 @@ std::string interface::get_user_string(size_t min_len, size_t max_len) {
             } else if (c >= 32 && c <= 126) {
                 std::cout << c << std::flush;
                 input.push_back(c);
+            } else if (c == 27 && poll(&fd, 1, 0) == 0) {
+                hit_escape = true;
+                break;
             }
         }
     }
@@ -448,5 +489,6 @@ void interface::draw_choices(const std::string& prefix,
         }
         std::cout << choices[i] << "\n";
     }
-    std::cout << "\nUse W, A, and ENTER to navigate." << std::flush;
+    std::cout << "\nUse W, A, and ENTER to navigate. Press ESC to go back."
+              << std::flush;
 }

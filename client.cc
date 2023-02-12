@@ -169,6 +169,7 @@ void client::start_ui() {
     std::string correspondent;
     std::vector<std::string> all_usernames;
     std::vector<std::string> all_correspondents;
+    bool hit_escape;
 
     while (true) {
         switch (interface_.next_) {
@@ -182,6 +183,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::registration;
                         break;
                     case 2:
+                    case ESCAPE:
                         interface_.next_ = screen_type::exit;
                         break;
                     default:
@@ -191,7 +193,11 @@ void client::start_ui() {
 
             case screen_type::login: {
                 std::string password;
-                interface_.login(me, password);
+                interface_.login(me, password, hit_escape);
+                if (hit_escape) {
+                    interface_.next_ = screen_type::login_registration;
+                    break;
+                }
                 stat_code = login(me, password);
                 if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::main_menu;
@@ -207,6 +213,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::login;
                         break;
                     case 1:
+                    case ESCAPE:
                         interface_.next_ = screen_type::login_registration;
                         break;
                     default:
@@ -217,7 +224,11 @@ void client::start_ui() {
             case screen_type::registration: {
                 std::string username;
                 std::string password;
-                interface_.registration(username, password);
+                interface_.registration(username, password, hit_escape);
+                if (hit_escape) {
+                    interface_.next_ = screen_type::login_registration;
+                    break;
+                }
                 stat_code = registration(username, password);
                 if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::registration_success;
@@ -238,6 +249,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::registration;
                         break;
                     case 1:
+                    case ESCAPE:
                         interface_.next_ = screen_type::login_registration;
                         break;
                     default:
@@ -255,6 +267,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::list_accounts;
                         break;
                     case 2:
+                    case ESCAPE:
                         stat_code = logout();
                         if (stat_code == chat262::status_code_ok) {
                             interface_.next_ = screen_type::login_registration;
@@ -280,8 +293,10 @@ void client::start_ui() {
                     interface_.open_chats_success(all_correspondents);
                 if (choice == 0) {
                     interface_.next_ = screen_type::new_chat;
+                } else if (choice == 1 || choice == ESCAPE) {
+                    interface_.next_ = screen_type::main_menu;
                 } else {
-                    correspondent = all_correspondents[choice - 1];
+                    correspondent = all_correspondents[choice - 2];
                     interface_.next_ = screen_type::recv_txt;
                 }
             } break;
@@ -293,6 +308,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::open_chats;
                         break;
                     case 1:
+                    case ESCAPE:
                         interface_.next_ = screen_type::main_menu;
                         break;
                     default:
@@ -301,7 +317,11 @@ void client::start_ui() {
             } break;
 
             case screen_type::new_chat: {
-                interface_.new_chat(correspondent);
+                interface_.new_chat(correspondent, hit_escape);
+                if (hit_escape) {
+                    interface_.next_ = screen_type::open_chats;
+                    break;
+                }
                 interface_.next_ = screen_type::recv_txt;
             } break;
 
@@ -336,7 +356,9 @@ void client::start_ui() {
                                      std::ref(curr_chat),
                                      std::ref(partial_txt));
 
-                interface_.prompt_send_txt(partial_txt, listener_m_);
+                interface_.prompt_send_txt(partial_txt,
+                                           listener_m_,
+                                           hit_escape);
 
                 std::unique_lock<std::mutex> lock(listener_m_);
                 listener_should_exit_ = true;
@@ -345,6 +367,10 @@ void client::start_ui() {
 
                 listener.join();
 
+                if (hit_escape) {
+                    interface_.next_ = screen_type::open_chats;
+                    break;
+                }
                 stat_code = send_txt(correspondent, partial_txt);
                 partial_txt.clear();
                 if (stat_code != chat262::status_code_ok) {
@@ -365,6 +391,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::open_chats;
                         break;
                     case 2:
+                    case ESCAPE:
                         interface_.next_ = screen_type::main_menu;
                         break;
                     default:
@@ -394,6 +421,7 @@ void client::start_ui() {
                         interface_.next_ = screen_type::list_accounts;
                         break;
                     case 1:
+                    case ESCAPE:
                         interface_.next_ = screen_type::main_menu;
                         break;
                     default:
