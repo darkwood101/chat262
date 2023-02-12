@@ -59,6 +59,7 @@ private:
     uint32_t send_txt(const std::string& recipient, const std::string& txt);
     uint32_t recv_txt(const std::string& sender, chat& c);
     uint32_t recv_correspondents(std::vector<std::string>& correspondents);
+    uint32_t delete_account();
 
     interface interface_;
 

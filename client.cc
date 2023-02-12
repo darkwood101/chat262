@@ -267,6 +267,9 @@ void client::start_ui() {
                         interface_.next_ = screen_type::list_accounts;
                         break;
                     case 2:
+                        interface_.next_ = screen_type::delete_account;
+                        break;
+                    case 3:
                     case ESCAPE:
                         stat_code = logout();
                         if (stat_code == chat262::status_code_ok) {
@@ -396,6 +399,37 @@ void client::start_ui() {
 
             case screen_type::list_accounts_fail: {
                 interface_.list_accounts_fail(stat_code);
+                interface_.next_ = screen_type::main_menu;
+            } break;
+
+            case screen_type::delete_account: {
+                user_choice choice = interface_.delete_account();
+                switch (choice) {
+                    case 0:
+                    case ESCAPE:
+                        interface_.next_ = screen_type::main_menu;
+                        break;
+                    case 1:
+                        stat_code = delete_account();
+                        if (stat_code == chat262::status_code_ok) {
+                            interface_.next_ =
+                                screen_type::delete_account_success;
+                        } else {
+                            interface_.next_ = screen_type::delete_account_fail;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } break;
+
+            case screen_type::delete_account_success: {
+                interface_.delete_account_success();
+                interface_.next_ = screen_type::login_registration;
+            } break;
+
+            case screen_type::delete_account_fail: {
+                interface_.delete_account_fail(stat_code);
                 interface_.next_ = screen_type::main_menu;
             } break;
 
@@ -673,6 +707,41 @@ uint32_t client::recv_correspondents(std::vector<std::string>& correspondents) {
         status::ok) {
         throw std::runtime_error(
             "Receive text response: Unable to deserialize the message body\n");
+    }
+    return stat_code;
+}
+
+uint32_t client::delete_account() {
+    auto msg = chat262::delete_request::serialize();
+    send_msg(msg);
+
+    chat262::message_header msg_hdr;
+    recv_hdr(msg_hdr);
+    if (msg_hdr.version_ != chat262::version) {
+        throw std::runtime_error(
+            std::string(
+                "Delete account response: Unsupported protocol version ") +
+            std::to_string(msg_hdr.version_) + std::string("\n"));
+    } else if (msg_hdr.type_ != chat262::msgtype_delete_response) {
+        throw std::runtime_error(
+            std::string(
+                "Delete account response: Wrong message type, expected ") +
+            std::string(chat262::message_type_lookup(
+                chat262::msgtype_delete_response)) +
+            std::string(" (") +
+            std::to_string(chat262::msgtype_delete_response) +
+            std::string("), got ") +
+            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
+            std::string(" (") + std::to_string(msg_hdr.type_) +
+            std::string(")\n"));
+    }
+    std::vector<uint8_t> body;
+    recv_body(msg_hdr.body_len_, body);
+
+    uint32_t stat_code;
+    if (chat262::logout_response::deserialize(body, stat_code) != status::ok) {
+        throw std::runtime_error(
+            "Logout response: Unable to deserialize the message body\n");
     }
     return stat_code;
 }
