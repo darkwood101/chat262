@@ -3,22 +3,21 @@
 #include "chat262_protocol.h"
 
 #include <arpa/inet.h>
+#include <atomic>
 #include <cerrno>
+#include <chrono>
+#include <condition_variable>
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <mutex>
+#include <poll.h>
 #include <sstream>
 #include <stdexcept>
 #include <sys/socket.h>
-#include <unistd.h>
-#include <thread>
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
 #include <termios.h>
+#include <thread>
 #include <unistd.h>
-#include <poll.h>
 
 status client::run(int argc, char const* const* argv) {
     cmdline_args args;
@@ -168,6 +167,7 @@ void client::start_ui() {
     chat curr_chat;
     std::string me;
     std::string correspondent;
+    std::vector<std::string> all_usernames;
 
     while (true) {
         switch (interface_.next_) {
@@ -175,13 +175,13 @@ void client::start_ui() {
                 user_choice choice = interface_.login_registration();
                 switch (choice) {
                     case 0:
-                        interface_.next_ = screen_type::exit;
-                        break;
-                    case 1:
                         interface_.next_ = screen_type::login;
                         break;
-                    case 2:
+                    case 1:
                         interface_.next_ = screen_type::registration;
+                        break;
+                    case 2:
+                        interface_.next_ = screen_type::exit;
                         break;
                     default:
                         break;
@@ -202,10 +202,10 @@ void client::start_ui() {
             case screen_type::login_fail: {
                 user_choice choice = interface_.login_fail(stat_code);
                 switch (choice) {
-                    case 1:
+                    case 0:
                         interface_.next_ = screen_type::login;
                         break;
-                    case 2:
+                    case 1:
                         interface_.next_ = screen_type::login_registration;
                         break;
                     default:
@@ -226,23 +226,17 @@ void client::start_ui() {
             } break;
 
             case screen_type::registration_success: {
-                user_choice choice = interface_.registration_success();
-                switch (choice) {
-                    case 1:
-                        interface_.next_ = screen_type::login_registration;
-                        break;
-                    default:
-                        break;
-                }
+                interface_.registration_success();
+                interface_.next_ = screen_type::login_registration;
             } break;
 
             case screen_type::registration_fail: {
                 user_choice choice = interface_.registration_fail(stat_code);
                 switch (choice) {
-                    case 1:
+                    case 0:
                         interface_.next_ = screen_type::registration;
                         break;
-                    case 2:
+                    case 1:
                         interface_.next_ = screen_type::login_registration;
                         break;
                     default:
@@ -251,15 +245,15 @@ void client::start_ui() {
             } break;
 
             case screen_type::main_menu: {
-                user_choice choice = interface_.main_menu();
+                user_choice choice = interface_.main_menu(me);
                 switch (choice) {
-                    case 1:
+                    case 0:
                         interface_.next_ = screen_type::open_chat;
                         break;
-                    case 2:
+                    case 1:
                         interface_.next_ = screen_type::list_accounts;
                         break;
-                    case 0:
+                    case 2:
                         stat_code = logout();
                         if (stat_code == chat262::status_code_ok) {
                             interface_.next_ = screen_type::login_registration;
@@ -306,31 +300,36 @@ void client::start_ui() {
                 int ss = system("clear");
                 (void) ss;
                 std::cout << "\n*** Chat262 ***\n"
-                            "\n"
-                            "============================================================="
-                            "===================\n";
+                             "\n"
+                             "================================================="
+                             "============"
+                             "===================\n";
                 for (const text& t : curr_chat.texts_) {
                     if (t.sender_ == text::sender_you) {
                         std::cout << me << ": " << t.content_ << "\n\n";
                     } else {
-                        std::cout << correspondent << ": " << t.content_ << "\n\n";
+                        std::cout << correspondent << ": " << t.content_
+                                  << "\n\n";
                     }
                 }
-                std::cout << "============================================================="
-                                "===================\n\n";
+                std::cout << "================================================="
+                             "============"
+                             "===================\n\n";
                 std::cout << "Chat262> " << partial_txt << std::flush;
 
                 std::thread listener([&]() {
                     std::unique_lock<std::mutex> lock(m);
                     while (!should_exit) {
-                        auto end_time = high_resolution_clock::now() + seconds(2);
+                        auto end_time =
+                            high_resolution_clock::now() + seconds(2);
                         auto cv_status = cv.wait_until(lock, end_time);
                         if (cv_status == std::cv_status::timeout) {
                             std::string tl_correspondent = correspondent;
                             chat tl_curr_chat;
                             lock.unlock();
                             recv_txt(tl_correspondent, tl_curr_chat);
-                            if (tl_curr_chat.texts_.size() == curr_chat.texts_.size()) {
+                            if (tl_curr_chat.texts_.size() ==
+                                curr_chat.texts_.size()) {
                                 lock.lock();
                                 continue;
                             }
@@ -339,19 +338,24 @@ void client::start_ui() {
                             int s = system("clear");
                             (void) s;
                             std::cout << "\n*** Chat262 ***\n"
-                                        "\n"
-                                        "============================================================="
-                                        "===================\n";
+                                         "\n"
+                                         "====================================="
+                                         "========================"
+                                         "===================\n";
                             for (const text& t : curr_chat.texts_) {
                                 if (t.sender_ == text::sender_you) {
-                                    std::cout << me << ": " << t.content_ << "\n\n";
+                                    std::cout << me << ": " << t.content_
+                                              << "\n\n";
                                 } else {
-                                    std::cout << correspondent << ": " << t.content_ << "\n\n";
+                                    std::cout << correspondent << ": "
+                                              << t.content_ << "\n\n";
                                 }
                             }
-                            std::cout << "============================================================="
+                            std::cout << "====================================="
+                                         "========================"
                                          "===================\n\n";
-                            std::cout << "Chat262> " << partial_txt << std::flush;
+                            std::cout << "Chat262> " << partial_txt
+                                      << std::flush;
                         }
                     }
                 });
@@ -415,31 +419,31 @@ void client::start_ui() {
             } break;
 
             case screen_type::list_accounts: {
-                std::vector<std::string> usernames;
-                stat_code = list_accounts(usernames);
+                interface_.list_accounts();
+                stat_code = list_accounts(all_usernames);
                 if (stat_code == chat262::status_code_ok) {
-                    user_choice choice =
-                        interface_.list_accounts_success(usernames);
-                    switch (choice) {
-                        case 1:
-                            interface_.next_ = screen_type::main_menu;
-                            break;
-                        default:
-                            break;
-                    }
+                    interface_.next_ = screen_type::list_accounts_success;
                 } else {
-                    user_choice choice =
-                        interface_.list_accounts_fail(stat_code);
-                    switch (choice) {
-                        case 1:
-                            interface_.next_ = screen_type::list_accounts;
-                            break;
-                        case 2:
-                            interface_.next_ = screen_type::main_menu;
-                            break;
-                        default:
-                            break;
-                    }
+                    interface_.next_ = screen_type::list_accounts_fail;
+                }
+            } break;
+
+            case screen_type::list_accounts_success: {
+                interface_.list_accounts_success(all_usernames);
+                interface_.next_ = screen_type::main_menu;
+            } break;
+
+            case screen_type::list_accounts_fail: {
+                user_choice choice = interface_.list_accounts_fail(stat_code);
+                switch (choice) {
+                    case 0:
+                        interface_.next_ = screen_type::list_accounts;
+                        break;
+                    case 1:
+                        interface_.next_ = screen_type::main_menu;
+                        break;
+                    default:
+                        break;
                 }
             } break;
 

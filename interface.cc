@@ -3,19 +3,109 @@
 #include "chat262_protocol.h"
 #include "common.h"
 
+#include <cerrno>
 #include <cstring>
+#include <poll.h>
+#include <unistd.h>
 
-user_choice interface::login_registration() const {
-    clear_screen();
-    std::cout << "\n*** Welcome to Chat262 ***\n"
-                 "\n"
-                 "[1] Login\n"
-                 "[2] Register\n"
-                 "[0] Exit\n\n";
-    return get_user_unsigned<uint32_t>();
+interface::interface() {
+    // Save old terminal state
+    if (tcgetattr(STDIN_FILENO, &old_t_) < 0) {
+        throw std::runtime_error(std::string("Cannot save terminal state: ") +
+                                 std::string(strerror(errno)));
+    }
+    new_t_ = old_t_;
+    // Turn on non-canonical mode and disable character echo
+    new_t_.c_lflag &= ~(ICANON | ECHO);
+    new_t_.c_cc[VMIN] = 1;
+    new_t_.c_cc[VTIME] = 0;
+    // Set new terminal state
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &new_t_) < 0) {
+        throw std::runtime_error(std::string("Cannot set terminal state: ") +
+                                 std::string(strerror(errno)));
+    }
+    // Per man pages: "Note that tcsetattr() returns success if any of the
+    // requested  changes  could  be  successfull carried  out.   Therefore,
+    // when making multiple changes it may be necessary to follow this call with
+    // a further call to tcgetattr() to check that all changes have been
+    // performed successfully."
+    termios check_t;
+    if (tcgetattr(STDIN_FILENO, &check_t) < 0) {
+        throw std::runtime_error(std::string("Cannot save terminal state: ") +
+                                 std::string(strerror(errno)));
+    }
+    if (check_t.c_lflag != new_t_.c_lflag ||
+        check_t.c_cc[VMIN] != new_t_.c_cc[VMIN] ||
+        check_t.c_cc[VTIME] != new_t_.c_cc[VTIME]) {
+        throw std::runtime_error(std::string("Cannot set terminal state: ") +
+                                 std::string(strerror(errno)));
+    }
 }
 
-void interface::login(std::string& username, std::string& password) const {
+interface::~interface() {
+    // Restore terminal state
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &old_t_);
+}
+
+user_choice interface::make_selection(const std::string& prefix,
+                                      const std::vector<std::string>& choices) {
+    pollfd fd;
+    memset(&fd, 0, sizeof(pollfd));
+    fd.fd = STDIN_FILENO;
+    fd.events |= POLLIN;
+    user_choice selection = 0;
+    char c = 0;
+    draw_choices(prefix, choices, selection);
+    while (true) {
+        if (poll(&fd, 1, -1) != 0) {
+            std::unique_lock<std::mutex> lock(m_);
+            ssize_t s = read(STDIN_FILENO, &c, 1);
+            (void) s;
+            switch (c) {
+                case 'w':
+                case 'W':
+                    if (selection == 0) {
+                        selection = choices.size() - 1;
+                    } else {
+                        selection = (selection - 1) % choices.size();
+                    }
+                    draw_choices(prefix, choices, selection);
+                    break;
+                case 's':
+                case 'S':
+                    selection = (selection + 1) % choices.size();
+                    draw_choices(prefix, choices, selection);
+                    break;
+                case '\n':
+                    return selection;
+            }
+        }
+    }
+}
+
+void interface::wait_anykey() {
+    pollfd fd;
+    memset(&fd, 0, sizeof(pollfd));
+    fd.fd = STDIN_FILENO;
+    fd.events |= POLLIN;
+    char c = 0;
+    while (true) {
+        if (poll(&fd, 1, -1) != 0) {
+            std::unique_lock<std::mutex> lock(m_);
+            ssize_t s = read(STDIN_FILENO, &c, 1);
+            (void) s;
+            return;
+        }
+    }
+}
+
+user_choice interface::login_registration() {
+    return make_selection("\n*** Welcome to Chat262 ***\n"
+                          "\n",
+                          {"Login", "Register", "Exit"});
+}
+
+void interface::login(std::string& username, std::string& password) {
     clear_screen();
     std::cout << "\n*** Chat262 login ***\n"
                  "\n"
@@ -38,30 +128,29 @@ void interface::login(std::string& username, std::string& password) const {
                  "Password: "
               << password
               << "\n\n"
-                 "Logging in...\n";
+                 "Logging in..."
+              << std::flush;
 }
 
-user_choice interface::login_fail(uint32_t stat_code) const {
-    clear_screen();
+user_choice interface::login_fail(uint32_t stat_code) {
+    std::string prefix = "\n*** Chat262 login ***\n"
+                         "\n"
+                         "Login failed: ";
     const char* description = chat262::status_code_lookup(stat_code);
-    std::cout << "\n*** Chat262 login ***\n"
-                 "\n"
-                 "Login failed: ";
     if (strcmp(description, "Unknown") == 0) {
-        std::cout << description << " (status code " << stat_code << ")\n";
+        prefix.append(description);
+        prefix.append(" (status code " + std::to_string(stat_code) + ")\n");
     } else {
-        std::cout << description << "\n";
+        prefix.append(description);
     }
-    std::cout << "\n"
-                 "Try again?\n"
-                 "\n"
-                 "[1] Yes\n"
-                 "[2] No\n\n";
-    return get_user_unsigned<uint32_t>();
+    prefix.append("\n"
+                  "\n"
+                  "Try again?\n"
+                  "\n");
+    return make_selection(prefix, {"Yes", "No"});
 }
 
-void interface::registration(std::string& username,
-                             std::string& password) const {
+void interface::registration(std::string& username, std::string& password) {
     clear_screen();
     std::cout << "\n*** Chat262 registration ***\n"
                  "\n"
@@ -85,51 +174,58 @@ void interface::registration(std::string& username,
                  "Password: "
               << password
               << "\n\n"
-                 "Registering...\n";
+                 "Registering..."
+              << std::flush;
 }
 
-user_choice interface::registration_success() const {
+void interface::registration_success() {
     clear_screen();
-    std::cout << "\n*** Chat262 registration ***\n"
+    std::cout << "\n*** Chat262 ***\n"
                  "\n"
                  "Registration successful! You can now use your username and "
                  "password to log in.\n"
                  "\n"
-                 "[1] Main menu\n\n";
-    return get_user_unsigned<uint32_t>();
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
 }
 
-user_choice interface::registration_fail(uint32_t stat_code) const {
-    clear_screen();
+user_choice interface::registration_fail(uint32_t stat_code) {
+    std::string prefix = "\n*** Chat262 login ***\n"
+                         "\n"
+                         "Registration failed: ";
     const char* description = chat262::status_code_lookup(stat_code);
-    std::cout << "\n*** Chat262 registration ***\n"
-                 "\n"
-                 "Registration failed: ";
     if (strcmp(description, "Unknown") == 0) {
-        std::cout << description << " (status code " << stat_code << ")\n";
+        prefix.append(description);
+        prefix.append(" (status code " + std::to_string(stat_code) + ")\n");
     } else {
-        std::cout << description << "\n";
+        prefix.append(description);
     }
-    std::cout << "\n"
-                 "Try again?\n"
-                 "\n"
-                 "[1] Yes\n"
-                 "[2] No\n\n";
-    return get_user_unsigned<uint32_t>();
+    prefix.append("\n"
+                  "\n"
+                  "Try again?\n"
+                  "\n");
+    return make_selection(prefix, {"Yes", "No"});
 }
 
-user_choice interface::main_menu() const {
-    clear_screen();
-    std::cout << "\n*** Chat262 main menu ***\n"
-                 "\n"
-                 "[1] Chats (coming soon)\n"
-                 "[2] List all accounts\n"
-                 "[0] Log out\n\n";
-    return get_user_unsigned<uint32_t>();
+user_choice interface::main_menu(const std::string& username) {
+    std::string prefix = "\n*** Chat 262 main menu ***\n"
+                         "\n"
+                         "Welcome, ";
+    prefix.append(username);
+    prefix.append("\n\n");
+    return make_selection(prefix, {"Chats", "List all accounts", "Log out"});
 }
 
-user_choice interface::list_accounts_success(
-    const std::vector<std::string>& usernames) const {
+void interface::list_accounts() {
+    std::cout << "\n*** Chat 262 accounts ***\n"
+                 "\n"
+                 "Retrieving the list of accounts..."
+              << std::flush;
+}
+
+void interface::list_accounts_success(
+    const std::vector<std::string>& usernames) {
     clear_screen();
     std::cout << "\n*** Chat262 accounts ***\n"
                  "\n"
@@ -138,30 +234,30 @@ user_choice interface::list_accounts_success(
         std::cout << " " << i + 1 << ".\t" << usernames[i] << "\n";
     }
     std::cout << "\n"
-                 "[1] Main menu\n\n";
-    return get_user_unsigned<uint32_t>();
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
 }
 
-user_choice interface::list_accounts_fail(uint32_t stat_code) const {
-    clear_screen();
+user_choice interface::list_accounts_fail(uint32_t stat_code) {
+    std::string prefix = "\n*** Chat262 login ***\n"
+                         "\n"
+                         "Retrieving accounts failed: ";
     const char* description = chat262::status_code_lookup(stat_code);
-    std::cout << "\n*** Chat262 accounts ***\n"
-                 "\n"
-                 "Failed to get accounts: ";
     if (strcmp(description, "Unknown") == 0) {
-        std::cout << description << " (status code " << stat_code << ")\n";
+        prefix.append(description);
+        prefix.append(" (status code " + std::to_string(stat_code) + ")\n");
     } else {
-        std::cout << description << "\n";
+        prefix.append(description);
     }
-    std::cout << "\n"
-                 "Try again?\n"
-                 "\n"
-                 "[1] Yes\n"
-                 "[2] No\n\n";
-    return get_user_unsigned<uint32_t>();
+    prefix.append("\n"
+                  "\n"
+                  "Try again?\n"
+                  "\n");
+    return make_selection(prefix, {"Yes", "No"});
 }
 
-void interface::open_chat(std::string& username) const {
+void interface::open_chat(std::string& username) {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
@@ -195,7 +291,7 @@ user_choice interface::open_chat_fail(uint32_t stat_code) const {
 void interface::send_txt(const std::string& me,
                          const std::string& correspondent,
                          const chat& c,
-                         std::string& txt) const {
+                         std::string& txt) {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
@@ -238,20 +334,54 @@ void interface::clear_screen() const {
     (void) s;
 }
 
-std::string interface::get_user_string(size_t min_len, size_t max_len) const {
-    std::string line;
+std::string interface::get_user_string(size_t min_len, size_t max_len) {
+    pollfd fd;
+    memset(&fd, 0, sizeof(pollfd));
+    fd.fd = STDIN_FILENO;
+    fd.events |= POLLIN;
+    std::string input;
+    char c = 0;
+    std::cout << "Chat262> " << std::flush;
     while (true) {
-        std::cout << "Chat262> " << std::flush;
-        std::getline(std::cin, line);
-        if (std::cin.eof()) {
-            std::cout << "\n";
-            std::cin.clear();
-            clearerr(stdin);
-        } else if (line.length() < min_len || line.length() > max_len) {
-            std::cout << "Input must be between " << min_len << " and "
-                      << max_len << " characters\n";
-        } else {
-            return line;
+        if (poll(&fd, 1, -1) != 0) {
+            std::unique_lock<std::mutex> lock(m_);
+            ssize_t s = read(STDIN_FILENO, &c, 1);
+            (void) s;
+            if (c == new_t_.c_cc[VERASE]) {
+                std::cout << "\b \b" << std::flush;
+                if (input.length() > 0) {
+                    input.pop_back();
+                }
+            } else if (c == '\n') {
+                std::cout << "\n" << std::flush;
+                if (input.length() >= min_len && input.length() <= max_len) {
+                    break;
+                }
+                std::cout << "Input must be between " << min_len << " and "
+                          << max_len << " characters\n";
+                input.clear();
+                std::cout << "Chat262> " << std::flush;
+            } else {
+                std::cout << c << std::flush;
+                input.push_back(c);
+            }
         }
     }
+    return input;
+}
+
+void interface::draw_choices(const std::string& prefix,
+                             const std::vector<std::string>& choices,
+                             const user_choice selection) {
+    clear_screen();
+    std::cout << prefix << std::flush;
+    for (uint32_t i = 0; i != choices.size(); ++i) {
+        if (i == selection) {
+            std::cout << "[X] ";
+        } else {
+            std::cout << "[ ] ";
+        }
+        std::cout << choices[i] << "\n";
+    }
+    std::cout << "\nUse W, A, and ENTER to navigate." << std::flush;
 }
