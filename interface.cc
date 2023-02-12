@@ -77,6 +77,7 @@ user_choice interface::make_selection(const std::string& prefix,
                     draw_choices(prefix, choices, selection);
                     break;
                 case '\n':
+                    std::cout << "\n" << std::flush;
                     return selection;
                 case 27:
                     if (poll(&fd, 1, 0) == 0) {
