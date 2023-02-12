@@ -239,7 +239,7 @@ user_choice interface::main_menu(const std::string& username) {
                          "Welcome, ";
     prefix.append(username);
     prefix.append("\n\n");
-    return make_selection(prefix, {"Chats", "List all accounts", "Log out"});
+    return make_selection(prefix, {"Chats", "List all accounts", "Delete account", "Log out"});
 }
 
 void interface::list_accounts() {
@@ -414,6 +414,43 @@ void interface::send_txt_fail(uint32_t stat_code) {
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
                  "Failed to send the text: ";
+    if (strcmp(description, "Unknown") == 0) {
+        std::cout << description << " (status code " << stat_code << ")\n";
+    } else {
+        std::cout << description << "\n";
+    }
+    std::cout << "\n"
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
+}
+
+user_choice interface::delete_account() {
+    return make_selection("\n*** Chat 262 account deletion ***\n"
+                          "\n"
+                          "WARNING: You are about to delete your account. This "
+                          "cannot be undone. Are you sure?\n"
+                          "\n",
+                          {"No", "Yes"});
+}
+
+void interface::delete_account_success() {
+    clear_screen();
+    std::cout << "\n*** Chat 262 account deletion ***\n"
+                 "\n"
+                 "Account successfully deleted.\n"
+                 "\n"
+                 "Press any key to continue..."
+              << std::flush;
+    wait_anykey();
+}
+
+void interface::delete_account_fail(uint32_t stat_code) {
+    clear_screen();
+    const char* description = chat262::status_code_lookup(stat_code);
+    std::cout << "\n*** Chat 262 account deletion ***\n"
+                 "\n"
+                 "Failed to delete the account: ";
     if (strcmp(description, "Unknown") == 0) {
         std::cout << description << " (status code " << stat_code << ")\n";
     } else {

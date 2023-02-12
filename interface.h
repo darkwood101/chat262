@@ -33,6 +33,9 @@ enum class screen_type {
     recv_txt_fail,
     send_txt,
     send_txt_fail,
+    delete_account,
+    delete_account_success,
+    delete_account_fail,
     exit
 };
 
@@ -76,6 +79,9 @@ public:
                          std::mutex& m,
                          bool& hit_escape);
     void send_txt_fail(uint32_t stat_code);
+    user_choice delete_account();
+    void delete_account_success();
+    void delete_account_fail(uint32_t stat_code);
     screen_type next_;
 
 private:
