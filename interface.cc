@@ -367,7 +367,7 @@ void interface::prompt_send_txt(std::string& partial_txt, std::mutex& m) {
             } else if (c == '\n') {
                 std::cout << "\n" << std::flush;
                 break;
-            } else {
+            } else if (c >= 32 && c <= 126) {
                 std::cout << c << std::flush;
                 partial_txt.push_back(c);
             }
@@ -426,7 +426,7 @@ std::string interface::get_user_string(size_t min_len, size_t max_len) {
                           << max_len << " characters\n";
                 input.clear();
                 std::cout << "Chat262> " << std::flush;
-            } else {
+            } else if (c >= 32 && c <= 126) {
                 std::cout << c << std::flush;
                 input.push_back(c);
             }
