@@ -81,6 +81,7 @@ private:
                            const std::vector<uint8_t>& body_data);
     status handle_correspondents(int client_fd,
                                  const std::vector<uint8_t>& body_data);
+    status handle_delete(int client_fd, const std::vector<uint8_t>& body_data);
 
     // The users database
     database database_;

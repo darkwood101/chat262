@@ -205,6 +205,9 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             case chat262::msgtype_correspondents_request:
                 handle_correspondents(client_fd, body);
                 break;
+            case chat262::msgtype_delete_request:
+                handle_delete(client_fd, body);
+                break;
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
@@ -468,6 +471,26 @@ status server::handle_correspondents(int client_fd,
     auto msg =
         chat262::correspondents_response::serialize(chat262::status_code_ok,
                                                     correspondents);
+    return send_msg(client_fd, msg);
+}
+
+status server::handle_delete(int client_fd,
+                             const std::vector<uint8_t>& body_data) {
+    status s = chat262::delete_request::deserialize(body_data);
+    if (s != status::ok) {
+        logger::log_err("%s", "Unable to deserialize request body\n");
+        return s;
+    }
+
+    logger::log_out("%s", "Delete account requested\n");
+
+    if (!database_.is_logged_in()) {
+        // TODO, unauthorized
+    }
+
+    database_.delete_user();
+
+    auto msg = chat262::delete_response::serialize(chat262::status_code_ok);
     return send_msg(client_fd, msg);
 }
 
