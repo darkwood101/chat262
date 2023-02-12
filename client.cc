@@ -302,18 +302,8 @@ void client::start_ui() {
             } break;
 
             case screen_type::open_chats_fail: {
-                user_choice choice = interface_.open_chats_fail(stat_code);
-                switch (choice) {
-                    case 0:
-                        interface_.next_ = screen_type::open_chats;
-                        break;
-                    case 1:
-                    case ESCAPE:
-                        interface_.next_ = screen_type::main_menu;
-                        break;
-                    default:
-                        break;
-                }
+                interface_.open_chats_fail(stat_code);
+                interface_.next_ = screen_type::main_menu;
             } break;
 
             case screen_type::new_chat: {
@@ -405,18 +395,8 @@ void client::start_ui() {
             } break;
 
             case screen_type::list_accounts_fail: {
-                user_choice choice = interface_.list_accounts_fail(stat_code);
-                switch (choice) {
-                    case 0:
-                        interface_.next_ = screen_type::list_accounts;
-                        break;
-                    case 1:
-                    case ESCAPE:
-                        interface_.next_ = screen_type::main_menu;
-                        break;
-                    default:
-                        break;
-                }
+                interface_.list_accounts_fail(stat_code);
+                interface_.next_ = screen_type::main_menu;
             } break;
 
             case screen_type::exit: {

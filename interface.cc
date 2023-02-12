@@ -264,22 +264,21 @@ void interface::list_accounts_success(
     wait_anykey();
 }
 
-user_choice interface::list_accounts_fail(uint32_t stat_code) {
-    std::string prefix = "\n*** Chat262 login ***\n"
-                         "\n"
-                         "Retrieving accounts failed: ";
+void interface::list_accounts_fail(uint32_t stat_code) {
+    clear_screen();
     const char* description = chat262::status_code_lookup(stat_code);
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Retrieving accounts failed: ";
     if (strcmp(description, "Unknown") == 0) {
-        prefix.append(description);
-        prefix.append(" (status code " + std::to_string(stat_code) + ")\n");
+        std::cout << description << " (status code " << stat_code << ")\n";
     } else {
-        prefix.append(description);
+        std::cout << description << "\n";
     }
-    prefix.append("\n"
-                  "\n"
-                  "Try again?\n"
-                  "\n");
-    return make_selection(prefix, {"Yes", "No"});
+    std::cout << "\n"
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
 }
 
 void interface::open_chats() {
@@ -301,22 +300,21 @@ user_choice interface::open_chats_success(
                           usernames_copy);
 }
 
-user_choice interface::open_chats_fail(uint32_t stat_code) {
-    std::string prefix = "\n*** Chat262 ***\n"
-                         "\n"
-                         "Retrieving chats failed: ";
+void interface::open_chats_fail(uint32_t stat_code) {
+    clear_screen();
     const char* description = chat262::status_code_lookup(stat_code);
+    std::cout << "\n*** Chat262 ***\n"
+                 "\n"
+                 "Retrieving chats failed: ";
     if (strcmp(description, "Unknown") == 0) {
-        prefix.append(description);
-        prefix.append(" (status code " + std::to_string(stat_code) + ")\n");
+        std::cout << description << " (status code " << stat_code << ")\n";
     } else {
-        prefix.append(description);
+        std::cout << description << "\n";
     }
-    prefix.append("\n"
-                  "\n"
-                  "Try again?\n"
-                  "\n");
-    return make_selection(prefix, {"Yes", "No"});
+    std::cout << "\n"
+                 "Press any key to go back..."
+              << std::flush;
+    wait_anykey();
 }
 
 void interface::new_chat(std::string& correspondent, bool& hit_escape) {

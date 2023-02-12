@@ -61,10 +61,10 @@ public:
     user_choice main_menu(const std::string& username);
     void list_accounts();
     void list_accounts_success(const std::vector<std::string>& usernames);
-    user_choice list_accounts_fail(uint32_t stat_code);
+    void list_accounts_fail(uint32_t stat_code);
     void open_chats();
     user_choice open_chats_success(const std::vector<std::string>& usernames);
-    user_choice open_chats_fail(uint32_t stat_code);
+    void open_chats_fail(uint32_t stat_code);
     void new_chat(std::string& correspondent, bool& hit_escape);
     void recv_txt();
     void recv_txt_fail(uint32_t stat_code);
