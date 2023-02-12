@@ -129,3 +129,19 @@ status database::recv_txt(const std::string& sender_username, chat& c) {
 
     return status::ok;
 }
+
+status database::get_correspondents(std::vector<std::string>& usernames) {
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    auto thread_it = threads_.find(std::this_thread::get_id());
+    if (thread_it == threads_.end()) {
+        return status::error;
+    }
+    const user& this_user = users_.at((*thread_it).second);
+
+    usernames.clear();
+    for (const auto& chat_it : this_user.chats_) {
+        usernames.push_back(chat_it.first);
+    }
+    return status::ok;
+}

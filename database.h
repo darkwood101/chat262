@@ -64,6 +64,14 @@ public:
     // @return error - The sender doesn't exist.
     status recv_txt(const std::string& sender_username, chat& c);
 
+    // Retrieve the correspondents of the currently logged in user and stores
+    // them into `usernames`.
+    // @return ok    - Correspondents were successfully retrieved (the vector
+    //                 could contain no usernames).
+    // @return error - The current thread does not have an associated user (not
+    //                 logged in).
+    status get_correspondents(std::vector<std::string>& usernames);
+
 private:
     struct user {
         std::string username_;
