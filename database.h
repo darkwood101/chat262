@@ -72,6 +72,15 @@ public:
     //                 logged in).
     status get_correspondents(std::vector<std::string>& usernames);
 
+    // Delete the currently logged in user. This includes deleting from
+    // `users_`, but also deleting chats with all correspondents, both for the
+    // logged in user and the correspondents.
+    // @return ok    - The deletion was successful. The running thread is
+    //                 deassociated from the user (logged out).
+    // @return error - The current thread does not have an associated user (not
+    //                 logged in).
+    status delete_user();
+
 private:
     struct user {
         std::string username_;

@@ -145,3 +145,28 @@ status database::get_correspondents(std::vector<std::string>& usernames) {
     }
     return status::ok;
 }
+
+status database::delete_user() {
+    const std::lock_guard<std::mutex> lock(mutex_);
+
+    // Check if the thread is already logged out
+    auto thread_it = threads_.find(std::this_thread::get_id());
+    if (thread_it == threads_.end()) {
+        return status::error;
+    }
+
+    const std::string& username = (*thread_it).second;
+    const user& u = users_.at(username);
+
+    // For every correspondent, delete their chat with the current user
+    for (auto& chat_it : u.chats_) {
+        const std::string& correspondent_username = chat_it.first;
+        user& correspondent = users_.at(correspondent_username);
+        correspondent.chats_.erase(username);
+    }
+    // Delete the current user
+    users_.erase(username);
+    // Log out the thread
+    threads_.erase(thread_it);
+    return status::ok;
+}
