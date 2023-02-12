@@ -413,10 +413,15 @@ status server::handle_send_txt(int client_fd,
         // TODO, unauthorized
     }
     s = database_.send_txt(recipient, txt);
-    if (s != status::ok) {
-        // TODO, recipient non-existent
+    std::shared_ptr<chat262::message> msg;
+    if (s == status::ok) {
+        logger::log_out("Sent text to \"%s\"\n", recipient.c_str());
+        msg = chat262::send_txt_response::serialize(chat262::status_code_ok);
+    } else {
+        logger::log_out("User \"%s\" does not exist\n", recipient.c_str());
+        msg = chat262::send_txt_response::serialize(
+            chat262::status_code_user_noexist);
     }
-    auto msg = chat262::send_txt_response::serialize(chat262::status_code_ok);
     return send_msg(client_fd, msg);
 }
 
