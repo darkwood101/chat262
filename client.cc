@@ -161,11 +161,29 @@ void client::recv_body(uint32_t body_len, std::vector<uint8_t>& data) const {
     }
 }
 
+void client::validate_hdr(const chat262::message_header& hdr,
+                          const chat262::message_type& expected) {
+    if (hdr.version_ != chat262::version) {
+        throw std::runtime_error(std::string("Unsupported protocol version ") +
+                                 std::to_string(hdr.version_) +
+                                 std::string("\n"));
+    } else if (hdr.type_ != expected) {
+        throw std::runtime_error(
+            std::string("Wrong message type, expected ") +
+            std::string(chat262::message_type_lookup(expected)) +
+            std::string(" (") + std::to_string(expected) +
+            std::string("), got ") +
+            std::string(chat262::message_type_lookup(hdr.type_)) +
+            std::string(" (") + std::to_string(hdr.type_) + std::string(")\n"));
+    }
+}
+
 void client::start_ui() {
     uint32_t stat_code = 0;
     interface_.next_ = screen_type::login_registration;
     chat curr_chat;
     std::string me;
+    std::string password;
     std::string correspondent;
     std::vector<std::string> all_usernames;
     std::vector<std::string> all_correspondents;
@@ -192,7 +210,6 @@ void client::start_ui() {
             } break;
 
             case screen_type::login: {
-                std::string password;
                 interface_.login(me, password, hit_escape);
                 if (hit_escape) {
                     interface_.next_ = screen_type::login_registration;
@@ -222,14 +239,12 @@ void client::start_ui() {
             } break;
 
             case screen_type::registration: {
-                std::string username;
-                std::string password;
-                interface_.registration(username, password, hit_escape);
+                interface_.registration(me, password, hit_escape);
                 if (hit_escape) {
                     interface_.next_ = screen_type::login_registration;
                     break;
                 }
-                stat_code = registration(username, password);
+                stat_code = registration(me, password);
                 if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::registration_success;
                 } else {
@@ -239,7 +254,12 @@ void client::start_ui() {
 
             case screen_type::registration_success: {
                 interface_.registration_success();
-                interface_.next_ = screen_type::login_registration;
+                stat_code = login(me, password);
+                if (stat_code == chat262::status_code_ok) {
+                    interface_.next_ = screen_type::main_menu;
+                } else {
+                    interface_.next_ = screen_type::login_fail;
+                }
             } break;
 
             case screen_type::registration_fail: {
@@ -471,22 +491,8 @@ uint32_t client::login(const std::string& username,
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string("Login response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_login_response) {
-        throw std::runtime_error(
-            std::string("Login response: Wrong message type, expected ") +
-            std::string(
-                chat262::message_type_lookup(chat262::msgtype_login_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_login_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_login_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -505,24 +511,8 @@ uint32_t client::registration(const std::string& username,
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string(
-                "Registration response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_registration_response) {
-        throw std::runtime_error(
-            std::string(
-                "Registration response: Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_registration_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_registration_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_registration_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -541,22 +531,8 @@ uint32_t client::logout() {
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string("Logout response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_logout_response) {
-        throw std::runtime_error(
-            std::string("Logout response: Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_logout_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_logout_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_logout_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -574,22 +550,8 @@ uint32_t client::list_accounts(std::vector<std::string>& usernames) {
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string("Accounts response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_accounts_response) {
-        throw std::runtime_error(
-            std::string("Accounts response: Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_accounts_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_accounts_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_accounts_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -609,22 +571,8 @@ uint32_t client::send_txt(const std::string& recipient,
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string("Send text response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_send_txt_response) {
-        throw std::runtime_error(
-            std::string("Send text response: Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_send_txt_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_send_txt_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_send_txt_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -643,24 +591,8 @@ uint32_t client::recv_txt(const std::string& sender, chat& c) {
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string(
-                "Receive text response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_recv_txt_response) {
-        throw std::runtime_error(
-            std::string(
-                "Receive text response: Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_recv_txt_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_recv_txt_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_recv_txt_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -679,24 +611,8 @@ uint32_t client::recv_correspondents(std::vector<std::string>& correspondents) {
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(std::string("Receive correspondents response: "
-                                             "Unsupported protocol version ") +
-                                 std::to_string(msg_hdr.version_) +
-                                 std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_correspondents_response) {
-        throw std::runtime_error(
-            std::string("Receive correspondents response: Wrong message type, "
-                        "expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_correspondents_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_correspondents_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_correspondents_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 
@@ -717,24 +633,8 @@ uint32_t client::delete_account() {
 
     chat262::message_header msg_hdr;
     recv_hdr(msg_hdr);
-    if (msg_hdr.version_ != chat262::version) {
-        throw std::runtime_error(
-            std::string(
-                "Delete account response: Unsupported protocol version ") +
-            std::to_string(msg_hdr.version_) + std::string("\n"));
-    } else if (msg_hdr.type_ != chat262::msgtype_delete_response) {
-        throw std::runtime_error(
-            std::string(
-                "Delete account response: Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(
-                chat262::msgtype_delete_response)) +
-            std::string(" (") +
-            std::to_string(chat262::msgtype_delete_response) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(msg_hdr.type_)) +
-            std::string(" (") + std::to_string(msg_hdr.type_) +
-            std::string(")\n"));
-    }
+    validate_hdr(msg_hdr, chat262::msgtype_delete_response);
+
     std::vector<uint8_t> body;
     recv_body(msg_hdr.body_len_, body);
 

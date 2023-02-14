@@ -79,12 +79,36 @@ user_choice interface::make_selection(const std::string& prefix,
                 case '\n':
                     std::cout << "\n" << std::flush;
                     return selection;
-                case 27:
+                case 27: {
+                    // Only escape was hit
                     if (poll(&fd, 1, 0) == 0) {
                         std::cout << "\n" << std::flush;
                         return ESCAPE;
                     }
+                    // Read two chars from stdin
+                    char cc[2];
+                    s = read(STDIN_FILENO, cc, 2);
+                    // If we read less than 2, it's not arrows
+                    if (s != 2) {
+                        break;
+                    }
+                    // If the sequence is ESC-[-A, it's up arrow
+                    if (cc[0] == '[' && cc[1] == 'A') {
+                        if (selection == 0) {
+                            selection = choices.size() - 1;
+                        } else {
+                            selection = (selection - 1) % choices.size();
+                        }
+                        draw_choices(prefix, choices, selection);
+                    }
+                    // If the sequence is ESC-[-B, it's down arrow
+                    else if (cc[0] == '[' && cc[1] == 'B') {
+                        selection = (selection + 1) % choices.size();
+                        draw_choices(prefix, choices, selection);
+                    }
+                    // If the sequence was something else, we just ignore
                     break;
+                }
                 default:
                     break;
             }
@@ -208,12 +232,8 @@ void interface::registration_success() {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
-                 "Registration successful! You can now use your username and "
-                 "password to log in.\n"
-                 "\n"
-                 "Press any key to go back..."
+                 "Registration successful! Logging you in..."
               << std::flush;
-    wait_anykey();
 }
 
 user_choice interface::registration_fail(uint32_t stat_code) {
@@ -403,9 +423,18 @@ void interface::prompt_send_txt(std::string& partial_txt,
             } else if (c >= 32 && c <= 126) {
                 std::cout << c << std::flush;
                 partial_txt.push_back(c);
-            } else if (c == 27 && poll(&fd, 1, 0) == 0) {
-                hit_escape = true;
-                break;
+            } else if (c == 27) {
+                // Only escape was hit
+                if (poll(&fd, 1, 0) == 0) {
+                    std::cout << "\n" << std::flush;
+                    hit_escape = true;
+                    break;
+                }
+                // Some other special key was hit. We ignore the rest of the
+                // characters in the control sequence.
+                while (poll(&fd, 1, 0) != 0) {
+                    s = read(STDIN_FILENO, &c, 1);
+                }
             }
         }
     }
@@ -503,9 +532,18 @@ std::string interface::get_user_string(size_t min_len,
             } else if (c >= 32 && c <= 126) {
                 std::cout << c << std::flush;
                 input.push_back(c);
-            } else if (c == 27 && poll(&fd, 1, 0) == 0) {
-                hit_escape = true;
-                break;
+            } else if (c == 27) {
+                // Only escape was hit
+                if (poll(&fd, 1, 0) == 0) {
+                    std::cout << "\n" << std::flush;
+                    hit_escape = true;
+                    break;
+                }
+                // Some other special key was hit. We ignore the rest of the
+                // characters in the control sequence.
+                while (poll(&fd, 1, 0) != 0) {
+                    s = read(STDIN_FILENO, &c, 1);
+                }
             }
         }
     }
@@ -525,6 +563,7 @@ void interface::draw_choices(const std::string& prefix,
         }
         std::cout << choices[i] << "\n";
     }
-    std::cout << "\nUse W, S, and ENTER to navigate. Press ESC to go back."
+    std::cout << "\nUse Up and Down arrows to navigate. Press ENTER to "
+                 "confirm. Press ESC to go back."
               << std::flush;
 }
