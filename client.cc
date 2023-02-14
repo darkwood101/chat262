@@ -183,6 +183,7 @@ void client::start_ui() {
     interface_.next_ = screen_type::login_registration;
     chat curr_chat;
     std::string me;
+    std::string password;
     std::string correspondent;
     std::vector<std::string> all_usernames;
     std::vector<std::string> all_correspondents;
@@ -209,7 +210,6 @@ void client::start_ui() {
             } break;
 
             case screen_type::login: {
-                std::string password;
                 interface_.login(me, password, hit_escape);
                 if (hit_escape) {
                     interface_.next_ = screen_type::login_registration;
@@ -239,14 +239,12 @@ void client::start_ui() {
             } break;
 
             case screen_type::registration: {
-                std::string username;
-                std::string password;
-                interface_.registration(username, password, hit_escape);
+                interface_.registration(me, password, hit_escape);
                 if (hit_escape) {
                     interface_.next_ = screen_type::login_registration;
                     break;
                 }
-                stat_code = registration(username, password);
+                stat_code = registration(me, password);
                 if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::registration_success;
                 } else {
@@ -256,7 +254,12 @@ void client::start_ui() {
 
             case screen_type::registration_success: {
                 interface_.registration_success();
-                interface_.next_ = screen_type::login_registration;
+                stat_code = login(me, password);
+                if (stat_code == chat262::status_code_ok) {
+                    interface_.next_ = screen_type::main_menu;
+                } else {
+                    interface_.next_ = screen_type::login_fail;
+                }
             } break;
 
             case screen_type::registration_fail: {

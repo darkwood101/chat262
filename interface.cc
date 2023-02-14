@@ -232,12 +232,8 @@ void interface::registration_success() {
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
-                 "Registration successful! You can now use your username and "
-                 "password to log in.\n"
-                 "\n"
-                 "Press any key to go back..."
+                 "Registration successful! Logging you in..."
               << std::flush;
-    wait_anykey();
 }
 
 user_choice interface::registration_fail(uint32_t stat_code) {
