@@ -46,6 +46,9 @@ private:
     // Throws `std::runtime_error` if the body cannot be received (fatal).
     void recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
 
+    void validate_hdr(const chat262::message_header& hdr,
+                      const chat262::message_type& expected);
+
     void start_ui();
     void background_listener(const std::string& me,
                              const std::string& correspondent,
