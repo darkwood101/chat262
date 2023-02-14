@@ -434,8 +434,8 @@ void interface::prompt_send_txt(std::string& partial_txt,
                     hit_escape = true;
                     break;
                 }
-                // Some other special key was hit. We ignore the rest of the characters
-                // in the control sequence.
+                // Some other special key was hit. We ignore the rest of the
+                // characters in the control sequence.
                 while (poll(&fd, 1, 0) != 0) {
                     s = read(STDIN_FILENO, &c, 1);
                 }
@@ -543,8 +543,8 @@ std::string interface::get_user_string(size_t min_len,
                     hit_escape = true;
                     break;
                 }
-                // Some other special key was hit. We ignore the rest of the characters
-                // in the control sequence.
+                // Some other special key was hit. We ignore the rest of the
+                // characters in the control sequence.
                 while (poll(&fd, 1, 0) != 0) {
                     s = read(STDIN_FILENO, &c, 1);
                 }
@@ -567,6 +567,7 @@ void interface::draw_choices(const std::string& prefix,
         }
         std::cout << choices[i] << "\n";
     }
-    std::cout << "\nUse Up and Down arrows to navigate. Press ENTER to confirm. Press ESC to go back."
+    std::cout << "\nUse Up and Down arrows to navigate. Press ENTER to "
+                 "confirm. Press ESC to go back."
               << std::flush;
 }
