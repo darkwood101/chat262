@@ -2,6 +2,7 @@ import grpc
 from concurrent import futures
 import chat_pb2
 import chat_pb2_grpc
+from collections import defaultdict
 
 import pickle
 
@@ -16,27 +17,32 @@ def loadData():
             db = pickle.load(dbfile)
     except:
         db = {
-            "user_pass": {}, # key: username (str), value: password (str)
-            "login_status": {}, # key: username (str), value: login status (bool)
-            "messages": {} # key: sender_username, value: dict{key: sender, value: list of messages}
+            # "user_pass": {}, # key: username (str), value: password (str)
+            # "login_status": {}, # key: username (str), value: login status (bool)
+            # "active_streams": dict(), # whether we can talk to a user
+            # "messages": []
+            "passwords": dict(),
+            "messages": defaultdict(list)
+            # "messages": {} # key: sender_username, value: dict{key: sender, value: list of messages}
         }
     return db
 
 db = loadData()
 
 
-# class ChatServiceServicer(chat_pb2_grpc.ChatServiceServicer):
-#     def MyMethod(self, request, context):
-#         response = chat_pb2.MyResponse()
-#         response.reply = 'Hello, {}!'.format(request.message)
-#         return response
-
 class AuthService(chat_pb2_grpc.AuthServiceServicer):
     def Register(self, request, context):
+
         # Check if the username and password are valid
-        if request.username not in db['user_pass'].keys():
-            db['user_pass'][request.username] = request.password
-            db['login_status'][request.username] = False # later: automatically log user in
+        u = request.username
+        p = request.password
+        
+        if u not in db['passwords']:
+            # register user
+            db['passwords'][u] = p
+            # db['login_status'][u] = False # later: automatically log user in
+            # stream = context.otherside_context().wrap(grpc.server_streaming).invoke_rpc()
+            # db["active_streams"][u] = stream
             storeData(db)
             response = chat_pb2.LoginResponse(success=True, message = "Registration successful.")
         else:
@@ -44,42 +50,57 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         return response
 
     def Login(self, request, context):
+        u = request.username
+        p = request.password
         # Check if the username and password are valid
-        if request.username in db['user_pass'].keys() and request.password == db['user_pass'][request.username]:
-            db['login_status'][request.username] = True
-            storeData(db)
+        if u in db['passwords'] and p == db['passwords'][u]:
+            # db['login_status'][u] = True
+            # storeData(db)
+
+            # stream = context.otherside_context().wrap(grpc.server_streaming).invoke_rpc()
+            # db["active_streams"][u] = stream
+            # for m in db["messages"]:
+            #     if m.receiver == u:
+            #         stream.send_message(m)
+
             response = chat_pb2.LoginResponse(success=True, message = "Login successful.")
         else:
             response = chat_pb2.LoginResponse(success=False, message = "Invalid username or password.")
         return response
 
 class ChatService(chat_pb2_grpc.AuthServiceServicer):
-    def Send(self, request, context):
+    def SendMessage(self, request, context):
         # Check if the username and password are valid
-        curr_users = db['user_pass'].keys()
+        curr_users = db['passwords'].keys()
         s = request.sender
         r = request.receiver
+        b = request.body
         print('sender', s)
         print('receiver', r)
         print('body', request.body)
-        # make sure both users are registered + sender is logged in
-        if s in curr_users and r in curr_users and s in db['login_status'] and db['login_status'][s]:
-            # initialize sender chats
-            if s not in db['messages']:
-                db['messages'][s] = {}
 
-            print('here')
-            if r in db['messages'][s].keys():
-                # add to existing chats
-                db['messages'][s][r].append(request.body)
-                response = chat_pb2.LoginResponse(success=True, message = "Message successfully added.")
-            else:
-                # create new list of chats
-                db['messages'][s][r] = [request.body]
-                response = chat_pb2.LoginResponse(success=True, message = "Chat successfully started.")
+        # make sure both users are registered + sender is logged in
+        if s in curr_users and r in curr_users:
+
+            print(f'received message from {s} to {r}')
+            db['messages'][r].append(request)
+
+            response = chat_pb2.LoginResponse(success = True, message = "Message successfully added.")
         else:
-            response = chat_pb2.LoginResponse(success=False, message = "Error in sending message")
+            response = chat_pb2.LoginResponse(success = False, message = "Error in sending message - either sender or receiver are not in username database")
         return response
+
+    def GetUsers(self, request, context):
+        for u in db['passwords'].keys():
+            yield chat_pb2.User(username = u)
+    
+    def ReceiveMessage(self, request, context):
+        r = request.username
+        for i in range(len(db['messages'][r])):
+            m = db['messages'][r][0]
+            yield chat_pb2.ChatMessage(sender = m.sender, body = m.body)
+            db['messages'][r].pop(0)
+            storeData(db)
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)

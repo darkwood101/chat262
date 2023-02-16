@@ -1,24 +1,8 @@
+// python -m grpc_tools.protoc -I protos --python_out=. --pyi_out=. --grpc_python_out=. protos/chat.proto
+
 syntax = "proto3";
 
-// option java_multiple_files = true;
-// option java_package = "io.grpc.examples.routeguide";
-// option java_outer_classname = "RouteGuideProto";
-// option objc_class_prefix = "RTG";
-
 package chatservice;
-
-// // Interface exported by the server.
-// service ChatService {
-//   rpc MyMethod(MyRequest) returns (MyResponse) {}
-// }
-
-// message MyRequest {
-//   string message = 1;
-// }
-
-// message MyResponse {
-//   string reply = 1;
-// }
 
 service AuthService {
   rpc Login (LoginRequest) returns (LoginResponse) {}
@@ -26,8 +10,16 @@ service AuthService {
 }
 
 service ChatService {
-  rpc Send (SendRequest) returns (SendResponse) {}
+  rpc SendMessage (SendRequest) returns (SendResponse) {}
+  rpc ReceiveMessage (User) returns (stream ChatMessage) {}
+  rpc GetUsers (Empty) returns (stream User) {}
   // rpc Receive
+}
+
+message Empty {}
+
+message User{
+  string username = 1;
 }
 
 message LoginRequest {
@@ -59,4 +51,9 @@ message SendRequest {
 message SendResponse {
   bool success = 1;
   string message = 2;
+}
+
+message ChatMessage {
+  string sender = 1;
+  string body = 2;
 }

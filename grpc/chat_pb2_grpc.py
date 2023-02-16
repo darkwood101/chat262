@@ -6,20 +6,7 @@ import chat_pb2 as chat__pb2
 
 
 class AuthServiceStub(object):
-    """// Interface exported by the server.
-    service ChatService {
-    rpc MyMethod(MyRequest) returns (MyResponse) {}
-    }
-
-    message MyRequest {
-    string message = 1;
-    }
-
-    message MyResponse {
-    string reply = 1;
-    }
-
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -40,20 +27,7 @@ class AuthServiceStub(object):
 
 
 class AuthServiceServicer(object):
-    """// Interface exported by the server.
-    service ChatService {
-    rpc MyMethod(MyRequest) returns (MyResponse) {}
-    }
-
-    message MyRequest {
-    string message = 1;
-    }
-
-    message MyResponse {
-    string reply = 1;
-    }
-
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def Login(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -88,20 +62,7 @@ def add_AuthServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class AuthService(object):
-    """// Interface exported by the server.
-    service ChatService {
-    rpc MyMethod(MyRequest) returns (MyResponse) {}
-    }
-
-    message MyRequest {
-    string message = 1;
-    }
-
-    message MyResponse {
-    string reply = 1;
-    }
-
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def Login(request,
@@ -147,17 +108,39 @@ class ChatServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Send = channel.unary_unary(
-                '/chatservice.ChatService/Send',
+        self.SendMessage = channel.unary_unary(
+                '/chatservice.ChatService/SendMessage',
                 request_serializer=chat__pb2.SendRequest.SerializeToString,
                 response_deserializer=chat__pb2.SendResponse.FromString,
+                )
+        self.ReceiveMessage = channel.unary_stream(
+                '/chatservice.ChatService/ReceiveMessage',
+                request_serializer=chat__pb2.User.SerializeToString,
+                response_deserializer=chat__pb2.ChatMessage.FromString,
+                )
+        self.GetUsers = channel.unary_stream(
+                '/chatservice.ChatService/GetUsers',
+                request_serializer=chat__pb2.Empty.SerializeToString,
+                response_deserializer=chat__pb2.User.FromString,
                 )
 
 
 class ChatServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Send(self, request, context):
+    def SendMessage(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReceiveMessage(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUsers(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -166,10 +149,20 @@ class ChatServiceServicer(object):
 
 def add_ChatServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Send': grpc.unary_unary_rpc_method_handler(
-                    servicer.Send,
+            'SendMessage': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendMessage,
                     request_deserializer=chat__pb2.SendRequest.FromString,
                     response_serializer=chat__pb2.SendResponse.SerializeToString,
+            ),
+            'ReceiveMessage': grpc.unary_stream_rpc_method_handler(
+                    servicer.ReceiveMessage,
+                    request_deserializer=chat__pb2.User.FromString,
+                    response_serializer=chat__pb2.ChatMessage.SerializeToString,
+            ),
+            'GetUsers': grpc.unary_stream_rpc_method_handler(
+                    servicer.GetUsers,
+                    request_deserializer=chat__pb2.Empty.FromString,
+                    response_serializer=chat__pb2.User.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -182,7 +175,7 @@ class ChatService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Send(request,
+    def SendMessage(request,
             target,
             options=(),
             channel_credentials=None,
@@ -192,8 +185,42 @@ class ChatService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/chatservice.ChatService/Send',
+        return grpc.experimental.unary_unary(request, target, '/chatservice.ChatService/SendMessage',
             chat__pb2.SendRequest.SerializeToString,
             chat__pb2.SendResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ReceiveMessage(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/chatservice.ChatService/ReceiveMessage',
+            chat__pb2.User.SerializeToString,
+            chat__pb2.ChatMessage.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetUsers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/chatservice.ChatService/GetUsers',
+            chat__pb2.Empty.SerializeToString,
+            chat__pb2.User.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

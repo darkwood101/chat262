@@ -4,6 +4,18 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class ChatMessage(_message.Message):
+    __slots__ = ["body", "sender"]
+    BODY_FIELD_NUMBER: _ClassVar[int]
+    SENDER_FIELD_NUMBER: _ClassVar[int]
+    body: str
+    sender: str
+    def __init__(self, sender: _Optional[str] = ..., body: _Optional[str] = ...) -> None: ...
+
+class Empty(_message.Message):
+    __slots__ = []
+    def __init__(self) -> None: ...
+
 class LoginRequest(_message.Message):
     __slots__ = ["password", "username"]
     PASSWORD_FIELD_NUMBER: _ClassVar[int]
@@ -53,3 +65,9 @@ class SendResponse(_message.Message):
     message: str
     success: bool
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
+
+class User(_message.Message):
+    __slots__ = ["username"]
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    username: str
+    def __init__(self, username: _Optional[str] = ...) -> None: ...

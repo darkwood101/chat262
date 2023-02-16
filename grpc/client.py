@@ -1,48 +1,79 @@
 import grpc
 import chat_pb2
 import chat_pb2_grpc
+# import login
+import tkinter as tk
+import threading
 
 channel = grpc.insecure_channel('localhost:50051')
 auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
-
-# stub = chat_pb2_grpc.ServiceStub(channel)
-# request = chat_pb2.MyRequest()
-# request.message = 'world'
-# response = stub.MyMethod(request)
-
-print("Register with username and password.")
-username = input("Username: ")
-password = input("Password: ")
-
-request = chat_pb2.RegisterRequest(username=username, password=password)
-response = auth_stub.Register(request)
-print(response.message)
-
-# if response.success:
-#     print(response.message)
-# else:
-#     print(response.message)
-
-print("Login with username and password.")
-username = input("Username: ")
-password = input("Password: ")
-
-request = chat_pb2.LoginRequest(username=username, password=password)
-response = auth_stub.Login(request)
-# if response.success:
-print(response.message)
-
-
-# LATER: ADD DICTIONARY OF STUBS
-channel = grpc.insecure_channel('localhost:50051')
 chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
-sender = 'cynthia' # WHOEVER IS LOGGED IN
-receiver = input("Please type in the username of the person you wish to send a message to: \n")
-body = input("Enter your message: \n")
+username = ''
 
-request = chat_pb2.SendRequest(sender=username, receiver=receiver, body = body)
-response = chat_stub.Send(request)
-print(response.message)
+def receive_messages():
+    global username
+    
+    while True:
+        message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+        for m in message_list:
+            print(f'\nNew Message from {m.sender}: {m.body}')
 
-# print(response.reply)
+def send_messages():
+    global username
+    
+    while True:
+        print('\nMessaging')
+        receiver = input('Recipient username: ')
+        body = input('Message body: ')
+        request = chat_pb2.SendRequest(sender=username, receiver=receiver, body=body)
+        chat_stub.SendMessage(request)
+
+def run_home():
+    global username
+    print("\nHome")
+
+    print('\nInbox:')
+    message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+    empty_inbox = True
+    for m in message_list:
+        print(f'{m.sender}: {m.body}\n')
+        empty_inbox = False
+    if empty_inbox:
+        print("No messages to show.")
+
+    user_list = chat_stub.GetUsers(chat_pb2.Empty())
+
+    users = []
+    for u in user_list:
+        users.append(u.username)
+    print('\nAll Usernames: ', users)
+
+    threading.Thread(target = send_messages).start()
+    threading.Thread(target = receive_messages).start()
+
+
+def run_login():
+    global username
+    choice = input("\nRegister or Login?\n\n")
+
+    if 'r' in choice.lower():
+        print("Register with username and password.")
+        username = input("Username: ")
+        password = input("Password: ")
+        request = chat_pb2.RegisterRequest(username=username, password=password)
+        response = auth_stub.Register(request)
+        # if response.success:
+        print(response.message)
+
+    else:
+        print("Login with your username and password.")
+        username = input("Username: ")
+        password = input("Password: ")
+        request = chat_pb2.LoginRequest(username=username, password=password)
+        response = auth_stub.Login(request)
+        # if response.success:
+        print(response.message)
+
+run_login()
+run_home()
