@@ -102,23 +102,4 @@ private:
     termios new_t_;
 };
 
-template <typename T>
-T interface::get_user_unsigned() const {
-    std::string line;
-    T num;
-    while (true) {
-        std::cout << "Chat262> " << std::flush;
-        std::getline(std::cin, line);
-        if (std::cin.eof()) {
-            std::cout << "\n";
-            std::cin.clear();
-            clearerr(stdin);
-        }
-        if (str_to_unsigned<T>(line, num) == status::ok) {
-            break;
-        }
-    }
-    return num;
-}
-
 #endif
