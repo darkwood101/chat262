@@ -265,19 +265,28 @@ user_choice interface::main_menu(const std::string& username) {
         {"Chats", "List all accounts", "Delete account", "Log out"});
 }
 
-void interface::list_accounts() {
-    std::cout << "\n*** Chat 262 accounts ***\n"
+void interface::list_accounts(std::string& pattern, bool& hit_escape) {
+    clear_screen();
+    std::cout << "\n*** Chat 262 account search ***\n"
+                 "\n"
+                 "Please enter the pattern to search for (* will match any "
+                 "number of any characters).\nPress ESC to cancel.\n\n";
+    pattern = get_user_string(4, 40, hit_escape);
+    clear_screen();
+    std::cout << "\n*** Chat 262 account search ***\n"
                  "\n"
                  "Retrieving the list of accounts..."
               << std::flush;
 }
 
 void interface::list_accounts_success(
+    const std::string& pattern,
     const std::vector<std::string>& usernames) {
     clear_screen();
-    std::cout << "\n*** Chat262 accounts ***\n"
+    std::cout << "\n*** Chat262 account search ***\n"
                  "\n"
-                 "The following usernames are registered with Chat262:\n\n";
+                 "The following usernames match the pattern "
+              << pattern << ":\n\n";
     for (size_t i = 0; i != usernames.size(); ++i) {
         std::cout << " " << i + 1 << ".\t" << usernames[i] << "\n";
     }

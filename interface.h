@@ -62,8 +62,9 @@ public:
     void registration_success();
     user_choice registration_fail(uint32_t stat_code);
     user_choice main_menu(const std::string& username);
-    void list_accounts();
-    void list_accounts_success(const std::vector<std::string>& usernames);
+    void list_accounts(std::string& pattern, bool& hit_escape);
+    void list_accounts_success(const std::string& pattern,
+                               const std::vector<std::string>& usernames);
     void list_accounts_fail(uint32_t stat_code);
     void open_chats();
     user_choice open_chats_success(const std::vector<std::string>& usernames);
