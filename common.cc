@@ -5,6 +5,8 @@
 #include <sstream>
 
 bool wildcard_match(const std::string& pattern, const std::string& target) {
+    (void) pattern;
+    (void) target;
     // TODO: implement this properly
     return true;
 }
