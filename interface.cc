@@ -337,7 +337,16 @@ void interface::open_chats() {
 user_choice interface::open_chats_success(
     const std::vector<std::string>& usernames) {
     std::vector<std::string> usernames_copy = usernames;
-    usernames_copy.insert(usernames_copy.begin(), 1, "Go back\n");
+    if (usernames.size() > 0) {
+        usernames_copy.insert(usernames_copy.begin(),
+                              1,
+                              "Go back\n\nYour chats:\n");
+    } else {
+        usernames_copy.insert(
+            usernames_copy.begin(),
+            1,
+            "Go back\n\nYou have no chats. Start a new one!\n");
+    }
     usernames_copy.insert(usernames_copy.begin(), 1, "Start a new chat");
     return make_selection("\n*** Chat 262 ***\n"
                           "\n"
