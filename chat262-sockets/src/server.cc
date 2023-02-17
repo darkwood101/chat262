@@ -347,7 +347,7 @@ status server::handle_login(int client_fd,
     std::shared_ptr<chat262::message> msg;
 
     if (database_.is_logged_in()) {
-        // TODO, already logged in
+        database_.logout();
     }
 
     s = database_.login(username, password);
