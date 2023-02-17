@@ -196,10 +196,16 @@ void interface::registration(std::string& username,
                              bool& hit_escape) {
     clear_screen();
     std::cout << "\n*** Chat262 registration ***\n"
-                 "\n"
-                 "Please enter a username (between 4 and 40 characters). Press "
-                 "ESC to cancel.\n\n";
-    username = get_user_string(4, 40, hit_escape);
+                "\n"
+                "Please enter a username (between 4 and 40 characters). Must "
+                "not contain '*' or whitespace.\nPress ESC to cancel.\n\n";
+    do {
+        username = get_user_string(4, 40, hit_escape);
+        if (username.find_first_of("* ") == std::string::npos) {
+            break;
+        }
+        std::cout << "Input must not contain '*' or whitespace\n";
+    } while (true);
     if (hit_escape) {
         return;
     }

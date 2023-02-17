@@ -44,7 +44,8 @@ enum status_code : uint32_t {
     status_code_ok = 0,
     status_code_invalid_credentials = 1,
     status_code_user_exists = 2,
-    status_code_user_noexist = 3
+    status_code_user_noexist = 3,
+    status_code_username_invalid = 4
 };
 
 // Look up the message type and returns a descriptive string
