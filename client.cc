@@ -419,7 +419,7 @@ void client::start_ui() {
 
             case screen_type::list_accounts_success: {
                 interface_.list_accounts_success(pattern, matched_usernames);
-                interface_.next_ = screen_type::main_menu;
+                interface_.next_ = screen_type::list_accounts;
             } break;
 
             case screen_type::list_accounts_fail: {

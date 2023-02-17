@@ -268,20 +268,22 @@ user_choice interface::main_menu(const std::string& username) {
     prefix.append("\n\n");
     return make_selection(
         prefix,
-        {"Chats", "List all accounts", "Delete account", "Log out"});
+        {"Chats", "Search users", "Delete account", "Log out"});
 }
 
 void interface::list_accounts(std::string& pattern, bool& hit_escape) {
     clear_screen();
-    std::cout << "\n*** Chat 262 account search ***\n"
+    std::cout << "\n*** Chat 262 user search ***\n"
                  "\n"
                  "Please enter the pattern to search for (* will match any "
-                 "number of any characters).\nPress ESC to cancel.\n\n";
+                 "number of any characters).\n"
+                 "To list all users, search for '*'.\n"
+                 "Press ESC to cancel.\n\n";
     pattern = get_user_string(1, 40, hit_escape);
     clear_screen();
-    std::cout << "\n*** Chat 262 account search ***\n"
+    std::cout << "\n*** Chat 262 user search ***\n"
                  "\n"
-                 "Retrieving the list of accounts..."
+                 "Retrieving the list of users..."
               << std::flush;
 }
 
@@ -289,12 +291,17 @@ void interface::list_accounts_success(
     const std::string& pattern,
     const std::vector<std::string>& usernames) {
     clear_screen();
-    std::cout << "\n*** Chat262 account search ***\n"
-                 "\n"
-                 "The following usernames match the pattern "
-              << pattern << ":\n\n";
-    for (size_t i = 0; i != usernames.size(); ++i) {
-        std::cout << " " << i + 1 << ".\t" << usernames[i] << "\n";
+    std::cout << "\n*** Chat262 user search ***\n"
+                 "\n";
+
+    if (usernames.size() > 0) {
+        std::cout << "The following usernames match the pattern \"" << pattern
+                  << "\":\n\n";
+        for (size_t i = 0; i != usernames.size(); ++i) {
+            std::cout << " " << i + 1 << ".\t" << usernames[i] << "\n";
+        }
+    } else {
+        std::cout << "No usernames match the pattern \"" << pattern << "\".\n";
     }
     std::cout << "\n"
                  "Press any key to go back..."
@@ -307,7 +314,7 @@ void interface::list_accounts_fail(uint32_t stat_code) {
     const char* description = chat262::status_code_lookup(stat_code);
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
-                 "Retrieving accounts failed: ";
+                 "Retrieving users failed: ";
     if (strcmp(description, "Unknown") == 0) {
         std::cout << description << " (status code " << stat_code << ")\n";
     } else {
