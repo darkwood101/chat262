@@ -214,7 +214,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             default:
                 logger::log_err("Unknown message type %" PRIu16 "\n",
                                 msg_hdr.type_);
-                // TODO: notify the client about this?
+                handle_invalid_type(client_fd);
                 break;
         }
     }
@@ -531,6 +531,11 @@ status server::handle_delete(int client_fd,
 
     database_.delete_user();
     msg = chat262::delete_response::serialize(chat262::status_code_ok);
+    return send_msg(client_fd, msg);
+}
+
+status server::handle_invalid_type(int client_fd) {
+    auto msg = chat262::invalid_type_response::serialize();
     return send_msg(client_fd, msg);
 }
 

@@ -862,4 +862,21 @@ status wrong_version_response::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
+std::shared_ptr<message> invalid_type_response::serialize() {
+    std::shared_ptr<message> msg(
+        static_cast<message*>(malloc(sizeof(message_header))),
+        free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_invalid_type_response);
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
+    return msg;
+}
+
+status invalid_type_response::deserialize(const std::vector<uint8_t>& data) {
+    if (data.size() != 0) {
+        return status::error;
+    }
+    return status::ok;
+}
+
 }  // namespace chat262
