@@ -421,4 +421,5 @@ Almost all server responses (except special responses) include a status code. Th
 - `Username already exists` — status code 2. Indicated that the registration request failed because the supplied username already matches a registered user.
 - `User does not exist` — status code 3. Indicates that the receive text request or send text request failed because the specified username does not exist.
 - `Invalid username` — status code 4. Indicates that the registration request failed because the supplied username is not 4–40 characters in length, or contains a whitespace or an asterisk.
-- `Invalid password`. The password was not 4–60 characters in length, or contained a whitespace or an asterisk.
+- `Invalid password` – status code 5. Indicates that the registration request failed because the password was not 4–60 characters in length, or contained a whitespace or an asterisk.
+- `Unauthorized` – status code 6. Indicates that a request failed because the user is not logged in. Can be included in logout response, search accounts response, send text response, receive text response, retrieve correspondents response, and delete account response.
