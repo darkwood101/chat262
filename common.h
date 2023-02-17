@@ -8,6 +8,8 @@
 
 enum class status { ok, error };
 
+bool wildcard_match(const std::string& pattern, const std::string& target);
+
 template <typename T>
 status str_to_unsigned(char const* str, T& res) {
     char* endptr;
