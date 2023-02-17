@@ -41,6 +41,8 @@ const char* message_type_lookup(uint16_t msg_type) {
             return "Delete account request";
         case msgtype_delete_response:
             return "Delete account response";
+        case msgtype_wrong_version_response:
+            return "Wrong version response";
         default:
             return "Unknown";
     }
@@ -808,7 +810,7 @@ status delete_request::deserialize(const std::vector<uint8_t>& data) {
 }
 
 std::shared_ptr<message> delete_response::serialize(uint32_t stat_code) {
-    uint32_t body_len = sizeof(login_response);
+    uint32_t body_len = sizeof(uint32_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -820,7 +822,8 @@ std::shared_ptr<message> delete_response::serialize(uint32_t stat_code) {
     return msg;
 }
 
-status deserialize(const std::vector<uint8_t>& data, uint32_t& stat_code) {
+status delete_response::deserialize(const std::vector<uint8_t>& data,
+                                    uint32_t& stat_code) {
     if (data.size() != sizeof(delete_response)) {
         return status::error;
     }
@@ -829,6 +832,33 @@ status deserialize(const std::vector<uint8_t>& data, uint32_t& stat_code) {
     uint32_t stat_code_le;
     memcpy(&stat_code_le, msg_body, sizeof(uint32_t));
     stat_code = e_le32toh(stat_code_le);
+    return status::ok;
+}
+
+std::shared_ptr<message> wrong_version_response::serialize(
+    uint32_t correct_version) {
+    uint32_t body_len = sizeof(uint32_t);
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_wrong_version_response);
+    msg->hdr_.body_len_ = e_htole32(body_len);
+    uint32_t version_le = e_htole32(correct_version);
+    memcpy(msg->body_, &version_le, sizeof(uint32_t));
+    return msg;
+}
+
+status wrong_version_response::deserialize(const std::vector<uint8_t>& data,
+                                           uint32_t& correct_version) {
+    if (data.size() != sizeof(uint32_t)) {
+        return status::error;
+    }
+    const uint8_t* msg_body = data.data();
+
+    uint32_t version_le;
+    memcpy(&version_le, msg_body, sizeof(uint32_t));
+    correct_version = e_le32toh(version_le);
     return status::ok;
 }
 

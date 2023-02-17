@@ -36,7 +36,10 @@ enum message_type : uint16_t {
     msgtype_send_txt_response = 205,
     msgtype_recv_txt_response = 206,
     msgtype_correspondents_response = 207,
-    msgtype_delete_response = 208
+    msgtype_delete_response = 208,
+
+    // Error server responses
+    msgtype_wrong_version_response = 301
 };
 
 // Server response status codes
@@ -326,6 +329,14 @@ struct delete_response {
     static std::shared_ptr<message> serialize(uint32_t stat_code);
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code);
+};
+
+struct wrong_version_response {
+    uint32_t correct_version_;
+
+    static std::shared_ptr<message> serialize(uint32_t correct_version);
+    static status deserialize(const std::vector<uint8_t>& data,
+                              uint32_t& correct_version);
 };
 
 struct logout_body {};

@@ -172,6 +172,9 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
         if (msg_hdr.version_ != chat262::version) {
             logger::log_err("Unsupported protocol version %" PRIu16 "\n",
                             msg_hdr.version_);
+            auto msg =
+                chat262::wrong_version_response::serialize(chat262::version);
+            send_msg(client_fd, msg);
             break;
         }
 

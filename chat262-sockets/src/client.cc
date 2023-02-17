@@ -645,7 +645,7 @@ uint32_t client::delete_account() {
     recv_body(msg_hdr.body_len_, body);
 
     uint32_t stat_code;
-    if (chat262::logout_response::deserialize(body, stat_code) != status::ok) {
+    if (chat262::delete_response::deserialize(body, stat_code) != status::ok) {
         throw std::runtime_error(
             "Logout response: Unable to deserialize the message body\n");
     }
