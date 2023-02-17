@@ -50,7 +50,8 @@ enum status_code : uint32_t {
     status_code_user_exists = 2,
     status_code_user_noexist = 3,
     status_code_username_invalid = 4,
-    status_code_unauthorized = 5
+    status_code_password_invalid = 5,
+    status_code_unauthorized = 6
 };
 
 // Look up the message type and returns a descriptive string

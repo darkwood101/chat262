@@ -53,13 +53,15 @@ const char* status_code_lookup(uint32_t stat_code) {
         case status_code_ok:
             return "OK";
         case status_code_invalid_credentials:
-            return "Invalid username and/or password";
+            return "Invalid credentials";
         case status_code_user_exists:
             return "Username already exists";
         case status_code_user_noexist:
             return "User does not exist";
         case status_code_username_invalid:
-            return "Username is invalid";
+            return "Invalid username";
+        case status_code_password_invalid:
+            return "Invalid password";
         default:
             return "Unknown";
     }
