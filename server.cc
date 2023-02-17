@@ -374,18 +374,19 @@ status server::handle_logout(int client_fd,
 
 status server::handle_list_accounts(int client_fd,
                                     const std::vector<uint8_t>& body_data) {
-    status s = chat262::accounts_request::deserialize(body_data);
+    std::string pattern;
+    status s = chat262::accounts_request::deserialize(body_data, pattern);
     if (s != status::ok) {
         logger::log_err("%s", "Unable to deserialize request body\n");
         return s;
     }
 
-    logger::log_out("%s", "List accounts requested\n");
+    logger::log_out("List accounts requested, pattern \"%s\"\n", pattern);
 
     if (!database_.is_logged_in()) {
         // TODO
     }
-    std::vector<std::string> usernames = database_.get_usernames();
+    std::vector<std::string> usernames = database_.get_usernames(pattern);
 
     auto msg = chat262::accounts_response::serialize(chat262::status_code_ok,
                                                      usernames);
