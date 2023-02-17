@@ -348,10 +348,7 @@ user_choice interface::open_chats_success(
             "Go back\n\nYou have no chats. Start a new one!\n");
     }
     usernames_copy.insert(usernames_copy.begin(), 1, "Start a new chat");
-    return make_selection("\n*** Chat 262 ***\n"
-                          "\n"
-                          "Select a chat.\n\n",
-                          usernames_copy);
+    return make_selection("\n*** Chat 262 ***\n\n", usernames_copy);
 }
 
 void interface::open_chats_fail(uint32_t stat_code) {
@@ -416,6 +413,9 @@ void interface::draw_send_txt(const std::string& me,
                  "\n"
                  "============================================================="
                  "===================\n";
+    if (c.texts_.size() == 0) {
+        std::cout << "This chat is empty. Start chatting now!\n";
+    }
 
     for (const text& t : c.texts_) {
         if (t.sender_ == text::sender_you) {
@@ -426,6 +426,8 @@ void interface::draw_send_txt(const std::string& me,
     }
     std::cout << "============================================================="
                  "===================\n\n";
+    std::cout << "Type your message and press ENTER when you're done. Press "
+                 "ESC to cancel.\n\n";
     std::cout << "Chat262> " << partial_txt << std::flush;
 }
 
