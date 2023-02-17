@@ -13,7 +13,7 @@
 namespace chat262 {
 
 static constexpr uint16_t version = 1;
-static constexpr uint16_t port = 45171;
+static constexpr uint16_t port = 61079;
 
 // Message types. Types in the range [101, 199] are client requestes. Types in
 // the range [201, 299] are server responses.
