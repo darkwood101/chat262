@@ -40,8 +40,8 @@ public:
     // Checks if the current thread has an associated user.
     bool is_logged_in();
 
-    // Returns a vector of all usernames.
-    std::vector<std::string> get_usernames();
+    // Returns a vector of all usernames matching `pattern`.
+    std::vector<std::string> get_usernames(const std::string& pattern);
 
     // Stores `txt` into recipient's chat with the sender and into the sender's
     // chat with the recipient. Recipient is identified via

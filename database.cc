@@ -62,12 +62,14 @@ bool database::is_logged_in() {
     return threads_.find(std::this_thread::get_id()) != threads_.end();
 }
 
-std::vector<std::string> database::get_usernames() {
+std::vector<std::string> database::get_usernames(const std::string& pattern) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
     std::vector<std::string> usernames;
     for (const auto& it : users_) {
-        usernames.push_back(it.first);
+        if (wildcard_match(pattern, it.first)) {
+            usernames.push_back(it.first);
+        }
     }
     return usernames;
 }
