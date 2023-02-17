@@ -184,8 +184,9 @@ void client::start_ui() {
     chat curr_chat;
     std::string me;
     std::string password;
+    std::string pattern;
     std::string correspondent;
-    std::vector<std::string> all_usernames;
+    std::vector<std::string> matched_usernames;
     std::vector<std::string> all_correspondents;
     bool hit_escape;
 
@@ -403,8 +404,12 @@ void client::start_ui() {
             } break;
 
             case screen_type::list_accounts: {
-                interface_.list_accounts();
-                stat_code = list_accounts(all_usernames);
+                interface_.list_accounts(pattern, hit_escape);
+                if (hit_escape) {
+                    interface_.next_ = screen_type::main_menu;
+                    break;
+                }
+                stat_code = list_accounts(pattern, matched_usernames);
                 if (stat_code == chat262::status_code_ok) {
                     interface_.next_ = screen_type::list_accounts_success;
                 } else {
@@ -413,7 +418,7 @@ void client::start_ui() {
             } break;
 
             case screen_type::list_accounts_success: {
-                interface_.list_accounts_success(all_usernames);
+                interface_.list_accounts_success(pattern, matched_usernames);
                 interface_.next_ = screen_type::main_menu;
             } break;
 
@@ -544,8 +549,9 @@ uint32_t client::logout() {
     return stat_code;
 }
 
-uint32_t client::list_accounts(std::vector<std::string>& usernames) {
-    auto msg = chat262::accounts_request::serialize();
+uint32_t client::list_accounts(const std::string& pattern,
+                               std::vector<std::string>& usernames) {
+    auto msg = chat262::accounts_request::serialize(pattern);
     send_msg(msg);
 
     chat262::message_header msg_hdr;
