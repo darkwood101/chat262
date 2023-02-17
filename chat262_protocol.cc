@@ -270,20 +270,40 @@ status logout_response::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> accounts_request::serialize() {
-    std::shared_ptr<message> msg(
-        static_cast<message*>(malloc(sizeof(message_header))),
-        free);
+std::shared_ptr<message> accounts_request::serialize(
+    const std::string& pattern) {
+    uint32_t body_len = sizeof(uint32_t) + pattern.length();
+    size_t total_len = sizeof(message_header) + body_len;
+    std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
+                                 free);
     msg->hdr_.version_ = e_htole16(version);
     msg->hdr_.type_ = e_htole16(msgtype_accounts_request);
-    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(body_len));
+
+    uint32_t pattern_len_le =
+        e_htole32(static_cast<uint32_t>(pattern.length()));
+    memcpy(msg->body_, &pattern_len_le, sizeof(uint32_t));
+    memcpy(msg->body_ + 4, pattern.c_str(), pattern.length());
+
     return msg;
 }
 
-status accounts_request::deserialize(const std::vector<uint8_t>& data) {
-    if (data.size() != 0) {
+status accounts_request::deserialize(const std::vector<uint8_t>& data,
+                                     std::string& pattern) {
+    if (data.size() < sizeof(uint32_t)) {
         return status::error;
     }
+    const uint8_t* msg_body = data.data();
+
+    uint32_t pattern_len_le;
+    memcpy(&pattern_len_le, msg_body + 4, sizeof(uint32_t));
+    uint32_t pattern_len = e_le32toh(pattern_len_le);
+
+    if (sizeof(uint32_t) + pattern_len != data.size()) {
+        return status::error;
+    }
+
+    pattern.assign(msg_body + 4, msg_body + 4 + pattern_len);
     return status::ok;
 }
 

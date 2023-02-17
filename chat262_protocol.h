@@ -198,17 +198,23 @@ struct logout_response {
 };
 
 struct accounts_request {
-    // Form a complete accounts request message. There is no body in this
-    // request.
-    static std::shared_ptr<message> serialize();
+    uint32_t pattern_len_;
+    uint8_t pattern_[];
 
-    // Do nothing because there is no body in the request. `data` must be an
-    // empty vector.
+    // Form a complete accounts request message from `pattern`.
+    static std::shared_ptr<message> serialize(const std::string& pattern);
+
+    // Extract the matching pattern from `data`. `data` must contain the
+    // `accounts_request` structure.
     // @return ok    - success
     // @return error - `data.size() != 0`
-    //                 This is the fault of the local implementation, never of
-    //                 the remote party.
-    static status deserialize(const std::vector<uint8_t>& data);
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
+    static status deserialize(const std::vector<uint8_t>& data,
+                              std::string& pattern);
 };
 
 struct accounts_response {
