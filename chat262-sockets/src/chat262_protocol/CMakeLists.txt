@@ -4,7 +4,7 @@ add_library(
 )
 target_compile_options(
     chat262_protocol
-    PRIVATE
+    PUBLIC
     -Wall -Wextra -Werror -Wshadow -O2 -std=c++17
 )
 target_include_directories(

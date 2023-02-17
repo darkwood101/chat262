@@ -6,8 +6,13 @@ add_library(
 )
 target_compile_options(
     server
-    PRIVATE
+    PUBLIC
     -Wall -Wextra -Werror -Wshadow -O2 -std=c++17
+)
+target_link_options(
+    server
+    PUBLIC
+    -pthread
 )
 target_include_directories(
     server
@@ -26,11 +31,6 @@ target_link_libraries(
     PUBLIC
     server
     chat262_protocol
-)
-target_link_options(
-    server.out
-    PUBLIC
-    -pthread
 )
 set_target_properties(
     server.out
