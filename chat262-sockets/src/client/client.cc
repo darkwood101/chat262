@@ -651,12 +651,3 @@ uint32_t client::delete_account() {
     }
     return stat_code;
 }
-
-int main(int argc, char** argv) {
-    client c;
-    if (c.run(argc, argv) == status::ok) {
-        return EXIT_SUCCESS;
-    } else {
-        return EXIT_FAILURE;
-    }
-}

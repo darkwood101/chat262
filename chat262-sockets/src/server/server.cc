@@ -538,12 +538,3 @@ status server::handle_invalid_type(int client_fd) {
     auto msg = chat262::invalid_type_response::serialize();
     return send_msg(client_fd, msg);
 }
-
-int main(int argc, char** argv) {
-    server s;
-    if (s.run(argc, argv) == status::ok) {
-        return EXIT_SUCCESS;
-    } else {
-        return EXIT_FAILURE;
-    }
-}
