@@ -334,11 +334,11 @@ struct delete_response {
 };
 
 struct wrong_version_response {
-    uint32_t correct_version_;
+    uint16_t correct_version_;
 
-    static std::shared_ptr<message> serialize(uint32_t correct_version);
+    static std::shared_ptr<message> serialize(uint16_t correct_version);
     static status deserialize(const std::vector<uint8_t>& data,
-                              uint32_t& correct_version);
+                              uint16_t& correct_version);
 };
 
 struct invalid_type_response {
