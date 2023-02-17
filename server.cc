@@ -381,7 +381,8 @@ status server::handle_list_accounts(int client_fd,
         return s;
     }
 
-    logger::log_out("List accounts requested, pattern \"%s\"\n", pattern);
+    logger::log_out("List accounts requested, pattern \"%s\"\n",
+                    pattern.c_str());
 
     if (!database_.is_logged_in()) {
         // TODO
