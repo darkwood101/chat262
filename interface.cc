@@ -277,7 +277,7 @@ void interface::list_accounts(std::string& pattern, bool& hit_escape) {
                  "\n"
                  "Please enter the pattern to search for (* will match any "
                  "number of any characters).\nPress ESC to cancel.\n\n";
-    pattern = get_user_string(4, 40, hit_escape);
+    pattern = get_user_string(1, 40, hit_escape);
     clear_screen();
     std::cout << "\n*** Chat 262 account search ***\n"
                  "\n"
