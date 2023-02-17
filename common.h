@@ -1,9 +1,6 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <climits>
-#include <cstdlib>
-#include <limits>
 #include <string>
 
 enum class status { ok, error };
