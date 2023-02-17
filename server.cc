@@ -344,12 +344,13 @@ status server::handle_login(int client_fd,
         username.c_str(),
         password.c_str());
 
+    std::shared_ptr<chat262::message> msg;
+
     if (database_.is_logged_in()) {
-        // TODO
+        // TODO, already logged in
     }
 
     s = database_.login(username, password);
-    std::shared_ptr<chat262::message> msg;
     if (s == status::ok) {
         logger::log_out("%s", "Correct credentials\n");
         msg = chat262::login_response::serialize(chat262::status_code_ok);
@@ -371,12 +372,17 @@ status server::handle_logout(int client_fd,
 
     logger::log_out("%s", "Logout requested\n");
 
+    std::shared_ptr<chat262::message> msg;
+
     if (!database_.is_logged_in()) {
-        // TODO
+        msg = chat262::logout_response::serialize(
+            chat262::status_code_unauthorized);
+        return send_msg(client_fd, msg);
     }
+
     database_.logout();
 
-    auto msg = chat262::logout_response::serialize(chat262::status_code_ok);
+    msg = chat262::logout_response::serialize(chat262::status_code_ok);
     return send_msg(client_fd, msg);
 }
 
@@ -392,18 +398,20 @@ status server::handle_list_accounts(int client_fd,
     logger::log_out("List accounts requested, pattern \"%s\"\n",
                     pattern.c_str());
 
-    if (!database_.is_logged_in()) {
-        // TODO
-    }
-    std::vector<std::string> usernames = database_.get_usernames(pattern);
+    std::shared_ptr<chat262::message> msg;
+    std::vector<std::string> usernames;
 
-    auto msg = chat262::accounts_response::serialize(chat262::status_code_ok,
-                                                     usernames);
-    s = send_msg(client_fd, msg);
-    if (s != status::ok) {
-        return s;
+    if (!database_.is_logged_in()) {
+        msg = chat262::accounts_response::serialize(
+            chat262::status_code_unauthorized,
+            usernames);
+        return send_msg(client_fd, msg);
     }
-    return status::ok;
+
+    usernames = database_.get_usernames(pattern);
+    msg = chat262::accounts_response::serialize(chat262::status_code_ok,
+                                                usernames);
+    return send_msg(client_fd, msg);
 }
 
 status server::handle_send_txt(int client_fd,
@@ -419,11 +427,15 @@ status server::handle_send_txt(int client_fd,
 
     logger::log_out("Send text requested to user \"%s\"\n", recipient.c_str());
 
-    if (!database_.is_logged_in()) {
-        // TODO, unauthorized
-    }
-    s = database_.send_txt(recipient, txt);
     std::shared_ptr<chat262::message> msg;
+
+    if (!database_.is_logged_in()) {
+        msg = chat262::send_txt_response::serialize(
+            chat262::status_code_unauthorized);
+        return send_msg(client_fd, msg);
+    }
+
+    s = database_.send_txt(recipient, txt);
     if (s == status::ok) {
         logger::log_out("Sent text to \"%s\"\n", recipient.c_str());
         msg = chat262::send_txt_response::serialize(chat262::status_code_ok);
@@ -447,13 +459,17 @@ status server::handle_recv_txt(int client_fd,
     logger::log_out("Receive text requested from user \"%s\"\n",
                     sender.c_str());
 
+    std::shared_ptr<chat262::message> msg;
+    chat c;
+
     if (!database_.is_logged_in()) {
-        // TODO, unauthorized
+        msg = chat262::recv_txt_response::serialize(
+            chat262::status_code_unauthorized,
+            c);
+        return send_msg(client_fd, msg);
     }
 
-    chat c;
     s = database_.recv_txt(sender, c);
-    std::shared_ptr<chat262::message> msg;
     if (s == status::ok) {
         logger::log_out("Sending texts from \"%s\"\n", sender.c_str());
         msg = chat262::recv_txt_response::serialize(chat262::status_code_ok, c);
@@ -476,16 +492,19 @@ status server::handle_correspondents(int client_fd,
 
     logger::log_out("%s", "Retrieve correspondents requested\n");
 
+    std::shared_ptr<chat262::message> msg;
+    std::vector<std::string> correspondents;
+
     if (!database_.is_logged_in()) {
-        // TODO, unauthorized
+        msg = chat262::correspondents_response::serialize(
+            chat262::status_code_unauthorized,
+            correspondents);
+        return send_msg(client_fd, msg);
     }
 
-    std::vector<std::string> correspondents;
     database_.get_correspondents(correspondents);
-
-    auto msg =
-        chat262::correspondents_response::serialize(chat262::status_code_ok,
-                                                    correspondents);
+    msg = chat262::correspondents_response::serialize(chat262::status_code_ok,
+                                                      correspondents);
     return send_msg(client_fd, msg);
 }
 
@@ -499,13 +518,16 @@ status server::handle_delete(int client_fd,
 
     logger::log_out("%s", "Delete account requested\n");
 
+    std::shared_ptr<chat262::message> msg;
+
     if (!database_.is_logged_in()) {
-        // TODO, unauthorized
+        msg = chat262::delete_response::serialize(
+            chat262::status_code_unauthorized);
+        return send_msg(client_fd, msg);
     }
 
     database_.delete_user();
-
-    auto msg = chat262::delete_response::serialize(chat262::status_code_ok);
+    msg = chat262::delete_response::serialize(chat262::status_code_ok);
     return send_msg(client_fd, msg);
 }
 
