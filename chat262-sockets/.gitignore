@@ -1,0 +1,6 @@
+# CMake build directory
+build/
+
+# Executables
+client
+server
