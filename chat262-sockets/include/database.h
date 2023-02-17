@@ -88,6 +88,10 @@ private:
         std::unordered_map<std::string, chat> chats_;
     };
 
+    // Check if `target` matches `pattern`. The only special character in
+    // `pattern` is `*`, which matches zero or more of any character.
+    bool wildcard_match(const std::string& pattern, const std::string& target);
+
     // Protects everything. We don't care about the performance, so we go for
     // coarse-grained strategy.
     std::mutex mutex_;

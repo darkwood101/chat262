@@ -411,7 +411,9 @@ void interface::draw_send_txt(const std::string& me,
     clear_screen();
     std::cout << "\n*** Chat262 ***\n"
                  "\n"
-                 "Your chat with " << correspondent << "\n\n"
+                 "Your chat with "
+              << correspondent
+              << "\n\n"
                  "============================================================="
                  "===================\n";
     if (c.texts_.size() == 0) {

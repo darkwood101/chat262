@@ -25,16 +25,15 @@ add_executable(
     src/server.cc
     src/database.cc
     src/logger.cc
-    src/common.cc
+)
+target_link_libraries(
+    server
+    chat262_protocol
 )
 set_target_properties(
     server
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-target_link_libraries(
-    server
-    chat262_protocol
 )
 
 # Build the client and output in the current directory
@@ -42,12 +41,12 @@ add_executable(client
     src/client.cc
     src/interface.cc
 )
+target_link_libraries(
+    client
+    chat262_protocol
+)
 set_target_properties(
     client
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-target_link_libraries(
-    client
-    chat262_protocol
 )
