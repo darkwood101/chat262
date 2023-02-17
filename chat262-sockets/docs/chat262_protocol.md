@@ -43,7 +43,9 @@ Each message passed between a server and a client consists of two parts:
 - A message header
 - A message body
 
-The message header always has the same structure, regardless of whether the message is a request or a response. This structure is depicted as follows: ![message header](res/message_header.png)
+The message header always has the same structure, regardless of whether the message is a request or a response. This structure is depicted as follows:
+
+![message header](res/message_header.png)
 
 Each field of the message header should be interpreted in **little-endian byte order**.
 
@@ -90,7 +92,9 @@ The registration request registers a new user with the Chat 262 service.
 
 The type of this message is **<u>101</u>**.
 
-The body of this message is structured as follows: ![registration request](res/registration_request.png)
+The body of this message is structured as follows:
+
+![registration request](res/registration_request.png)
 
 Each field of the registration request should be interpreted in **little-endian byte order**.
 
@@ -108,7 +112,9 @@ The registration response is sent after receiving a registration request from th
 
 The type of this message is **<u>201</u>**.
 
-The body of this message is structured as follows: ![registration response](res/registration_response.png)
+The body of this message is structured as follows:
+
+![registration response](res/registration_response.png)
 
 Each field of the registration response should be interpreted in **little-endian byte order**.
 
@@ -127,7 +133,9 @@ The login request attempts to log in an existing user to the Chat 262 service.
 
 The type of this message is **<u>102</u>**.
 
-The body of this message is structured as follows: ![login request](res/login_request.png)
+The body of this message is structured as follows:
+
+![login request](res/login_request.png)
 
 Each field of the login request should be interpreted in **little-endian byte order**.
 
@@ -145,7 +153,9 @@ The login response is sent after receiving a login request from the client.
 
 The type of this message is **<u>202</u>**.
 
-The body of this message is structured as follows: ![login response](res/login_response.png)
+The body of this message is structured as follows:
+
+![login response](res/login_response.png)
 
 Each field of the login response should be interpreted in **little-endian byte order**.
 
@@ -172,7 +182,9 @@ The logout response is sent after receiving a logout request from the client.
 
 The type of this message is **<u>203</u>**.
 
-The body of this message is structured as follows: ![logout response](res/logout_response.png)
+The body of this message is structured as follows:
+
+![logout response](res/logout_response.png)
 
 Each field of the logout response should be interpreted in **little-endian byte order**.
 
@@ -189,7 +201,9 @@ The search accounts request attempts to retrieve a list of usernames currently r
 
 The type of this message is **<u>104</u>**.
 
-The body of this message is structured as follows: ![accounts request](res/accounts_request.png)
+The body of this message is structured as follows:
+
+![accounts request](res/accounts_request.png)
 
 Each field of the search accounts request should be interpreted in **little-endian byte order**.
 
@@ -207,7 +221,9 @@ The search accounts response is sent after receiving a search accounts request f
 
 The type of this message is **<u>204</u>**.
 
-The body of this message is structured as follows: ![accounts response](res/accounts_response.png)
+The body of this message is structured as follows:
+
+![accounts response](res/accounts_response.png)
 
 Each field of the search accounts response should be interpreted in **little-endian byte order**.
 
@@ -230,7 +246,9 @@ The send text request attempts to send the text (in a chatting context) to the s
 
 The type of this message is **<u>105</u>**.
 
-The body of this message is structured as follows: ![send text request](res/send_txt_request.png)
+The body of this message is structured as follows:
+
+![send text request](res/send_txt_request.png)
 
 Each field of the send text request should be interpreted in **little-endian byte order**.
 
@@ -246,7 +264,9 @@ The send text response is sent after receiving a send text request from the clie
 
 The type of this message is **<u>205</u>**.
 
-The body of this message is structured as follows: ![send text response](res/send_txt_response.png)
+The body of this message is structured as follows:
+
+![send text response](res/send_txt_response.png)
 
 Each field of the logout response should be interpreted in **little-endian byte order**.
 
@@ -264,7 +284,9 @@ The receive text request attempts to retrieve all previous texts that were excha
 
 The type of this message is **<u>106</u>**.
 
-The body of this message is structured as follows: ![receive text request](res/recv_txt_request.png)
+The body of this message is structured as follows:
+
+![receive text request](res/recv_txt_request.png)
 
 Each field of the receive text request should be interpreted in **little-endian byte order**.
 
@@ -280,7 +302,9 @@ The receive text response is sent after receiving a receive text request from th
 
 The type of this message is **<u>206</u>**.
 
-The body of this message is structured as follows: ![receive text response](res/recv_txt_response.png)
+The body of this message is structured as follows:
+
+![receive text response](res/recv_txt_response.png)
 
 Each field of the receive text response should be interpreted in **little-endian byte order**.
 
@@ -314,7 +338,9 @@ The retrieve correspondents response is sent after receiving a retrieve correspo
 
 The type of this message is **<u>207</u>**.
 
-The body of this message is structured as follows: ![correspondents response](res/correspondents_response.png)
+The body of this message is structured as follows:
+
+![correspondents response](res/correspondents_response.png)
 
 Each field of the retrieve correspondents response should be interpreted in **little-endian byte order**.
 
@@ -345,7 +371,9 @@ The delete account response is sent after receiving a delete account request fro
 
 The type of this message is **<u>208</u>**.
 
-The body of this message is structured as follows: ![delete response](res/delete_response.png)
+The body of this message is structured as follows:
+
+![delete response](res/delete_response.png)
 
 Each field of the delete account response should be interpreted in **little-endian byte order**.
 
@@ -362,7 +390,9 @@ The wrong version response is a special response sent after the server detects a
 
 The type of this message is **<u>301</u>**.
 
-The body of this message is structured as follows: ![wrong version response](res/wrong_version_response.png)
+The body of this message is structured as follows:
+
+![wrong version response](res/wrong_version_response.png)
 
 Each field of the wrong version response should be interpreted in **little-endian byte order**.
 
