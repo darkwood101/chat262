@@ -296,7 +296,7 @@ status accounts_request::deserialize(const std::vector<uint8_t>& data,
     const uint8_t* msg_body = data.data();
 
     uint32_t pattern_len_le;
-    memcpy(&pattern_len_le, msg_body + 4, sizeof(uint32_t));
+    memcpy(&pattern_len_le, msg_body, sizeof(uint32_t));
     uint32_t pattern_len = e_le32toh(pattern_len_le);
 
     if (sizeof(uint32_t) + pattern_len != data.size()) {
