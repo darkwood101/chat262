@@ -303,8 +303,10 @@ status server::handle_registration(int client_fd,
 
     std::shared_ptr<chat262::message> msg;
     if (username.find_first_of("* ") != std::string::npos) {
-        logger::log_out("Username \"%s\" contains invalid characters\n", username.c_str());
-        msg = chat262::registration_response::serialize(chat262::status_code_username_invalid);
+        logger::log_out("Username \"%s\" contains invalid characters\n",
+                        username.c_str());
+        msg = chat262::registration_response::serialize(
+            chat262::status_code_username_invalid);
         return send_msg(client_fd, msg);
     }
 
