@@ -80,6 +80,9 @@ void client::test_login() {
     // Login twice in a row
     assert(send_login_request("3_BKn.4C", "pswd") == 0);
     assert(send_login_request("3_BKn.4C", "pswd") == 0);
+
+    // Registering after a login should be OK
+    assert(send_reg_request("A3mL9yfyv", "v3PX-BncF") == 0);
 }
 
 int main() {
