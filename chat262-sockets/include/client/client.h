@@ -16,7 +16,15 @@ public:
     // Run the client with command-line arguments
     status run(int argc, char const* const* argv);
 
+#ifdef TESTING
+    void test_registration();
+#endif
+
+#ifndef TESTING
 private:
+#else
+public:
+#endif
     // Command-line arguments
     struct cmdline_args {
         bool help_;
