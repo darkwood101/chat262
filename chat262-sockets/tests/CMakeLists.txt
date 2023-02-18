@@ -30,3 +30,4 @@ enable_testing()
 
 add_subdirectory(test_registration)
 add_subdirectory(test_login)
+add_subdirectory(test_logout)

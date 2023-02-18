@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-void client::test_login() {
+void client::test_logout() {
     const char* localhost = "127.0.0.1";
     char const* argv[] = {"./server", localhost};
     std::thread thread([&]() {
@@ -65,24 +65,48 @@ void client::test_login() {
         return stat_code;
     };
 
-    // Correct credentials
+    auto send_logout_request = [&]() {
+        msg = chat262::logout_request::serialize();
+        assert(msg->hdr_.version_ == 1);
+        assert(msg->hdr_.type_ == 103);
+        assert(msg->hdr_.body_len_ == 0);
+        send_msg(msg);
+        recv_hdr(hdr);
+        assert(hdr.version_ == 1);
+        assert(hdr.type_ == 203);
+        assert(hdr.body_len_ == 4);
+        recv_body(hdr.body_len_, data);
+        chat262::logout_response::deserialize(data, stat_code);
+        return stat_code;
+    };
+
     assert(send_login_request("testuser", "password") == 0);
-    // Invalid credentials
+    assert(send_logout_request() == 0);
+
+    // Unauthorized if not logged in
+    assert(send_logout_request() == 6);
+
+    // Unauthorized logout if invalid credentials
     assert(send_login_request("testuser", "wrongpassword") == 1);
-    // Even if username and password are ill-formed, should still get invalid credentials
-    assert(send_login_request("", "") == 1);
-    // Correct credentials
+    assert(send_logout_request() == 6);
+
+    // OK if two login requests
     assert(send_login_request("JoP4fqkvVpBQ", "                ") == 0);
     assert(send_login_request("3_BKn.4C", "pswd") == 0);
-    // Invalid credentials
+    assert(send_logout_request() == 0);
+
+    // OK if logged in on second attempt
     assert(send_login_request("3_BKn.4", "pswd") == 1);
     assert(send_login_request("Ea8jjQa2hzom", "*******") == 0);
-    // Login twice in a row
+    assert(send_logout_request() == 0);
+
+    // Not OK if second login invalid
     assert(send_login_request("3_BKn.4C", "pswd") == 0);
-    assert(send_login_request("3_BKn.4C", "pswd") == 0);
+    assert(send_login_request("3_BKn.4C", "ooops") == 1);
+    assert(send_logout_request() == 6);
 }
 
 int main() {
     client c;
-    c.test_login();
+    c.test_logout();
 }
