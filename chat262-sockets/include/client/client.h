@@ -5,25 +5,29 @@
 #include "chat262_protocol.h"
 #include "common.h"
 
-#include <condition_variable>
-#include <iostream>
-#include <mutex>
 #include <string>
 
 class client {
 public:
     status connect_server(const uint32_t n_ip_addr);
 
-    uint32_t login(const std::string& username, const std::string& password);
-    uint32_t registration(const std::string& username,
-                          const std::string& password);
-    uint32_t logout();
-    uint32_t list_accounts(const std::string& pattern,
-                           std::vector<std::string>& usernames);
-    uint32_t send_txt(const std::string& recipient, const std::string& txt);
-    uint32_t recv_txt(const std::string& sender, chat& c);
-    uint32_t recv_correspondents(std::vector<std::string>& correspondents);
-    uint32_t delete_account();
+    status login(const std::string& username,
+                 const std::string& password,
+                 uint32_t& stat_code);
+    status registration(const std::string& username,
+                        const std::string& password,
+                        uint32_t& stat_code);
+    status logout(uint32_t& stat_code);
+    status list_accounts(const std::string& pattern,
+                         uint32_t& stat_code,
+                         std::vector<std::string>& usernames);
+    status send_txt(const std::string& recipient,
+                    const std::string& txt,
+                    uint32_t& stat_code);
+    status recv_txt(const std::string& sender, uint32_t& stat_code, chat& c);
+    status recv_correspondents(uint32_t& stat_code,
+                               std::vector<std::string>& correspondents);
+    status delete_account(uint32_t& stat_code);
 
 #ifdef TESTING
     void test_registration();
@@ -40,20 +44,20 @@ public:
 #endif
     // Send the message `msg` to the server.
     // Throws `std::runtime_error` if the message cannot be sent (fatal).
-    void send_msg(std::shared_ptr<chat262::message> msg) const;
+    status send_msg(std::shared_ptr<chat262::message> msg) const;
 
     // Receive a message header from the server into `hdr`.
     // Throws `std::runtime_error` if the header cannot be received (fatal).
-    void recv_hdr(chat262::message_header& hdr) const;
+    status recv_hdr(chat262::message_header& hdr) const;
 
     // Receive a message body of length `body_len` from the server into `data`.
     // `body_len` should be chosen depending on the header that was received
     // first.
     // Throws `std::runtime_error` if the body cannot be received (fatal).
-    void recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
+    status recv_body(uint32_t body_len, std::vector<uint8_t>& data) const;
 
-    void validate_hdr(const chat262::message_header& hdr,
-                      const chat262::message_type& expected);
+    status validate_hdr(const chat262::message_header& hdr,
+                        const chat262::message_type& expected) const;
 
     // Connected socket file descriptor
     int server_fd_;

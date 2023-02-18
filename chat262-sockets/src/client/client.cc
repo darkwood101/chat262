@@ -45,184 +45,274 @@ status client::connect_server(const uint32_t n_ip_addr) {
     return status::ok;
 }
 
-uint32_t client::login(const std::string& username,
-                       const std::string& password) {
+status client::login(const std::string& username,
+                     const std::string& password,
+                     uint32_t& stat_code) {
     auto msg = chat262::login_request::serialize(username, password);
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_login_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_login_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::login_response::deserialize(body, stat_code) != status::ok) {
-        throw std::runtime_error(
-            "Login response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::login_response::deserialize(body, stat_code);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-uint32_t client::registration(const std::string& username,
-                              const std::string& password) {
+status client::registration(const std::string& username,
+                            const std::string& password,
+                            uint32_t& stat_code) {
     auto msg = chat262::registration_request::serialize(username, password);
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_registration_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_registration_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::registration_response::deserialize(body, stat_code) !=
-        status::ok) {
-        throw std::runtime_error(
-            "Registration response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::registration_response::deserialize(body, stat_code);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-uint32_t client::logout() {
+status client::logout(uint32_t& stat_code) {
     auto msg = chat262::logout_request::serialize();
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_logout_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_logout_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::logout_response::deserialize(body, stat_code) != status::ok) {
-        throw std::runtime_error(
-            "Logout response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::logout_response::deserialize(body, stat_code);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-uint32_t client::list_accounts(const std::string& pattern,
-                               std::vector<std::string>& usernames) {
+status client::list_accounts(const std::string& pattern,
+                             uint32_t& stat_code,
+                             std::vector<std::string>& usernames) {
     auto msg = chat262::accounts_request::serialize(pattern);
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_accounts_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_accounts_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::accounts_response::deserialize(body, stat_code, usernames) !=
-        status::ok) {
-        throw std::runtime_error(
-            "Accounts response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::accounts_response::deserialize(body, stat_code, usernames);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-uint32_t client::send_txt(const std::string& recipient,
-                          const std::string& txt) {
+status client::send_txt(const std::string& recipient,
+                        const std::string& txt,
+                        uint32_t& stat_code) {
     auto msg = chat262::send_txt_request::serialize(recipient, txt);
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_send_txt_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_send_txt_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::send_txt_response::deserialize(body, stat_code) !=
-        status::ok) {
-        throw std::runtime_error(
-            "Send text response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::send_txt_response::deserialize(body, stat_code);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-uint32_t client::recv_txt(const std::string& sender, chat& c) {
+status client::recv_txt(const std::string& sender,
+                        uint32_t& stat_code,
+                        chat& c) {
     auto msg = chat262::recv_txt_request::serialize(sender);
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_recv_txt_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_recv_txt_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::recv_txt_response::deserialize(body, stat_code, c) !=
-        status::ok) {
-        throw std::runtime_error(
-            "Receive text response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::recv_txt_response::deserialize(body, stat_code, c);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-uint32_t client::recv_correspondents(std::vector<std::string>& correspondents) {
+status client::recv_correspondents(uint32_t& stat_code,
+                                   std::vector<std::string>& correspondents) {
     auto msg = chat262::correspondents_request::serialize();
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_correspondents_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_correspondents_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
+    }
 
-    uint32_t stat_code;
-    if (chat262::correspondents_response::deserialize(body,
+    s = chat262::correspondents_response::deserialize(body,
                                                       stat_code,
-                                                      correspondents) !=
-        status::ok) {
-        throw std::runtime_error(
-            "Receive text response: Unable to deserialize the message body\n");
+                                                      correspondents);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+    return status::ok;
 }
 
-uint32_t client::delete_account() {
+status client::delete_account(uint32_t& stat_code) {
     auto msg = chat262::delete_request::serialize();
-    send_msg(msg);
+    status s = send_msg(msg);
+    if (s != status::ok) {
+        return s;
+    }
 
     chat262::message_header msg_hdr;
-    recv_hdr(msg_hdr);
-    validate_hdr(msg_hdr, chat262::msgtype_delete_response);
+    s = recv_hdr(msg_hdr);
+    if (s != status::ok) {
+        return s;
+    }
+    s = validate_hdr(msg_hdr, chat262::msgtype_delete_response);
+    if (s != status::ok) {
+        return s;
+    }
 
     std::vector<uint8_t> body;
-    recv_body(msg_hdr.body_len_, body);
-
-    uint32_t stat_code;
-    if (chat262::delete_response::deserialize(body, stat_code) != status::ok) {
-        throw std::runtime_error(
-            "Logout response: Unable to deserialize the message body\n");
+    s = recv_body(msg_hdr.body_len_, body);
+    if (s != status::ok) {
+        return s;
     }
-    return stat_code;
+
+    s = chat262::delete_response::deserialize(body, stat_code);
+    if (s != status::ok) {
+        return s;
+    }
+    return status::ok;
 }
 
-void client::send_msg(std::shared_ptr<chat262::message> msg) const {
+status client::send_msg(std::shared_ptr<chat262::message> msg) const {
     size_t total_sent = 0;
     ssize_t sent = 0;
     size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
     while (total_sent != total_len) {
         sent = write(server_fd_, msg.get(), total_len);
         if (sent < 0) {
-            throw std::runtime_error(std::string("Cannot send the message: ") +
-                                     std::string(strerror(errno)));
+            return status::send_error;
         }
         total_sent += sent;
     }
+    return status::ok;
 }
 
-void client::recv_hdr(chat262::message_header& hdr) const {
+status client::recv_hdr(chat262::message_header& hdr) const {
     std::vector<uint8_t> hdr_data;
     hdr_data.resize(sizeof(chat262::message_header));
     size_t total_read = 0;
@@ -231,50 +321,37 @@ void client::recv_hdr(chat262::message_header& hdr) const {
         readed =
             read(server_fd_, hdr_data.data(), sizeof(chat262::message_header));
         if (readed < 0) {
-            throw std::runtime_error(std::string("Cannot send the message: ") +
-                                     std::string(strerror(errno)) +
-                                     std::string("\n"));
+            return status::receive_error;
         } else if (readed == 0) {
-            throw std::runtime_error(
-                "Cannot send the message: Server closed the connection\n");
+            return status::closed_connection;
         }
         total_read += readed;
     }
     // This should always succeed
     chat262::message_header::deserialize(hdr_data, hdr);
+    return status::ok;
 }
 
-void client::recv_body(uint32_t body_len, std::vector<uint8_t>& data) const {
+status client::recv_body(uint32_t body_len, std::vector<uint8_t>& data) const {
     data.resize(body_len);
     size_t total_read = 0;
     ssize_t readed = 0;
     while (total_read != body_len) {
         readed = read(server_fd_, data.data(), body_len);
         if (readed < 0) {
-            throw std::runtime_error(std::string("Cannot send the message: ") +
-                                     std::string(strerror(errno)) +
-                                     std::string("\n"));
+            return status::receive_error;
         } else if (readed == 0) {
-            throw std::runtime_error(
-                "Cannot send the message: Server closed the connection\n");
+            return status::closed_connection;
         }
         total_read += readed;
     }
+    return status::ok;
 }
 
-void client::validate_hdr(const chat262::message_header& hdr,
-                          const chat262::message_type& expected) {
-    if (hdr.version_ != chat262::version) {
-        throw std::runtime_error(std::string("Unsupported protocol version ") +
-                                 std::to_string(hdr.version_) +
-                                 std::string("\n"));
-    } else if (hdr.type_ != expected) {
-        throw std::runtime_error(
-            std::string("Wrong message type, expected ") +
-            std::string(chat262::message_type_lookup(expected)) +
-            std::string(" (") + std::to_string(expected) +
-            std::string("), got ") +
-            std::string(chat262::message_type_lookup(hdr.type_)) +
-            std::string(" (") + std::to_string(hdr.type_) + std::string(")\n"));
+status client::validate_hdr(const chat262::message_header& hdr,
+                            const chat262::message_type& expected) const {
+    if (hdr.version_ != chat262::version || hdr.type_ != expected) {
+        return status::header_error;
     }
+    return status::ok;
 }

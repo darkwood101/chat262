@@ -85,7 +85,10 @@ status interface::start(const uint32_t n_ip_addr) {
                 next_ = screen_type::login_registration;
                 break;
             }
-            stat_code_ = client_.login(username_, password_);
+            s = client_.login(username_, password_, stat_code_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ == chat262::status_code_ok) {
                 next_ = screen_type::main_menu;
             } else {
@@ -115,7 +118,10 @@ status interface::start(const uint32_t n_ip_addr) {
                 next_ = screen_type::login_registration;
                 break;
             }
-            stat_code_ = client_.registration(username_, password_);
+            s = client_.registration(username_, password_, stat_code_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ == chat262::status_code_ok) {
                 next_ = screen_type::registration_success;
             } else {
@@ -125,7 +131,10 @@ status interface::start(const uint32_t n_ip_addr) {
 
         case screen_type::registration_success:
             registration_success();
-            stat_code_ = client_.login(username_, password_);
+            s = client_.login(username_, password_, stat_code_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ == chat262::status_code_ok) {
                 next_ = screen_type::main_menu;
             } else {
@@ -163,7 +172,10 @@ status interface::start(const uint32_t n_ip_addr) {
                 break;
             case 3:
             case ESCAPE:
-                stat_code_ = client_.logout();
+                s = client_.logout(stat_code_);
+                if (s != status::ok) {
+                    return s;
+                }
                 if (stat_code_ == chat262::status_code_ok) {
                     next_ = screen_type::login_registration;
                 }
@@ -176,7 +188,10 @@ status interface::start(const uint32_t n_ip_addr) {
 
         case screen_type::open_chats:
             open_chats();
-            stat_code_ = client_.recv_correspondents(all_correspondents_);
+            s = client_.recv_correspondents(stat_code_, all_correspondents_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ == chat262::status_code_ok) {
                 next_ = screen_type::open_chats_success;
             } else {
@@ -213,7 +228,10 @@ status interface::start(const uint32_t n_ip_addr) {
 
         case screen_type::recv_txt:
             recv_txt();
-            stat_code_ = client_.recv_txt(correspondent_, curr_chat_);
+            s = client_.recv_txt(correspondent_, stat_code_, curr_chat_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ == chat262::status_code_ok) {
                 next_ = screen_type::send_txt;
             } else {
@@ -251,13 +269,19 @@ status interface::start(const uint32_t n_ip_addr) {
                 break;
             }
             // Actually send the text
-            stat_code_ = client_.send_txt(correspondent_, partial_txt_);
+            s = client_.send_txt(correspondent_, partial_txt_, stat_code_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ != chat262::status_code_ok) {
                 next_ = screen_type::send_txt_fail;
                 break;
             }
             // Receive updated texts
-            stat_code_ = client_.recv_txt(correspondent_, curr_chat_);
+            s = client_.recv_txt(correspondent_, stat_code_, curr_chat_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ != chat262::status_code_ok) {
                 next_ = screen_type::recv_txt_fail;
             }
@@ -274,7 +298,10 @@ status interface::start(const uint32_t n_ip_addr) {
                 next_ = screen_type::main_menu;
                 break;
             }
-            stat_code_ = client_.list_accounts(pattern_, matched_usernames_);
+            s = client_.list_accounts(pattern_, stat_code_, matched_usernames_);
+            if (s != status::ok) {
+                return s;
+            }
             if (stat_code_ == chat262::status_code_ok) {
                 next_ = screen_type::search_accounts_success;
             } else {
@@ -300,7 +327,10 @@ status interface::start(const uint32_t n_ip_addr) {
                 next_ = screen_type::main_menu;
                 break;
             case 1:
-                stat_code_ = client_.delete_account();
+                s = client_.delete_account(stat_code_);
+                if (s != status::ok) {
+                    return s;
+                }
                 if (stat_code_ == chat262::status_code_ok) {
                     next_ = screen_type::delete_account_success;
                 } else {
@@ -342,7 +372,7 @@ void interface::background_listener() {
         }
         lock.unlock();
         size_t prev_size = curr_chat_.texts_.size();
-        client_.recv_txt(correspondent_, curr_chat_);
+        client_.recv_txt(correspondent_, stat_code_, curr_chat_);
         lock.lock();
         if (prev_size == curr_chat_.texts_.size()) {
             continue;
@@ -838,6 +868,7 @@ void interface::get_user_txt() {
             return;
         case keypress::type::regular:
             std::cout << k.c_ << std::flush;
+            partial_txt_.push_back(k.c_);
             break;
         case keypress::type::escape:
             hit_escape_ = true;

@@ -5,6 +5,7 @@
 #include "client.h"
 #include "common.h"
 
+#include <condition_variable>
 #include <cstdint>
 #include <iostream>
 #include <mutex>
