@@ -32,7 +32,8 @@ int main() {
     assert(stat_code == 0);
     assert(c.registration("otheruser", "password", stat_code) == status::ok);
     assert(stat_code == 0);
-    assert(c.registration("JoP4fqkvVpBQ", "                ", stat_code) == status::ok);
+    assert(c.registration("JoP4fqkvVpBQ", "                ", stat_code) ==
+           status::ok);
     assert(stat_code == 0);
     assert(c.registration("Ea8jjQa2hzom", "*******", stat_code) == status::ok);
     assert(stat_code == 0);
@@ -52,7 +53,8 @@ int main() {
     assert(c.login("", "", stat_code) == status::ok);
     assert(stat_code == 1);
     // Correct credentials
-    assert(c.login("JoP4fqkvVpBQ", "                ", stat_code) == status::ok);
+    assert(c.login("JoP4fqkvVpBQ", "                ", stat_code) ==
+           status::ok);
     assert(stat_code == 0);
     assert(c.login("3_BKn.4C", "pswd", stat_code) == status::ok);
     assert(stat_code == 0);

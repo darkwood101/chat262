@@ -9,61 +9,61 @@ namespace chat262 {
 
 const char* message_type_lookup(uint16_t msg_type) {
     switch (msg_type) {
-        case msgtype_registration_request:
-            return "Registration request";
-        case msgtype_registration_response:
-            return "Registration response";
-        case msgtype_login_request:
-            return "Login request";
-        case msgtype_login_response:
-            return "Login response";
-        case msgtype_logout_request:
-            return "Logout request";
-        case msgtype_logout_response:
-            return "Logout response";
-        case msgtype_accounts_request:
-            return "List accounts request";
-        case msgtype_accounts_response:
-            return "List accounts response";
-        case msgtype_send_txt_request:
-            return "Send text request";
-        case msgtype_send_txt_response:
-            return "Send text response";
-        case msgtype_recv_txt_request:
-            return "Receive text request";
-        case msgtype_recv_txt_response:
-            return "Receive text response";
-        case msgtype_correspondents_request:
-            return "Correspondents request";
-        case msgtype_correspondents_response:
-            return "Correspondents response";
-        case msgtype_delete_request:
-            return "Delete account request";
-        case msgtype_delete_response:
-            return "Delete account response";
-        case msgtype_wrong_version_response:
-            return "Wrong version response";
-        default:
-            return "Unknown";
+    case msgtype_registration_request:
+        return "Registration request";
+    case msgtype_registration_response:
+        return "Registration response";
+    case msgtype_login_request:
+        return "Login request";
+    case msgtype_login_response:
+        return "Login response";
+    case msgtype_logout_request:
+        return "Logout request";
+    case msgtype_logout_response:
+        return "Logout response";
+    case msgtype_accounts_request:
+        return "List accounts request";
+    case msgtype_accounts_response:
+        return "List accounts response";
+    case msgtype_send_txt_request:
+        return "Send text request";
+    case msgtype_send_txt_response:
+        return "Send text response";
+    case msgtype_recv_txt_request:
+        return "Receive text request";
+    case msgtype_recv_txt_response:
+        return "Receive text response";
+    case msgtype_correspondents_request:
+        return "Correspondents request";
+    case msgtype_correspondents_response:
+        return "Correspondents response";
+    case msgtype_delete_request:
+        return "Delete account request";
+    case msgtype_delete_response:
+        return "Delete account response";
+    case msgtype_wrong_version_response:
+        return "Wrong version response";
+    default:
+        return "Unknown";
     }
 }
 
 const char* status_code_lookup(uint32_t stat_code) {
     switch (stat_code) {
-        case status_code_ok:
-            return "OK";
-        case status_code_invalid_credentials:
-            return "Invalid credentials";
-        case status_code_user_exists:
-            return "Username already exists";
-        case status_code_user_noexist:
-            return "User does not exist";
-        case status_code_username_invalid:
-            return "Invalid username";
-        case status_code_password_invalid:
-            return "Invalid password";
-        default:
-            return "Unknown";
+    case status_code_ok:
+        return "OK";
+    case status_code_invalid_credentials:
+        return "Invalid credentials";
+    case status_code_user_exists:
+        return "Username already exists";
+    case status_code_user_noexist:
+        return "User does not exist";
+    case status_code_username_invalid:
+        return "Invalid username";
+    case status_code_password_invalid:
+        return "Invalid password";
+    default:
+        return "Unknown";
     }
 }
 

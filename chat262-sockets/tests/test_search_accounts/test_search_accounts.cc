@@ -12,11 +12,11 @@
 // We will abuse the implementation detail that returned usernames are ordered
 // alphabetically. This is NOT guaranteed by the Chat 262 protocol.
 constexpr const char* test_usernames[] = {"1234",
-                                "3_BKn.4C",
-                                "Ea8jjQa2hzom",
-                                "JoP4fqkvVpBQ",
-                                "otheruser",
-                                "testuser"};
+                                          "3_BKn.4C",
+                                          "Ea8jjQa2hzom",
+                                          "JoP4fqkvVpBQ",
+                                          "otheruser",
+                                          "testuser"};
 
 constexpr uint32_t n_ip_addr = 0x0100007F;
 
@@ -42,7 +42,8 @@ int main() {
     assert(stat_code == 0);
     assert(c.registration("otheruser", "password", stat_code) == status::ok);
     assert(stat_code == 0);
-    assert(c.registration("JoP4fqkvVpBQ", "                ", stat_code) == status::ok);
+    assert(c.registration("JoP4fqkvVpBQ", "                ", stat_code) ==
+           status::ok);
     assert(stat_code == 0);
     assert(c.registration("Ea8jjQa2hzom", "*******", stat_code) == status::ok);
     assert(stat_code == 0);
@@ -73,7 +74,9 @@ int main() {
     // OK if no match, but returns no usernames
     assert(c.login("1234", "*raR*rF8KbRGhTa", stat_code) == status::ok);
     assert(stat_code == 0);
-    assert(c.list_accounts("**completelynonexistent", stat_code, matched_usernames) == status::ok);
+    assert(c.list_accounts("**completelynonexistent",
+                           stat_code,
+                           matched_usernames) == status::ok);
     assert(stat_code == 0);
     assert(matched_usernames.size() == 0);
 
@@ -85,15 +88,20 @@ int main() {
     assert(strcmp(matched_usernames[1].c_str(), "testuser") == 0);
 
     // After registration, should work
-    assert(c.registration("iamcompletelynonexistent", "password", stat_code) == status::ok);
+    assert(c.registration("iamcompletelynonexistent", "password", stat_code) ==
+           status::ok);
     assert(stat_code == 0);
-    assert(c.list_accounts("**completelynonexistent", stat_code, matched_usernames) == status::ok);
+    assert(c.list_accounts("**completelynonexistent",
+                           stat_code,
+                           matched_usernames) == status::ok);
     assert(stat_code == 0);
     assert(matched_usernames.size() == 1);
-    assert(strcmp(matched_usernames[0].c_str(), "iamcompletelynonexistent") == 0);
+    assert(strcmp(matched_usernames[0].c_str(), "iamcompletelynonexistent") ==
+           0);
 
     // Almost full match
-    assert(c.list_accounts("Ea8jjQa2hzo", stat_code, matched_usernames) == status::ok);
+    assert(c.list_accounts("Ea8jjQa2hzo", stat_code, matched_usernames) ==
+           status::ok);
     assert(stat_code == 0);
     assert(matched_usernames.size() == 0);
 }

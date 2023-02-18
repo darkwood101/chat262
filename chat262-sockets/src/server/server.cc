@@ -187,35 +187,35 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
         logger::log_out("%s", "Received the body\n");
 
         switch (msg_hdr.type_) {
-            case chat262::msgtype_registration_request:
-                handle_registration(client_fd, body);
-                break;
-            case chat262::msgtype_login_request:
-                handle_login(client_fd, body);
-                break;
-            case chat262::msgtype_logout_request:
-                handle_logout(client_fd, body);
-                break;
-            case chat262::msgtype_accounts_request:
-                handle_list_accounts(client_fd, body);
-                break;
-            case chat262::msgtype_send_txt_request:
-                handle_send_txt(client_fd, body);
-                break;
-            case chat262::msgtype_recv_txt_request:
-                handle_recv_txt(client_fd, body);
-                break;
-            case chat262::msgtype_correspondents_request:
-                handle_correspondents(client_fd, body);
-                break;
-            case chat262::msgtype_delete_request:
-                handle_delete(client_fd, body);
-                break;
-            default:
-                logger::log_err("Unknown message type %" PRIu16 "\n",
-                                msg_hdr.type_);
-                handle_invalid_type(client_fd);
-                break;
+        case chat262::msgtype_registration_request:
+            handle_registration(client_fd, body);
+            break;
+        case chat262::msgtype_login_request:
+            handle_login(client_fd, body);
+            break;
+        case chat262::msgtype_logout_request:
+            handle_logout(client_fd, body);
+            break;
+        case chat262::msgtype_accounts_request:
+            handle_list_accounts(client_fd, body);
+            break;
+        case chat262::msgtype_send_txt_request:
+            handle_send_txt(client_fd, body);
+            break;
+        case chat262::msgtype_recv_txt_request:
+            handle_recv_txt(client_fd, body);
+            break;
+        case chat262::msgtype_correspondents_request:
+            handle_correspondents(client_fd, body);
+            break;
+        case chat262::msgtype_delete_request:
+            handle_delete(client_fd, body);
+            break;
+        default:
+            logger::log_err("Unknown message type %" PRIu16 "\n",
+                            msg_hdr.type_);
+            handle_invalid_type(client_fd);
+            break;
         }
     }
     database_.logout();
