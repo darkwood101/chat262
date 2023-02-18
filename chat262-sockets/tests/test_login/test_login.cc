@@ -61,7 +61,8 @@ void client::test_login() {
         assert(hdr.type_ == 202);
         assert(hdr.body_len_ == 4);
         recv_body(hdr.body_len_, data);
-        chat262::login_response::deserialize(data, stat_code);
+        assert(chat262::login_response::deserialize(data, stat_code) ==
+               status::ok);
         return stat_code;
     };
 
@@ -69,7 +70,8 @@ void client::test_login() {
     assert(send_login_request("testuser", "password") == 0);
     // Invalid credentials
     assert(send_login_request("testuser", "wrongpassword") == 1);
-    // Even if username and password are ill-formed, should still get invalid credentials
+    // Even if username and password are ill-formed, should still get invalid
+    // credentials
     assert(send_login_request("", "") == 1);
     // Correct credentials
     assert(send_login_request("JoP4fqkvVpBQ", "                ") == 0);

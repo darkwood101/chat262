@@ -39,7 +39,8 @@ void client::test_logout() {
         assert(hdr.type_ == 201);
         assert(hdr.body_len_ == 4);
         recv_body(hdr.body_len_, data);
-        chat262::registration_response::deserialize(data, stat_code);
+        assert(chat262::registration_response::deserialize(data, stat_code) ==
+               status::ok);
         return stat_code;
     };
 
