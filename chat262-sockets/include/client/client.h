@@ -18,6 +18,7 @@ public:
 
 #ifdef TESTING
     void test_registration();
+    void test_login();
 #endif
 
 #ifndef TESTING

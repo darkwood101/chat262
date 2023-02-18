@@ -105,6 +105,9 @@ void client::test_registration() {
                         "aA47eCHHuCgibXJhL") == 4);
     assert(send_request("mk8qhBZoABLReQJUixACWE7xE3nqRxtXp76jgpgNK6eD3g7C2jY",
                         "ok") == 4);
+
+    // Try registering an existing user again
+    assert(send_request("3_BKn.4C", "pswd") == 2);
 }
 
 int main() {

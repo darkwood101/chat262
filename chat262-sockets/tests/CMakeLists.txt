@@ -29,3 +29,4 @@ target_include_directories(
 enable_testing()
 
 add_subdirectory(test_registration)
+add_subdirectory(test_login)
