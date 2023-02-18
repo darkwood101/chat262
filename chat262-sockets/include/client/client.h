@@ -20,6 +20,7 @@ public:
     void test_registration();
     void test_login();
     void test_logout();
+    void test_search_accounts();
 #endif
 
 #ifndef TESTING
