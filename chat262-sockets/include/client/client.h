@@ -21,6 +21,7 @@ public:
     void test_login();
     void test_logout();
     void test_search_accounts();
+    void test_send_txt();
 #endif
 
 #ifndef TESTING
