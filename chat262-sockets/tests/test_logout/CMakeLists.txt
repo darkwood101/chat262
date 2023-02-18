@@ -5,7 +5,7 @@ add_executable(
 target_link_libraries(
     test_logout
     PRIVATE
-    test-client
+    client
     server
     chat262_protocol
 )
