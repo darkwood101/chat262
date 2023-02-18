@@ -231,7 +231,8 @@ status interface::start(const uint32_t n_ip_addr) {
             partial_txt_.clear();
             draw_send_txt();
 
-            // Start a background listener thread to periodically ask for new texts
+            // Start a background listener thread to periodically ask for new
+            // texts
             listener_should_exit_ = false;
             std::thread listener(&interface::background_listener, this);
 
