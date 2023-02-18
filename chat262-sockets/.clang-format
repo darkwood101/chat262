@@ -35,7 +35,7 @@ Cpp11BracedListStyle: true
 DeriveLineEnding: false
 DerivePointerAlignment: false
 IncludeBlocks: Regroup
-IndentCaseLabels: true
+IndentCaseLabels: false
 IndentGotoLabels: false
 IndentPPDirectives: BeforeHash
 IndentWidth: 4
