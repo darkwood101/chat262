@@ -179,17 +179,19 @@ bool database::wildcard_match(const std::string& pattern,
     size_t pattern_idx = 0;
     size_t last_star = static_cast<size_t>(-1);
     size_t saved_target = 0;
-    while (target_idx < target.size() && pattern_idx < pattern.size()) {
+    while (target_idx < target.length()) {
         // If an explicit match, we are certain we can move forward with both
         // pattern and target.
-        if (target[target_idx] == pattern[pattern_idx]) {
+        if (pattern_idx < pattern.length() &&
+            target[target_idx] == pattern[pattern_idx]) {
             ++target_idx;
             ++pattern_idx;
         }
         // If a star, let's assume that the star consumes no characters. If
         // we're wrong, we'll go back. So save the star and the corresponding
         // target index.
-        else if (pattern[pattern_idx] == '*') {
+        else if (pattern_idx < pattern.length() &&
+                 pattern[pattern_idx] == '*') {
             last_star = pattern_idx;
             ++pattern_idx;
             saved_target = target_idx;
