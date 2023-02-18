@@ -27,7 +27,6 @@ void client::test_send_txt() {
     chat262::message_header hdr;
     std::vector<uint8_t> data;
     uint32_t stat_code;
-    std::vector<std::string> usernames;
 
     auto send_reg_request = [&](const char* username, const char* password) {
         msg = chat262::registration_request::serialize(username, password);
