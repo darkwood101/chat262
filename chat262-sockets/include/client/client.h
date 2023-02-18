@@ -4,7 +4,6 @@
 #include "chat.h"
 #include "chat262_protocol.h"
 #include "common.h"
-#include "interface.h"
 
 #include <condition_variable>
 #include <iostream>
@@ -13,8 +12,18 @@
 
 class client {
 public:
-    // Run the client with command-line arguments
-    status run(int argc, char const* const* argv);
+    status connect_server(const uint32_t n_ip_addr);
+
+    uint32_t login(const std::string& username, const std::string& password);
+    uint32_t registration(const std::string& username,
+                          const std::string& password);
+    uint32_t logout();
+    uint32_t list_accounts(const std::string& pattern,
+                           std::vector<std::string>& usernames);
+    uint32_t send_txt(const std::string& recipient, const std::string& txt);
+    uint32_t recv_txt(const std::string& sender, chat& c);
+    uint32_t recv_correspondents(std::vector<std::string>& correspondents);
+    uint32_t delete_account();
 
 #ifdef TESTING
     void test_registration();
@@ -29,21 +38,6 @@ private:
 #else
 public:
 #endif
-    // Command-line arguments
-    struct cmdline_args {
-        bool help_;
-        uint32_t n_ip_addr_;
-    };
-    // Parse command-line arguments (`argc`, `argv`).
-    // Returns the filled `cmdline_args` structure on success.
-    // Throws `std::invalid_argument` exception on error.
-    cmdline_args parse_args(const int argc, char const* const* argv) const;
-
-    // Print usage information to standard error
-    void usage(char const* prog) const;
-
-    status connect_server();
-
     // Send the message `msg` to the server.
     // Throws `std::runtime_error` if the message cannot be sent (fatal).
     void send_msg(std::shared_ptr<chat262::message> msg) const;
@@ -60,28 +54,6 @@ public:
 
     void validate_hdr(const chat262::message_header& hdr,
                       const chat262::message_type& expected);
-
-    void start_ui();
-    void background_listener(const std::string& me,
-                             const std::string& correspondent,
-                             chat& curr_chat,
-                             const std::string& partial_txt);
-    uint32_t login(const std::string& username, const std::string& password);
-    uint32_t registration(const std::string& username,
-                          const std::string& password);
-    uint32_t logout();
-    uint32_t list_accounts(const std::string& pattern,
-                           std::vector<std::string>& usernames);
-    uint32_t send_txt(const std::string& recipient, const std::string& txt);
-    uint32_t recv_txt(const std::string& sender, chat& c);
-    uint32_t recv_correspondents(std::vector<std::string>& correspondents);
-    uint32_t delete_account();
-
-    interface interface_;
-
-    std::mutex listener_m_;
-    std::condition_variable listener_cv_;
-    bool listener_should_exit_;
 
     // Connected socket file descriptor
     int server_fd_;
