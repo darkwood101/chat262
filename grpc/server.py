@@ -20,7 +20,6 @@ def loadData():
             # "user_pass": {}, # key: username (str), value: password (str)
             # "login_status": {}, # key: username (str), value: login status (bool)
             # "active_streams": dict(), # whether we can talk to a user
-            # "messages": []
             "passwords": dict(),
             "messages": defaultdict(list)
             # "messages": {} # key: sender_username, value: dict{key: sender, value: list of messages}
@@ -46,7 +45,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             storeData(db)
             response = chat_pb2.LoginResponse(success=True, message = "Registration successful.")
         else:
-            response = chat_pb2.LoginResponse(success=False, message = "Username already taken.")
+            response = chat_pb2.LoginResponse(success=False, message = "\n The username you requested is already taken.")
         return response
 
     def Login(self, request, context):
@@ -56,16 +55,9 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         if u in db['passwords'] and p == db['passwords'][u]:
             # db['login_status'][u] = True
             # storeData(db)
-
-            # stream = context.otherside_context().wrap(grpc.server_streaming).invoke_rpc()
-            # db["active_streams"][u] = stream
-            # for m in db["messages"]:
-            #     if m.receiver == u:
-            #         stream.send_message(m)
-
             response = chat_pb2.LoginResponse(success=True, message = "Login successful.")
         else:
-            response = chat_pb2.LoginResponse(success=False, message = "Invalid username or password.")
+            response = chat_pb2.LoginResponse(success=False, message = "\nERROR: Invalid username or password. Please try again.")
         return response
 
 class ChatService(chat_pb2_grpc.AuthServiceServicer):
@@ -81,13 +73,11 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
 
         # make sure both users are registered + sender is logged in
         if s in curr_users and r in curr_users:
-
             print(f'received message from {s} to {r}')
             db['messages'][r].append(request)
-
             response = chat_pb2.LoginResponse(success = True, message = "Message successfully added.")
         else:
-            response = chat_pb2.LoginResponse(success = False, message = "Error in sending message - either sender or receiver are not in username database")
+            response = chat_pb2.LoginResponse(success = False, message = "\nERROR: either sender or receiver are not in username database. Please try again!\n")
         return response
 
     def GetUsers(self, request, context):
@@ -101,6 +91,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
             yield chat_pb2.ChatMessage(sender = m.sender, body = m.body)
             db['messages'][r].pop(0)
             storeData(db)
+
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
