@@ -82,4 +82,6 @@ int main() {
     assert(stat_code == 1);
     assert(c.logout(stat_code) == status::ok);
     assert(stat_code == 6);
+
+    return EXIT_SUCCESS;
 }

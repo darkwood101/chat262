@@ -104,4 +104,6 @@ int main() {
            status::ok);
     assert(stat_code == 0);
     assert(matched_usernames.size() == 0);
+
+    return EXIT_SUCCESS;
 }

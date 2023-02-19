@@ -74,4 +74,6 @@ int main() {
     assert(stat_code == 6);
     assert(c.send_txt("", "", stat_code) == status::ok);
     assert(stat_code == 6);
+
+    return EXIT_SUCCESS;
 }
