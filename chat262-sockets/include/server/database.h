@@ -10,6 +10,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class database {
@@ -27,7 +28,7 @@ public:
 
     // Attempts to register a user with `username` and `password`.
     // @return ok      - A user is successfully created.
-    // @return error   - `username` already exists.
+    // @return error   - `username` already exists or has existed.
     status registration(const std::string& username,
                         const std::string& password);
 
@@ -98,6 +99,9 @@ private:
 
     // Map from usernames to users
     std::map<std::string, user> users_;
+
+    // A set of all usernames ever registered with the service
+    std::unordered_set<std::string> historical_users_;
 
     // After a user logs in, each thread is in charge of exactly one user.
     // `threads_` maps unique thread IDs to usernames, so that the server

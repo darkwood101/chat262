@@ -30,8 +30,9 @@ status database::registration(const std::string& username,
                               const std::string& password) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    // Check if the username already exists
-    if (users_.find(username) != users_.end()) {
+    // Check if the username already exists or has existed before
+    if (users_.find(username) != users_.end() ||
+        historical_users_.find(username) != historical_users_.end()) {
         return status::error;
     }
 
@@ -39,6 +40,7 @@ status database::registration(const std::string& username,
     u.username_ = username;
     u.password_ = password;
     users_.insert({username, u});
+    historical_users_.insert(username);
 
     return status::ok;
 }
