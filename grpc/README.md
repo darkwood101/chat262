@@ -2,7 +2,7 @@
 
 - [1. Installation and Configuration](#1-installation)
 - [2. Building and Running](#2-build)
-- [3. Implementation](#3-implementation)
+- [3. Implementation and Functionality](#3-implementation)
 
 
 ## 1. Installation and Configuration
@@ -41,7 +41,7 @@ $ python client.py [IP-ADDRESS]
 ```
 If no IP address is provided, then the default local host is used. 
 
-## 3. Implementation
+## 3. Implementation and Functionality
 
 The services and message types are defined in the protos/chat.proto file. In particular, we define two services (AuthService and ChatService) and protocol buffer message type definitions for all the request and response types used in our service methods. AuthService handles register, login, and delete account requests and ChatService handles send/receive message requests and getting all the current users. We define message types for Users, Login requests/responses, Register request/responses, Send request/responses, and ChatMessage.
 
