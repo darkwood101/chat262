@@ -43,6 +43,10 @@ const char* message_type_lookup(uint16_t msg_type) {
         return "Delete account response";
     case msgtype_wrong_version_response:
         return "Wrong version response";
+    case msgtype_invalid_type_response:
+        return "Invalid type response";
+    case msgtype_invalid_body_response:
+        return "Invalid body response";
     default:
         return "Unknown";
     }
@@ -875,6 +879,23 @@ std::shared_ptr<message> invalid_type_response::serialize() {
 }
 
 status invalid_type_response::deserialize(const std::vector<uint8_t>& data) {
+    if (data.size() != 0) {
+        return status::error;
+    }
+    return status::ok;
+}
+
+std::shared_ptr<message> invalid_body_response::serialize() {
+    std::shared_ptr<message> msg(
+        static_cast<message*>(malloc(sizeof(message_header))),
+        free);
+    msg->hdr_.version_ = e_htole16(version);
+    msg->hdr_.type_ = e_htole16(msgtype_invalid_body_response);
+    msg->hdr_.body_len_ = e_htole32(static_cast<uint32_t>(0));
+    return msg;
+}
+
+status invalid_body_response::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() != 0) {
         return status::error;
     }

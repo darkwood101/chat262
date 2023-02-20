@@ -40,7 +40,8 @@ enum message_type : uint16_t {
 
     // Error server responses
     msgtype_wrong_version_response = 301,
-    msgtype_invalid_type_response = 302
+    msgtype_invalid_type_response = 302,
+    msgtype_invalid_body_response = 303
 };
 
 // Server response status codes
@@ -342,6 +343,11 @@ struct wrong_version_response {
 };
 
 struct invalid_type_response {
+    static std::shared_ptr<message> serialize();
+    static status deserialize(const std::vector<uint8_t>& data);
+};
+
+struct invalid_body_response {
     static std::shared_ptr<message> serialize();
     static status deserialize(const std::vector<uint8_t>& data);
 };
