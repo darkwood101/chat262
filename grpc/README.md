@@ -39,5 +39,9 @@ To start a client:
 ```console
 $ python client.py [IP-ADDRESS]
 ```
+If no IP address is provided, then the default local host is used. 
 
+## 3. Implementation
+
+The <pre>chat.proto</pre> 
 
