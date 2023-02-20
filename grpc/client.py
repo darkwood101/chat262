@@ -4,9 +4,22 @@ import chat_pb2_grpc
 # import login
 import tkinter as tk
 import threading
+import sys
+ 
+# total arguments
+n_arg = len(sys.argv)
+# print(n_arg)
+# print("Total arguments passed:", n)
+ 
+# Arguments passed
+channel_name = ''
+if n_arg == 1:
+    channel_name = 'localhost:50051'
+elif n_arg == 2:
+    channel_name = sys.argv[0]
 
 # 10.250.143.105:50051
-channel = grpc.insecure_channel('localhost:50051')
+channel = grpc.insecure_channel(channel_name)
 auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
 chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
