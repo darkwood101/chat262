@@ -74,7 +74,7 @@ const char* status_code_lookup(uint32_t stat_code) {
 status message_header::deserialize(const std::vector<uint8_t>& data,
                                    message_header& hdr) {
     if (data.size() != sizeof(message_header)) {
-        return status::error;
+        return status::body_error;
     }
     memcpy(&hdr, data.data(), sizeof(message_header));
     hdr.version_ = e_le16toh(hdr.version_);
@@ -110,7 +110,7 @@ status registration_request::deserialize(const std::vector<uint8_t>& data,
                                          std::string& password) {
     // Ensure we can at least read username and password length
     if (data.size() < sizeof(registration_request)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -124,7 +124,7 @@ status registration_request::deserialize(const std::vector<uint8_t>& data,
 
     // Cannot proceed if there is a mismatch of size
     if (2 * sizeof(uint32_t) + user_len + pass_len != data.size()) {
-        return status::error;
+        return status::body_error;
     }
 
     username.assign(msg_body + 8, msg_body + 8 + user_len);
@@ -150,7 +150,7 @@ status registration_response::deserialize(const std::vector<uint8_t>& data,
                                           uint32_t& stat_code) {
     // We know the size upfront
     if (data.size() != sizeof(registration_response)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -186,7 +186,7 @@ status login_request::deserialize(const std::vector<uint8_t>& data,
                                   std::string& password) {
     // Ensure we can at least read username and password length
     if (data.size() < sizeof(login_request)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -200,7 +200,7 @@ status login_request::deserialize(const std::vector<uint8_t>& data,
 
     // Cannot proceed if there is a mismatch of size
     if (2 * sizeof(uint32_t) + user_len + pass_len != data.size()) {
-        return status::error;
+        return status::body_error;
     }
 
     username.assign(msg_body + 8, msg_body + 8 + user_len);
@@ -226,7 +226,7 @@ status login_response::deserialize(const std::vector<uint8_t>& data,
                                    uint32_t& stat_code) {
     // We know the size upfront
     if (data.size() != sizeof(login_response)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -248,7 +248,7 @@ std::shared_ptr<message> logout_request::serialize() {
 
 status logout_request::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() != 0) {
-        return status::error;
+        return status::body_error;
     }
     return status::ok;
 }
@@ -270,7 +270,7 @@ status logout_response::deserialize(const std::vector<uint8_t>& data,
                                     uint32_t& stat_code) {
     // We know the size upfront
     if (data.size() != sizeof(logout_response)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -301,7 +301,7 @@ std::shared_ptr<message> accounts_request::serialize(
 status accounts_request::deserialize(const std::vector<uint8_t>& data,
                                      std::string& pattern) {
     if (data.size() < sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -310,7 +310,7 @@ status accounts_request::deserialize(const std::vector<uint8_t>& data,
     uint32_t pattern_len = e_le32toh(pattern_len_le);
 
     if (sizeof(uint32_t) + pattern_len != data.size()) {
-        return status::error;
+        return status::body_error;
     }
 
     pattern.assign(msg_body + 4, msg_body + 4 + pattern_len);
@@ -368,7 +368,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
                                       std::vector<std::string>& usernames) {
     // Make sure we can read the status code
     if (data.size() < sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     const uint8_t* msg_body = data.data();
@@ -385,7 +385,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
 
     // Make sure we can read the number of accounts
     if (data.size() < 2 * sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     // Copy the number of accounts
@@ -397,7 +397,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     // Make sure we can read the username lengths
     if (data.size() <
         2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     // Store all username lengths and compute total username length
@@ -416,7 +416,7 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     // Make sure we can read all usernames
     if (data.size() < 2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t) +
                           total_u_len) {
-        return status::error;
+        return status::body_error;
     }
 
     // Copy all usernames
@@ -456,7 +456,7 @@ status send_txt_request::deserialize(const std::vector<uint8_t>& data,
                                      std::string& recipient,
                                      std::string& txt) {
     if (data.size() < sizeof(send_txt_request)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -470,7 +470,7 @@ status send_txt_request::deserialize(const std::vector<uint8_t>& data,
 
     // Cannot proceed if there is a mismatch of size
     if (2 * sizeof(uint32_t) + recipient_len + txt_len != data.size()) {
-        return status::error;
+        return status::body_error;
     }
 
     recipient.assign(msg_body + 8, msg_body + 8 + recipient_len);
@@ -496,7 +496,7 @@ status send_txt_response::deserialize(const std::vector<uint8_t>& data,
                                       uint32_t& stat_code) {
     // We know the size upfront
     if (data.size() != sizeof(send_txt_response)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -524,7 +524,7 @@ std::shared_ptr<message> recv_txt_request::serialize(
 status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
                                      std::string& sender) {
     if (data.size() < sizeof(recv_txt_request)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -534,7 +534,7 @@ status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
 
     // Cannot proceed if there is a mismatch of size
     if (sizeof(uint32_t) + sender_len != data.size()) {
-        return status::error;
+        return status::body_error;
     }
 
     sender.assign(msg_body + 4, msg_body + 4 + sender_len);
@@ -597,7 +597,7 @@ status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
                                       chat& c) {
     // Make sure we can read the status code
     if (data.size() < sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     const uint8_t* msg_body = data.data();
@@ -614,7 +614,7 @@ status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
 
     // Make sure we can read the number of texts
     if (data.size() < 2 * sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     // Copy the number of texts
@@ -626,7 +626,7 @@ status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
     // Make sure we can read senders and text lengths
     if (data.size() < 2 * sizeof(uint32_t) +
                           num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t))) {
-        return status::error;
+        return status::body_error;
     }
 
     // Store all senders and text lengths, and compute total text length
@@ -651,7 +651,7 @@ status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
     if (data.size() < 2 * sizeof(uint32_t) +
                           num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t)) +
                           total_txt_len) {
-        return status::error;
+        return status::body_error;
     }
 
     // Copy all senders and texts
@@ -678,7 +678,7 @@ std::shared_ptr<message> correspondents_request::serialize() {
 
 status correspondents_request::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() != 0) {
-        return status::error;
+        return status::body_error;
     }
     return status::ok;
 }
@@ -735,7 +735,7 @@ status correspondents_response::deserialize(
     std::vector<std::string>& usernames) {
     // Make sure we can read the status code
     if (data.size() < sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     const uint8_t* msg_body = data.data();
@@ -752,7 +752,7 @@ status correspondents_response::deserialize(
 
     // Make sure we can read the number of accounts
     if (data.size() < 2 * sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     // Copy the number of accounts
@@ -764,7 +764,7 @@ status correspondents_response::deserialize(
     // Make sure we can read the username lengths
     if (data.size() <
         2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t)) {
-        return status::error;
+        return status::body_error;
     }
 
     // Store all username lengths and compute total username length
@@ -783,7 +783,7 @@ status correspondents_response::deserialize(
     // Make sure we can read all usernames
     if (data.size() < 2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t) +
                           total_u_len) {
-        return status::error;
+        return status::body_error;
     }
 
     // Copy all usernames
@@ -810,7 +810,7 @@ std::shared_ptr<message> delete_request::serialize() {
 
 status delete_request::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() != 0) {
-        return status::error;
+        return status::body_error;
     }
     return status::ok;
 }
@@ -831,7 +831,7 @@ std::shared_ptr<message> delete_response::serialize(uint32_t stat_code) {
 status delete_response::deserialize(const std::vector<uint8_t>& data,
                                     uint32_t& stat_code) {
     if (data.size() != sizeof(delete_response)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -858,7 +858,7 @@ std::shared_ptr<message> wrong_version_response::serialize(
 status wrong_version_response::deserialize(const std::vector<uint8_t>& data,
                                            uint16_t& correct_version) {
     if (data.size() != sizeof(uint16_t)) {
-        return status::error;
+        return status::body_error;
     }
     const uint8_t* msg_body = data.data();
 
@@ -880,7 +880,7 @@ std::shared_ptr<message> invalid_type_response::serialize() {
 
 status invalid_type_response::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() != 0) {
-        return status::error;
+        return status::body_error;
     }
     return status::ok;
 }
@@ -897,7 +897,7 @@ std::shared_ptr<message> invalid_body_response::serialize() {
 
 status invalid_body_response::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() != 0) {
-        return status::error;
+        return status::body_error;
     }
     return status::ok;
 }
