@@ -201,10 +201,12 @@ int main() {
     assert(e_le32toh(hdr.body_len_) == 0);
     assert(chat262::invalid_body_response::deserialize(body) == status::ok);
 
-    // Send a header and then close the connection, the server should still be up and running
+    // Send a header and then close the connection, the server should still be
+    // up and running
     total_sent = 0;
     while (total_sent != sizeof(chat262::message_header)) {
-        sent = send(server_fd, h, sizeof(chat262::message_header), MSG_NOSIGNAL);
+        sent =
+            send(server_fd, h, sizeof(chat262::message_header), MSG_NOSIGNAL);
         assert(sent > 0);
         total_sent += sent;
     }
