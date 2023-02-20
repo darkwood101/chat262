@@ -28,10 +28,8 @@ def loadData():
 
 db = loadData()
 
-
 class AuthService(chat_pb2_grpc.AuthServiceServicer):
     def Register(self, request, context):
-
         # Check if the username and password are valid
         u = request.username
         p = request.password
@@ -43,7 +41,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             # stream = context.otherside_context().wrap(grpc.server_streaming).invoke_rpc()
             # db["active_streams"][u] = stream
             storeData(db)
-            response = chat_pb2.LoginResponse(success=True, message = "Registration successful.")
+            response = chat_pb2.LoginResponse(success=True, message = "\nRegistration successful.")
         else:
             response = chat_pb2.LoginResponse(success=False, message = "\n The username you requested is already taken.")
         return response
@@ -55,7 +53,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         if u in db['passwords'] and p == db['passwords'][u]:
             # db['login_status'][u] = True
             # storeData(db)
-            response = chat_pb2.LoginResponse(success=True, message = "Login successful.")
+            response = chat_pb2.LoginResponse(success=True, message = "\nLogin successful.")
         else:
             response = chat_pb2.LoginResponse(success=False, message = "\nERROR: Invalid username or password. Please try again.")
         return response
