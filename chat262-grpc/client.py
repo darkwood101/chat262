@@ -10,7 +10,6 @@ import time
 
 def receive_messages():
     global username
-    
     while True:
         message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = username))
         for m in message_list:
@@ -99,7 +98,7 @@ channel_name = ''
 if n_arg == 1:
     channel_name = 'localhost:50051'
 elif n_arg == 2:
-    channel_name = sys.argv[0]
+    channel_name = sys.argv[1]
 
 # 10.250.143.105:50051
 channel = grpc.insecure_channel(channel_name)

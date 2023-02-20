@@ -98,7 +98,7 @@ channel_name = ''
 if n_arg == 1:
     channel_name = 'localhost:50051'
 elif n_arg == 2:
-    channel_name = sys.argv[0]
+    channel_name = str(sys.argv[1])
 
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
