@@ -158,7 +158,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
     while (true) {
         chat262::message_header msg_hdr;
         status s = recv_hdr(client_fd, msg_hdr);
-        if (s == status::error) {
+        if (s != status::ok) {
             break;
         }
 
@@ -169,6 +169,8 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
                         chat262::message_type_lookup(msg_hdr.type_),
                         msg_hdr.body_len_);
 
+        // If version is wrong, we do our best to let the client know, but we do
+        // break the connection
         if (msg_hdr.version_ != chat262::version) {
             logger::log_err("Unsupported protocol version %" PRIu16 "\n",
                             msg_hdr.version_);
@@ -180,7 +182,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
 
         std::vector<uint8_t> body;
         s = recv_body(client_fd, msg_hdr.body_len_, body);
-        if (s == status::error) {
+        if (s != status::ok) {
             break;
         }
 
@@ -188,33 +190,45 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
 
         switch (msg_hdr.type_) {
         case chat262::msgtype_registration_request:
-            handle_registration(client_fd, body);
+            s = handle_registration(client_fd, body);
             break;
         case chat262::msgtype_login_request:
-            handle_login(client_fd, body);
+            s = handle_login(client_fd, body);
             break;
         case chat262::msgtype_logout_request:
-            handle_logout(client_fd, body);
+            s = handle_logout(client_fd, body);
             break;
         case chat262::msgtype_accounts_request:
-            handle_list_accounts(client_fd, body);
+            s = handle_list_accounts(client_fd, body);
             break;
         case chat262::msgtype_send_txt_request:
-            handle_send_txt(client_fd, body);
+            s = handle_send_txt(client_fd, body);
             break;
         case chat262::msgtype_recv_txt_request:
-            handle_recv_txt(client_fd, body);
+            s = handle_recv_txt(client_fd, body);
             break;
         case chat262::msgtype_correspondents_request:
-            handle_correspondents(client_fd, body);
+            s = handle_correspondents(client_fd, body);
             break;
         case chat262::msgtype_delete_request:
-            handle_delete(client_fd, body);
+            s = handle_delete(client_fd, body);
             break;
         default:
             logger::log_err("Unknown message type %" PRIu16 "\n",
                             msg_hdr.type_);
-            handle_invalid_type(client_fd);
+            s = handle_invalid_type(client_fd);
+            break;
+        }
+        // If we encountered an invalid body, we can tell the client about this
+        if (s == status::body_error) {
+            s = handle_invalid_body(client_fd);
+            // An error from handling invalid body means send error, we give up
+            if (s != status::ok) {
+                break;
+            }
+        }
+        // Send error, we give up
+        else if (s != status::ok) {
             break;
         }
     }
@@ -234,7 +248,7 @@ status server::send_msg(int client_fd,
         if (sent < 0) {
             logger::log_err("Unable to send the message: %s\n",
                             strerror(errno));
-            return status::error;
+            return status::send_error;
         }
         total_sent += sent;
     }
@@ -252,12 +266,12 @@ status server::recv_hdr(int client_fd, chat262::message_header& hdr) const {
         if (readed < 0) {
             logger::log_err("Failed to receive the header: %s\n",
                             strerror(errno));
-            return status::error;
+            return status::receive_error;
         } else if (readed == 0) {
             logger::log_err(
                 "%s",
                 "Failed to receive the header: Client closed the connection\n");
-            return status::error;
+            return status::closed_connection;
         }
         total_read += readed;
     }
@@ -280,12 +294,12 @@ status server::recv_body(int client_fd,
         if (readed < 0) {
             logger::log_err("Failed to receive the body: %s\n",
                             strerror(errno));
-            return status::error;
+            return status::receive_error;
         } else if (readed == 0) {
             logger::log_err(
                 "%s",
                 "Failed to receive the body: Client closed the connection\n");
-            return status::error;
+            return status::closed_connection;
         }
         total_read += readed;
     }
@@ -541,5 +555,10 @@ status server::handle_delete(int client_fd,
 
 status server::handle_invalid_type(int client_fd) {
     auto msg = chat262::invalid_type_response::serialize();
+    return send_msg(client_fd, msg);
+}
+
+status server::handle_invalid_body(int client_fd) {
+    auto msg = chat262::invalid_body_response::serialize();
     return send_msg(client_fd, msg);
 }

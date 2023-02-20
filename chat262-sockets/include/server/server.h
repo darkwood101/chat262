@@ -83,6 +83,7 @@ private:
                                  const std::vector<uint8_t>& body_data);
     status handle_delete(int client_fd, const std::vector<uint8_t>& body_data);
     status handle_invalid_type(int client_fd);
+    status handle_invalid_body(int client_fd);
 
     // The users database
     database database_;
