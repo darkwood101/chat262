@@ -244,7 +244,7 @@ status server::send_msg(int client_fd,
     ssize_t sent = 0;
     size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
     while (total_sent != total_len) {
-        sent = write(client_fd, msg.get(), total_len);
+        sent = send(client_fd, msg.get(), total_len, MSG_NOSIGNAL);
         if (sent < 0) {
             logger::log_err("Unable to send the message: %s\n",
                             strerror(errno));
@@ -261,8 +261,10 @@ status server::recv_hdr(int client_fd, chat262::message_header& hdr) const {
     size_t total_read = 0;
     ssize_t readed = 0;
     while (total_read != sizeof(chat262::message_header)) {
-        readed =
-            read(client_fd, hdr_data.data(), sizeof(chat262::message_header));
+        readed = recv(client_fd,
+                      hdr_data.data(),
+                      sizeof(chat262::message_header),
+                      0);
         if (readed < 0) {
             logger::log_err("Failed to receive the header: %s\n",
                             strerror(errno));
@@ -290,7 +292,7 @@ status server::recv_body(int client_fd,
     size_t total_read = 0;
     ssize_t readed = 0;
     while (total_read != body_len) {
-        readed = read(client_fd, data.data(), body_len);
+        readed = recv(client_fd, data.data(), body_len, 0);
         if (readed < 0) {
             logger::log_err("Failed to receive the body: %s\n",
                             strerror(errno));

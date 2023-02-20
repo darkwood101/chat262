@@ -303,7 +303,7 @@ status client::send_msg(std::shared_ptr<chat262::message> msg) const {
     ssize_t sent = 0;
     size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
     while (total_sent != total_len) {
-        sent = write(server_fd_, msg.get(), total_len);
+        sent = send(server_fd_, msg.get(), total_len, MSG_NOSIGNAL);
         if (sent < 0) {
             return status::send_error;
         }
@@ -318,8 +318,10 @@ status client::recv_hdr(chat262::message_header& hdr) const {
     size_t total_read = 0;
     ssize_t readed = 0;
     while (total_read != sizeof(chat262::message_header)) {
-        readed =
-            read(server_fd_, hdr_data.data(), sizeof(chat262::message_header));
+        readed = recv(server_fd_,
+                      hdr_data.data(),
+                      sizeof(chat262::message_header),
+                      0);
         if (readed < 0) {
             return status::receive_error;
         } else if (readed == 0) {
@@ -337,7 +339,7 @@ status client::recv_body(uint32_t body_len, std::vector<uint8_t>& data) const {
     size_t total_read = 0;
     ssize_t readed = 0;
     while (total_read != body_len) {
-        readed = read(server_fd_, data.data(), body_len);
+        readed = recv(server_fd_, data.data(), body_len, 0);
         if (readed < 0) {
             return status::receive_error;
         } else if (readed == 0) {
