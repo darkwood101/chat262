@@ -12,6 +12,7 @@
 #include <limits>
 #include <mutex>
 #include <poll.h>
+#include <signal.h>
 #include <sstream>
 #include <stdexcept>
 #include <sys/socket.h>
@@ -20,6 +21,15 @@
 #include <unistd.h>
 
 status client::connect_server(const uint32_t n_ip_addr) {
+    // Ignore SIGPIPE when writing to a closed socket
+    struct sigaction act;
+    memset(&act, 0, sizeof(act));
+    act.sa_handler = SIG_IGN;
+    if (sigaction(SIGPIPE, &act, nullptr) < 0) {
+        std::cerr << "Could not ignore SIGPIPE: " << strerror(errno) << "\n";
+        return status::error;
+    }
+
     n_ip_addr_ = n_ip_addr;
     server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd_ < 0) {
@@ -303,7 +313,7 @@ status client::send_msg(std::shared_ptr<chat262::message> msg) const {
     ssize_t sent = 0;
     size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
     while (total_sent != total_len) {
-        sent = send(server_fd_, msg.get(), total_len, MSG_NOSIGNAL);
+        sent = send(server_fd_, msg.get(), total_len, 0);
         if (sent < 0) {
             return status::send_error;
         }
