@@ -15,8 +15,10 @@ namespace chat262 {
 static constexpr uint16_t version = 1;
 static constexpr uint16_t port = 61079;
 
-// Message types. Types in the range [101, 199] are client requestes. Types in
-// the range [201, 299] are server responses.
+// Message types.
+// Types in the range [101, 199] are client requests.
+// Types in the range [201, 299] are server responses.
+// Types in the range [301, 399] are special server responses.
 enum message_type : uint16_t {
     // Client requests
     msgtype_registration_request = 101,
@@ -38,7 +40,7 @@ enum message_type : uint16_t {
     msgtype_correspondents_response = 207,
     msgtype_delete_response = 208,
 
-    // Error server responses
+    // Special server responses
     msgtype_wrong_version_response = 301,
     msgtype_invalid_type_response = 302,
     msgtype_invalid_body_response = 303
@@ -56,10 +58,10 @@ enum status_code : uint32_t {
 };
 
 // Look up the message type and returns a descriptive string
-const char* message_type_lookup(uint16_t msg_type);
+const char* message_type_lookup(const uint16_t msg_type);
 
 // Look up the server status code and returns a descriptive string
-const char* status_code_lookup(uint32_t stat_code);
+const char* status_code_lookup(const uint32_t stat_code);
 
 struct message_header {
     uint16_t version_;
@@ -81,42 +83,46 @@ struct message {
 };
 
 struct registration_request {
-    uint32_t user_len_;
-    uint32_t pass_len_;
-    uint8_t user_pass_[];
+    // Layout from the specification:
+    //
+    // uint32_t username_length;
+    // uint32_t password_length;
+    // uint8_t username[username_length];
+    // uint8_t password[password_length]
 
     // Form a complete registration request message from `username` and
     // `password`.
     static std::shared_ptr<message> serialize(const std::string& username,
                                               const std::string& password);
 
-    // Extract the username and password from `data`.
-    // `data` must contain the `registration_request` structure.
+    // Extract the username and password from `data` into `username` and
+    // `password`. `data` must contain the `registration_request` structure.
     // @return ok    - success
-    // @return error - `data.size() != sizeof(registration_request) + user_len_
-    //                 + pass_len_`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
-    //                 fault of the remote party, if `body_len_` did not match
-    //                 what was provided in `user_len_` and `pass_len_`.
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               std::string& username,
                               std::string& password);
 };
 
 struct registration_response {
-    uint32_t stat_code;
+    // Layout from the specification:
+    //
+    // uint32_t status_code;
 
     // Form a complete registration response message from `stat_code`.
-    static std::shared_ptr<message> serialize(uint32_t stat_code);
+    static std::shared_ptr<message> serialize(const uint32_t stat_code);
 
-    // Extract the status code from `data`.
+    // Extract the status code from `data` into `stat_code`.
     // `data` must contain the `registration_response` structure.
     // @return ok    - success. There is no guarantee that `stat_code` is a
     //                 valid member of the `status_code` enum, and local
     //                 implementation should do further error-checking.
-    // @return error - `data.size() != sizeof(registration_response)`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
@@ -127,41 +133,45 @@ struct registration_response {
 };
 
 struct login_request {
-    uint32_t user_len_;
-    uint32_t pass_len_;
-    uint8_t user_pass_[];
+    // Layout from the specification:
+    //
+    // uint32_t username_length;
+    // uint32_t password_length;
+    // uint8_t username[username_length];
+    // uint8_t password[password_length]
 
     // Form a complete login request message from `username` and `password`.
     static std::shared_ptr<message> serialize(const std::string& username,
                                               const std::string& password);
 
-    // Extract the username and password from `data`.
-    // `data` must contain the `login_request` structure.
+    // Extract the username and password from `data` into `username` and
+    // `password`. `data` must contain the `login_request` structure.
     // @return ok    - success
-    // @return error - `data.size() != sizeof(login_request) + user_len_
-    //                 + pass_len_`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
-    //                 fault of the remote party, if `body_len_` did not match
-    //                 what was provided in `user_len_` and `pass_len_`.
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               std::string& username,
                               std::string& password);
 };
 
 struct login_response {
-    uint32_t stat_code;
+    // Layout from the specification:
+    //
+    // uint32_t status_code;
 
     // Form a complete login response message from `stat_code`.
-    static std::shared_ptr<message> serialize(uint32_t stat_code);
+    static std::shared_ptr<message> serialize(const uint32_t stat_code);
 
-    // Extract the status code from `data`.
+    // Extract the status code from `data` into `stat_code`.
     // `data` must contain the `login_response` structure.
     // @return ok    - success. There is no guarantee that `stat_code` is a
     //                 valid member of the `status_code` enum, and local
     //                 implementation should do further error-checking.
-    // @return error - `data.size() != sizeof(login_response)`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
@@ -178,24 +188,29 @@ struct logout_request {
     // Do nothing because there is no body in the request. `data` must be an
     // empty vector.
     // @return ok    - success
-    // @return error - `data.size() != 0`
-    //                 This is the fault of the local implementation, never of
-    //                 the remote party.
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data);
 };
 
 struct logout_response {
-    uint32_t stat_code;
+    // Layout from the specification:
+    //
+    // uint32_t status_code;
 
     // Form a complete logout response message from `stat_code`.
-    static std::shared_ptr<message> serialize(uint32_t stat_code);
+    static std::shared_ptr<message> serialize(const uint32_t stat_code);
 
-    // Extract the status code from `data`.
+    // Extract the status code from `data` into `stat_code`.
     // `data` must contain the `logout_response` structure.
     // @return ok    - success. There is no guarantee that `stat_code` is a
     //                 valid member of the `status_code` enum, and local
     //                 implementation should do further error-checking.
-    // @return error - `data.size() != sizeof(logout_response)`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
@@ -206,16 +221,18 @@ struct logout_response {
 };
 
 struct accounts_request {
-    uint32_t pattern_len_;
-    uint8_t pattern_[];
+    // Layout from the specification:
+    //
+    // uint32_t pattern_length;
+    // uint8_t pattern[pattern_length];
 
     // Form a complete accounts request message from `pattern`.
     static std::shared_ptr<message> serialize(const std::string& pattern);
 
-    // Extract the matching pattern from `data`. `data` must contain the
-    // `accounts_request` structure.
+    // Extract the matching pattern from `data` into `pattern`. `data` must
+    // contain the `accounts_request` structure.
     // @return ok    - success
-    // @return error - `data.size() != 0`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
@@ -226,10 +243,18 @@ struct accounts_request {
 };
 
 struct accounts_response {
-    uint32_t stat_code_;
-    // uint32_t num_accounts_;
-    // uint32_t username_lens_[];
-    // uint8_t usernames_[];
+    // Layout from the specification:
+    //
+    // uint32_t status_code;
+    //
+    // // present only if `status_code` is OK
+    // uint32_t num_accounts;
+    //
+    // // present only if `status_code` is OK
+    // uint32_t username_lengths[num_accounts];
+    //
+    // // present only if `status_code` is OK
+    // uint8_t usernames[num_accounts];
 
     // Form a complete accounts response from `stat_code` and `usernames`.
     // If `stat_code` is `status_code_ok`, then the message is properly formed.
@@ -237,18 +262,17 @@ struct accounts_response {
     // actual usernames are serialized into the message; the message contains
     // only the status code.
     static std::shared_ptr<message> serialize(
-        uint32_t stat_code,
+        const uint32_t stat_code,
         const std::vector<std::string>& usernames);
 
-    // Extract the status code and the usernames from `data`.
+    // Extract the status code and the usernames from `data` into `stat_code`
+    // and `usernames`. `data` must contain the `accounts_response` structure.
     // If `stat_code` is `status_code_ok`, then the data is properly extracted.
     // If `stat_code` is anything else, then `usernames` is ignored.
-    // The caller must first check `stat_code` before accessing `usernames`.
     // @return ok    - success. There is no guarantee that `stat_code` is a
     //                 valid member of the `status_code` enum, and local
     //                 implementation should do further error-checking.
-    // @return error - `data.size()` does not reflect the contents of
-    //                 `accounts_response`
+    // @return error - `data.size()` is of incorrect size.
     //                 This is potentially the fault of the local
     //                 implementation, if `data` was not resized to `body_len_`
     //                 advertised in the message header. It could also be the
@@ -260,104 +284,277 @@ struct accounts_response {
 };
 
 struct send_txt_request {
-    uint32_t user_len_;
-    uint32_t msg_len_;
-    uint8_t user_txt_[];
+    // Layout from the specification:
+    //
+    // uint32_t username_length;
+    // uint32_t text_length;
+    // uint8_t username[username_length];
+    // uint8_t text[text_length];
 
+    // Form a complete send text request message from `recipient` and `txt`.
     static std::shared_ptr<message> serialize(const std::string& recipient,
                                               const std::string& txt);
+
+    // Extract the recipient and the text from `data` into `recipient` and
+    // `txt`. `data` must contain the `send_txt_request` structure.
+    // @return ok    - success
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               std::string& recipient,
                               std::string& txt);
 };
 
 struct send_txt_response {
-    uint32_t stat_code_;
+    // Layout from the specification:
+    //
+    // uint32_t status_code;
 
-    static std::shared_ptr<message> serialize(uint32_t stat_code);
+    // Form a complete send text response message from `stat_code`.
+    static std::shared_ptr<message> serialize(const uint32_t stat_code);
+
+    // Extract the status code from `data` into `stat_code`.
+    // `data` must contain the `send_txt_response` structure.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code);
 };
 
 struct recv_txt_request {
-    uint32_t user_len_;
-    uint8_t user_[];
+    // Layout from the specification:
+    //
+    // uint32_t username_length;
+    // uint32_t username[username_length];
 
-    static std::shared_ptr<message> serialize(const std::string& sender);
+    // Form a complete receive text request from `username`.
+    static std::shared_ptr<message> serialize(const std::string& username);
+
+    // Extract the sender and the text from `data` into `sender`. `data` must
+    // contain the `recv_txt_request` structure.
+    // @return ok    - success
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               std::string& sender);
 };
 
 struct recv_txt_response {
-    uint32_t stat_code_;
-    // uint32_t num_txts_;
-    // uin8_t senders_[num_txts_];
-    // uint32_t txt_lens_[num_txts_];
-    // uin8_t txts_[num_txts_];
+    // Layout from the specification
+    //
+    // uint32_t status_code;
+    //
+    // // present only if `status_code` is OK
+    // uint32_t num_txts;
+    //
+    // // present only if `status_code` is OK
+    // uin8_t senders_indicators[num_txts];
+    //
+    // // present only if `status_code` is OK
+    // uint32_t txt_lengths[num_txts];
+    //
+    // // present only if `status_code` is OK
+    // uint8_t txt_0[txt_lengths[0]];
+    // uint8_t txt_1[txt_lengths[1]];
+    // // ...
+    // uint8_t txt_last[txt_lengths[num_txts - 1]];
 
-    static std::shared_ptr<message> serialize(uint32_t stat_code,
+    // Form a complete receive text response from `stat_code` and `c`.
+    static std::shared_ptr<message> serialize(const uint32_t stat_code,
                                               const chat& c);
+
+    // Extract the status code and the received texts from `data` into
+    // `stat_code` and `c`. `data` must contain the `recv_txt_response`
+    // structure. If `stat_code` is `status_code_ok`, then the data is properly
+    // extracted. If `stat_code` is anything else, then `c` is ignored.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code,
                               chat& c);
 };
 
 struct correspondents_request {
+    // Form a complete correspondents request message. There is no body in this
+    // request.
     static std::shared_ptr<message> serialize();
+
+    // Do nothing because there is no body in the request. `data` must be an
+    // empty vector.
+    // @return ok    - success
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data);
 };
 
 struct correspondents_response {
-    uint32_t stat_code;
-    // uint32_t num_accounts_;
-    // uint32_t username_lens_[];
-    // uint8_t usernames_[];
+    // Layout from the specification
+    //
+    // uint32_t status_code;
+    //
+    // // present only if `status_code` is OK
+    // uint32_t num_accounts;
+    //
+    // // present only if `status_code` is OK
+    // uin8_t username_lengths[num_accounts];
+    //
+    // // present only if `status_code` is OK
+    // uint8_t username_0[username_lengths[0]];
+    // uint8_t username_1[username_lengths[1]];
+    // // ...
+    // uint8_t username_last[username_lengths[num_accounts - 1]];
 
+    // Form a complete correspondents response message from `stat_code` and
+    // `usernames`.
     static std::shared_ptr<message> serialize(
-        uint32_t stat_code,
+        const uint32_t stat_code,
         const std::vector<std::string>& usernames);
+
+    // Extract the status code and the correspondents from `data` into
+    // `stat_code` and `usernames`. `data` must contain the
+    // `correspondents_response` structure.
+    // If `stat_code` is `status_code_ok`, then the data is properly extracted.
+    // If `stat_code` is anything else, then `usernames` is ignored.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code,
                               std::vector<std::string>& usernames);
 };
 
 struct delete_request {
+    // Form a complete delete request message. There is no body in this request.
     static std::shared_ptr<message> serialize();
+
+    // Do nothing because there is no body in the request. `data` must be an
+    // empty vector.
+    // @return ok    - success
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data);
 };
 
 struct delete_response {
-    uint32_t stat_code;
+    // Layout from the specification:
+    //
+    // uint32_t status_code;
 
-    static std::shared_ptr<message> serialize(uint32_t stat_code);
+    // Form a complete delete response message from `stat_code`.
+    static std::shared_ptr<message> serialize(const uint32_t stat_code);
+
+    // Extract the status code from `data` into `stat_code`.
+    // `data` must contain the `delete_response` structure.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               uint32_t& stat_code);
 };
 
 struct wrong_version_response {
-    uint16_t correct_version_;
+    // Layout from the specification:
+    //
+    // uint16_t correct_version;
 
-    static std::shared_ptr<message> serialize(uint16_t correct_version);
+    // Form a complete wrong version response message from `correct_version`.
+    static std::shared_ptr<message> serialize(const uint16_t correct_version);
+
+    // Extract the status code from `data` into `correct_version`.
+    // `data` must contain the `wrong_version_response` structure.
+    // @return ok    - success. There is no guarantee that `stat_code` is a
+    //                 valid member of the `status_code` enum, and local
+    //                 implementation should do further error-checking.
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data,
                               uint16_t& correct_version);
 };
 
 struct invalid_type_response {
+    // Form a complete invalid type response message. There is no body in this
+    // request.
     static std::shared_ptr<message> serialize();
+
+    // Do nothing because there is no body in the request. `data` must be an
+    // empty vector.
+    // @return ok    - success
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data);
 };
 
 struct invalid_body_response {
+    // Form a complete invalid body response message. There is no body in this
+    // request.
     static std::shared_ptr<message> serialize();
+
+    // Do nothing because there is no body in the request. `data` must be an
+    // empty vector.
+    // @return ok    - success
+    // @return error - `data.size()` is of incorrect size.
+    //                 This is potentially the fault of the local
+    //                 implementation, if `data` was not resized to `body_len_`
+    //                 advertised in the message header. It could also be the
+    //                 fault of the remote party, if `body_len_` was incorrectly
+    //                 advertised in the message header.
     static status deserialize(const std::vector<uint8_t>& data);
 };
 
-struct logout_body {};
-
+// Make sure the layout of `message` is as we expect it
 static_assert(sizeof(message_header) == 8);
 static_assert(sizeof(message) == 8);
 static_assert(offsetof(message, body_) == 8);
-
 
 };  // namespace chat262
 
