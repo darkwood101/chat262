@@ -98,7 +98,7 @@ channel_name = ''
 if n_arg == 1:
     channel_name = 'localhost:50051'
 elif n_arg == 2:
-    channel_name = sys.argv[1]
+    channel_name = sys.argv[1] + ':50051'
 
 # 10.250.143.105:50051
 channel = grpc.insecure_channel(channel_name)
