@@ -86,8 +86,8 @@ status message_header::deserialize(const std::vector<uint8_t>& data,
 std::shared_ptr<message> registration_request::serialize(
     const std::string& username,
     const std::string& password) {
-    uint32_t body_len = sizeof(chat262::registration_request) +
-                        username.length() + password.length();
+    uint32_t body_len =
+        2 * sizeof(uint32_t) + username.length() + password.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -109,7 +109,7 @@ status registration_request::deserialize(const std::vector<uint8_t>& data,
                                          std::string& username,
                                          std::string& password) {
     // Ensure we can at least read username and password length
-    if (data.size() < sizeof(registration_request)) {
+    if (data.size() < 2 * sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -135,7 +135,7 @@ status registration_request::deserialize(const std::vector<uint8_t>& data,
 
 std::shared_ptr<message> registration_response::serialize(
     const uint32_t stat_code) {
-    uint32_t body_len = sizeof(registration_response);
+    uint32_t body_len = sizeof(uint32_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -150,7 +150,7 @@ std::shared_ptr<message> registration_response::serialize(
 status registration_response::deserialize(const std::vector<uint8_t>& data,
                                           uint32_t& stat_code) {
     // We know the size upfront
-    if (data.size() != sizeof(registration_response)) {
+    if (data.size() != sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -164,7 +164,7 @@ status registration_response::deserialize(const std::vector<uint8_t>& data,
 std::shared_ptr<message> login_request::serialize(const std::string& username,
                                                   const std::string& password) {
     uint32_t body_len =
-        sizeof(chat262::login_request) + username.length() + password.length();
+        2 * sizeof(uint32_t) + username.length() + password.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -186,7 +186,7 @@ status login_request::deserialize(const std::vector<uint8_t>& data,
                                   std::string& username,
                                   std::string& password) {
     // Ensure we can at least read username and password length
-    if (data.size() < sizeof(login_request)) {
+    if (data.size() < 2 * sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -211,7 +211,7 @@ status login_request::deserialize(const std::vector<uint8_t>& data,
 }
 
 std::shared_ptr<message> login_response::serialize(const uint32_t stat_code) {
-    uint32_t body_len = sizeof(login_response);
+    uint32_t body_len = sizeof(uint32_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -226,7 +226,7 @@ std::shared_ptr<message> login_response::serialize(const uint32_t stat_code) {
 status login_response::deserialize(const std::vector<uint8_t>& data,
                                    uint32_t& stat_code) {
     // We know the size upfront
-    if (data.size() != sizeof(login_response)) {
+    if (data.size() != sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -255,7 +255,7 @@ status logout_request::deserialize(const std::vector<uint8_t>& data) {
 }
 
 std::shared_ptr<message> logout_response::serialize(const uint32_t stat_code) {
-    uint32_t body_len = sizeof(logout_response);
+    uint32_t body_len = sizeof(uint32_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -270,7 +270,7 @@ std::shared_ptr<message> logout_response::serialize(const uint32_t stat_code) {
 status logout_response::deserialize(const std::vector<uint8_t>& data,
                                     uint32_t& stat_code) {
     // We know the size upfront
-    if (data.size() != sizeof(logout_response)) {
+    if (data.size() != sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -415,8 +415,8 @@ status accounts_response::deserialize(const std::vector<uint8_t>& data,
     }
 
     // Make sure we can read all usernames
-    if (data.size() < 2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t) +
-                          total_u_len) {
+    if (data.size() != 2 * sizeof(uint32_t) +
+                           num_accounts_h * sizeof(uint32_t) + total_u_len) {
         return status::body_error;
     }
 
@@ -436,7 +436,7 @@ std::shared_ptr<message> send_txt_request::serialize(
     const std::string& recipient,
     const std::string& txt) {
     uint32_t body_len =
-        sizeof(chat262::send_txt_request) + recipient.length() + txt.length();
+        2 * sizeof(uint32_t) + recipient.length() + txt.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -456,7 +456,7 @@ std::shared_ptr<message> send_txt_request::serialize(
 status send_txt_request::deserialize(const std::vector<uint8_t>& data,
                                      std::string& recipient,
                                      std::string& txt) {
-    if (data.size() < sizeof(send_txt_request)) {
+    if (data.size() < 2 * sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -482,7 +482,7 @@ status send_txt_request::deserialize(const std::vector<uint8_t>& data,
 
 std::shared_ptr<message> send_txt_response::serialize(
     const uint32_t stat_code) {
-    uint32_t body_len = sizeof(send_txt_response);
+    uint32_t body_len = sizeof(uint32_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -497,7 +497,7 @@ std::shared_ptr<message> send_txt_response::serialize(
 status send_txt_response::deserialize(const std::vector<uint8_t>& data,
                                       uint32_t& stat_code) {
     // We know the size upfront
-    if (data.size() != sizeof(send_txt_response)) {
+    if (data.size() != sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -510,7 +510,7 @@ status send_txt_response::deserialize(const std::vector<uint8_t>& data,
 
 std::shared_ptr<message> recv_txt_request::serialize(
     const std::string& username) {
-    uint32_t body_len = sizeof(chat262::recv_txt_request) + username.length();
+    uint32_t body_len = sizeof(uint32_t) + username.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
@@ -526,7 +526,7 @@ std::shared_ptr<message> recv_txt_request::serialize(
 
 status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
                                      std::string& sender) {
-    if (data.size() < sizeof(recv_txt_request)) {
+    if (data.size() < sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
@@ -651,9 +651,9 @@ status recv_txt_response::deserialize(const std::vector<uint8_t>& data,
     msg_body += num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t));
 
     // Make sure we can read all texts
-    if (data.size() < 2 * sizeof(uint32_t) +
-                          num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t)) +
-                          total_txt_len) {
+    if (data.size() != 2 * sizeof(uint32_t) +
+                           num_txts_h * (sizeof(uint8_t) + sizeof(uint32_t)) +
+                           total_txt_len) {
         return status::body_error;
     }
 
@@ -784,8 +784,8 @@ status correspondents_response::deserialize(
     }
 
     // Make sure we can read all usernames
-    if (data.size() < 2 * sizeof(uint32_t) + num_accounts_h * sizeof(uint32_t) +
-                          total_u_len) {
+    if (data.size() != 2 * sizeof(uint32_t) +
+                           num_accounts_h * sizeof(uint32_t) + total_u_len) {
         return status::body_error;
     }
 
@@ -833,7 +833,7 @@ std::shared_ptr<message> delete_response::serialize(const uint32_t stat_code) {
 
 status delete_response::deserialize(const std::vector<uint8_t>& data,
                                     uint32_t& stat_code) {
-    if (data.size() != sizeof(delete_response)) {
+    if (data.size() != sizeof(uint32_t)) {
         return status::body_error;
     }
     const uint8_t* msg_body = data.data();
