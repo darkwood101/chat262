@@ -7,7 +7,7 @@
 
 namespace chat262 {
 
-const char* message_type_lookup(uint16_t msg_type) {
+const char* message_type_lookup(const uint16_t msg_type) {
     switch (msg_type) {
     case msgtype_registration_request:
         return "Registration request";
@@ -52,7 +52,7 @@ const char* message_type_lookup(uint16_t msg_type) {
     }
 }
 
-const char* status_code_lookup(uint32_t stat_code) {
+const char* status_code_lookup(const uint32_t stat_code) {
     switch (stat_code) {
     case status_code_ok:
         return "OK";
@@ -133,7 +133,8 @@ status registration_request::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> registration_response::serialize(uint32_t stat_code) {
+std::shared_ptr<message> registration_response::serialize(
+    const uint32_t stat_code) {
     uint32_t body_len = sizeof(registration_response);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
@@ -209,7 +210,7 @@ status login_request::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> login_response::serialize(uint32_t stat_code) {
+std::shared_ptr<message> login_response::serialize(const uint32_t stat_code) {
     uint32_t body_len = sizeof(login_response);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
@@ -253,7 +254,7 @@ status logout_request::deserialize(const std::vector<uint8_t>& data) {
     return status::ok;
 }
 
-std::shared_ptr<message> logout_response::serialize(uint32_t stat_code) {
+std::shared_ptr<message> logout_response::serialize(const uint32_t stat_code) {
     uint32_t body_len = sizeof(logout_response);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
@@ -318,7 +319,7 @@ status accounts_request::deserialize(const std::vector<uint8_t>& data,
 }
 
 std::shared_ptr<message> accounts_response::serialize(
-    uint32_t stat_code,
+    const uint32_t stat_code,
     const std::vector<std::string>& usernames) {
     uint32_t body_len = sizeof(uint32_t);
     // Add usernames to body length only if status code is ok
@@ -479,7 +480,8 @@ status send_txt_request::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> send_txt_response::serialize(uint32_t stat_code) {
+std::shared_ptr<message> send_txt_response::serialize(
+    const uint32_t stat_code) {
     uint32_t body_len = sizeof(send_txt_response);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
@@ -507,17 +509,18 @@ status send_txt_response::deserialize(const std::vector<uint8_t>& data,
 }
 
 std::shared_ptr<message> recv_txt_request::serialize(
-    const std::string& sender) {
-    uint32_t body_len = sizeof(chat262::recv_txt_request) + sender.length();
+    const std::string& username) {
+    uint32_t body_len = sizeof(chat262::recv_txt_request) + username.length();
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
                                  free);
     msg->hdr_.version_ = e_htole16(version);
     msg->hdr_.type_ = e_htole16(msgtype_recv_txt_request);
     msg->hdr_.body_len_ = e_htole32(body_len);
-    uint32_t sender_len_le = e_htole32(static_cast<uint32_t>(sender.length()));
+    uint32_t sender_len_le =
+        e_htole32(static_cast<uint32_t>(username.length()));
     memcpy(msg->body_, &sender_len_le, sizeof(uint32_t));
-    memcpy(msg->body_ + 4, sender.c_str(), sender.length());
+    memcpy(msg->body_ + 4, username.c_str(), username.length());
     return msg;
 }
 
@@ -541,7 +544,7 @@ status recv_txt_request::deserialize(const std::vector<uint8_t>& data,
     return status::ok;
 }
 
-std::shared_ptr<message> recv_txt_response::serialize(uint32_t stat_code,
+std::shared_ptr<message> recv_txt_response::serialize(const uint32_t stat_code,
                                                       const chat& c) {
     uint32_t body_len = sizeof(uint32_t);
     if (stat_code == status_code_ok) {
@@ -684,7 +687,7 @@ status correspondents_request::deserialize(const std::vector<uint8_t>& data) {
 }
 
 std::shared_ptr<message> correspondents_response::serialize(
-    uint32_t stat_code,
+    const uint32_t stat_code,
     const std::vector<std::string>& usernames) {
     uint32_t body_len = sizeof(uint32_t);
     // Add usernames to body length only if status code is ok
@@ -815,7 +818,7 @@ status delete_request::deserialize(const std::vector<uint8_t>& data) {
     return status::ok;
 }
 
-std::shared_ptr<message> delete_response::serialize(uint32_t stat_code) {
+std::shared_ptr<message> delete_response::serialize(const uint32_t stat_code) {
     uint32_t body_len = sizeof(uint32_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),
@@ -842,7 +845,7 @@ status delete_response::deserialize(const std::vector<uint8_t>& data,
 }
 
 std::shared_ptr<message> wrong_version_response::serialize(
-    uint16_t correct_version) {
+    const uint16_t correct_version) {
     uint32_t body_len = sizeof(uint16_t);
     size_t total_len = sizeof(message_header) + body_len;
     std::shared_ptr<message> msg(static_cast<message*>(malloc(total_len)),

@@ -48,6 +48,15 @@ The message header always has the same structure, regardless of whether the mess
 
 ![message header](res/message_header.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct message_header {
+    uint16_t version;
+    uint16_t type;
+    uint32_t body_length;
+};
+```
+
 Each field of the message header should be interpreted in **little-endian byte order**.
 
 Bits 0–15 of the header represent the version of the Chat 262 protocol. In the current specification, this is always set to 1.
@@ -98,6 +107,16 @@ The body of this message is structured as follows:
 
 ![registration request](res/registration_request.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct registration_request {
+    uint32_t username_length;
+    uint32_t password_length;
+    uint8_t username[username_length];
+    uint8_t password[password_length];
+};
+```
+
 Each field of the registration request should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the length of the username in bytes.
@@ -117,6 +136,13 @@ The type of this message is **<u>201</u>**.
 The body of this message is structured as follows:
 
 ![registration response](res/registration_response.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct registration_response {
+    uint32_t status_code;
+};
+```
 
 Each field of the registration response should be interpreted in **little-endian byte order**.
 
@@ -139,6 +165,16 @@ The body of this message is structured as follows:
 
 ![login request](res/login_request.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct login_request {
+    uint32_t username_len;
+    uint32_t password_len;
+    uint8_t username[username_len];
+    uint8_t password[password_len]
+};
+```
+
 Each field of the login request should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the length of the username in bytes.
@@ -158,6 +194,13 @@ The type of this message is **<u>202</u>**.
 The body of this message is structured as follows:
 
 ![login response](res/login_response.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct login_response {
+    uint32_t status_code;
+};
+```
 
 Each field of the login response should be interpreted in **little-endian byte order**.
 
@@ -188,6 +231,13 @@ The body of this message is structured as follows:
 
 ![logout response](res/logout_response.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct logout_response {
+    uint32_t status_code;
+};
+```
+
 Each field of the logout response should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the status code ([Section 4](#4-status-codes)). The server may send the following status codes in the logout response:
@@ -206,6 +256,14 @@ The type of this message is **<u>104</u>**.
 The body of this message is structured as follows:
 
 ![accounts request](res/accounts_request.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct accounts_request {
+    uint32_t pattern_length;
+    uint8_t pattern[pattern_length];
+};
+```
 
 Each field of the search accounts request should be interpreted in **little-endian byte order**.
 
@@ -226,6 +284,22 @@ The type of this message is **<u>204</u>**.
 The body of this message is structured as follows:
 
 ![accounts response](res/accounts_response.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct accounts_response {
+    uint32_t status_code;
+    
+    // present only if `status_code` is OK
+    uint32_t num_accounts;
+    
+    // present only if `status_code` is OK
+    uint32_t username_lengths[num_accounts];
+    
+    // present only if `status_code` is OK
+    uint8_t usernames[num_accounts];
+};
+```
 
 Each field of the search accounts response should be interpreted in **little-endian byte order**.
 
@@ -252,6 +326,16 @@ The body of this message is structured as follows:
 
 ![send text request](res/send_txt_request.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct send_txt_request {
+    uint32_t username_length;
+    uint32_t text_length;
+    uint8_t username[username_length];
+    uint8_t text[text_length];
+};
+```
+
 Each field of the send text request should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the length of the recipient's username in bytes.
@@ -269,6 +353,13 @@ The type of this message is **<u>205</u>**.
 The body of this message is structured as follows:
 
 ![send text response](res/send_txt_response.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct send_txt_response {
+    uint32_t status_code;
+};
+```
 
 Each field of the logout response should be interpreted in **little-endian byte order**.
 
@@ -290,6 +381,14 @@ The body of this message is structured as follows:
 
 ![receive text request](res/recv_txt_request.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct recv_txt_request {
+    uint32_t username_length;
+    uint32_t username[username_length];
+};
+```
+
 Each field of the receive text request should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the length of the correspondent's username in bytes.
@@ -307,6 +406,28 @@ The type of this message is **<u>206</u>**.
 The body of this message is structured as follows:
 
 ![receive text response](res/recv_txt_response.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct recv_txt_response {
+    uint32_t status_code;
+    
+    // present only if `status_code` is OK
+    uint32_t num_txts;
+    
+    // present only if `status_code` is OK
+    uin8_t senders_indicators[num_txts];
+    
+    // present only if `status_code` is OK
+    uint32_t txt_lengths[num_txts];
+    
+    // present only if `status_code` is OK
+    uint8_t txt_0[txt_lengths[0]];
+    uint8_t txt_1[txt_lengths[1]];
+    // ...
+    uint8_t txt_last[txt_lengths[num_txts - 1]];
+};
+```
 
 Each field of the receive text response should be interpreted in **little-endian byte order**.
 
@@ -344,6 +465,25 @@ The body of this message is structured as follows:
 
 ![correspondents response](res/correspondents_response.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct correspondents_response {
+    uint32_t status_code;
+    
+    // present only if `status_code` is OK
+    uint32_t num_accounts;
+    
+    // present only if `status_code` is OK
+    uin8_t username_lengths[num_accounts];
+    
+    // present only if `status_code` is OK
+    uint8_t username_0[username_lengths[0]];
+    uint8_t username_1[username_lengths[1]];
+    // ...
+    uint8_t username_last[username_lengths[num_accounts - 1]];
+};
+```
+
 Each field of the retrieve correspondents response should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the status code ([Section 4](#4-status-codes)). The server may send the following status codes in the retrieve correspondents response:
@@ -377,6 +517,13 @@ The body of this message is structured as follows:
 
 ![delete response](res/delete_response.png)
 
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct delete_response {
+    uint32_t status_code;
+};
+```
+
 Each field of the delete account response should be interpreted in **little-endian byte order**.
 
 Bits 0–31 represent the status code ([Section 4](#4-status-codes)). The server may send the following status codes in the delete account response:
@@ -395,6 +542,13 @@ The type of this message is **<u>301</u>**.
 The body of this message is structured as follows:
 
 ![wrong version response](res/wrong_version_response.png)
+
+The C-like struct definition of the message would be something the following **packed** structure (i.e. assuming no padding):
+```C
+struct wrong_version_response {
+    uint16_t correct_version;
+};
+```
 
 Each field of the wrong version response should be interpreted in **little-endian byte order**.
 
