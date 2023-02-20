@@ -5,26 +5,8 @@ import chat_pb2_grpc
 import tkinter as tk
 import threading
 import sys
- 
-# total arguments
-n_arg = len(sys.argv)
-# print(n_arg)
-# print("Total arguments passed:", n)
- 
-# Arguments passed
-channel_name = ''
-if n_arg == 1:
-    channel_name = 'localhost:50051'
-elif n_arg == 2:
-    channel_name = sys.argv[0]
+import time
 
-# 10.250.143.105:50051
-channel = grpc.insecure_channel(channel_name)
-auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
-chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
-
-username = ''
-page_status = 0 # 0 = login/register prompt, 1 = home page
 
 def receive_messages():
     global username
@@ -33,7 +15,7 @@ def receive_messages():
         message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = username))
         for m in message_list:
             print(f'\n\n Received new message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
-            # print('Recipient username', end = '')
+        time.sleep(1)
 
 def send_messages():
     global username
@@ -45,6 +27,7 @@ def send_messages():
         
         if not response.success:
             print(response.message)
+        time.sleep(1)
 
 def run_home():
     global username
@@ -109,6 +92,22 @@ def run_login():
             return 0
 
 
+
+# set server IP address; if none provided, use local server
+n_arg = len(sys.argv)
+channel_name = ''
+if n_arg == 1:
+    channel_name = 'localhost:50051'
+elif n_arg == 2:
+    channel_name = sys.argv[0]
+
+# 10.250.143.105:50051
+channel = grpc.insecure_channel(channel_name)
+auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
+chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
+
+username = ''
+page_status = 0 # 0 = login/register prompt, 1 = home page
 
 while page_status == 0:
     page_status = run_login()

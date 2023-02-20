@@ -3,8 +3,9 @@ from concurrent import futures
 import chat_pb2
 import chat_pb2_grpc
 from collections import defaultdict
-
+import sys
 import pickle
+
 
 def storeData(db):
     with open('db.pkl', 'wb') as dbfile:
@@ -91,10 +92,18 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
             storeData(db)
 
 
+# set server IP address; if none provided, use local server
+n_arg = len(sys.argv)
+channel_name = ''
+if n_arg == 1:
+    channel_name = 'localhost:50051'
+elif n_arg == 2:
+    channel_name = sys.argv[0]
+
 server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
 chat_pb2_grpc.add_AuthServiceServicer_to_server(AuthService(), server)
 
-server.add_insecure_port('[::]:50051')
+server.add_insecure_port(channel_name)
 server.start()
 server.wait_for_termination()
