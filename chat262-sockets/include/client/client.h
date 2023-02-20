@@ -14,6 +14,7 @@ public:
     // @return error        - There was an error. A debug output is printed to
     //                        stderr.
     // @param[in] n_ip_addr - The IP address on which the server is listening.
+    //                        This number must be in network byte order.
     status connect_server(const uint32_t n_ip_addr);
 
     // Send a login request to the server and read the response.
@@ -24,6 +25,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[in]  username      - Username for the login request.
@@ -44,6 +48,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[in]  username      - Username for the registration request.
@@ -63,6 +70,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[out] stat_code     - Stores the status code received from the
@@ -74,15 +84,14 @@ public:
     // `pattern`.
     // @return ok                - The request was successfully sent, and the
     //                             response was successfully received and
-    //                             parsed. The status code from the server is
-    //                             stored in `stat_code` and the list of matched
-    //                             usernames is stored in `usernames`.
-    //                             `usernames` is ignored if the status code is
-    //                             not OK.
+    //                             parsed.
     // @return send_error        - There was an error in sending the request.
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[in] pattern        - The matching pattern for searching accounts.
@@ -104,6 +113,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[in] recipient      - The username of the text recipient.
@@ -123,6 +135,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[in] sender         - The username of the user to retrieve the
@@ -144,6 +159,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[out] stat_code     - Stores the status code received from the
@@ -163,6 +181,9 @@ public:
     // @return receive_error     - There was an error in receiving the header or
     //                             the body.
     // @return closed_connection - The server closed the connection.
+    // @return header_error      - The client received a header it cannot
+    //                             interpret. This can happen if the response
+    //                             was a special response.
     // @return body_error        - The server sent an improperly formed response
     //                             body.
     // @param[out] stat_code     - Stores the status code received from the
