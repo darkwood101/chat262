@@ -46,5 +46,9 @@ int main(int argc, char** argv) {
     }
 
     interface i;
-    i.start(n_ip_addr);
+    if (i.start(n_ip_addr) == status::ok) {
+        return EXIT_SUCCESS;
+    } else {
+        return EXIT_FAILURE;
+    }
 }
