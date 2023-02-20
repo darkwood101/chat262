@@ -43,5 +43,10 @@ If no IP address is provided, then the default local host is used.
 
 ## 3. Implementation
 
-The <pre>chat.proto</pre> 
+The services and message types are defined in the protos/chat.proto file. In particular, we define two services (AuthService and ChatService) and protocol buffer message type definitions for all the request and response types used in our service methods. AuthService handles register, login, and delete account requests and ChatService handles send/receive message requests and getting all the current users. We define message types for Users, Login requests/responses, Register request/responses, Send request/responses, and ChatMessage.
+
+The server.py file contains the service method implementations for AuthService and ChatService, handles storing and loading data from the database, and also starts up the server on a specified IP address. The database is stored on disk and updated with pickle loading and dumping so that database information persists across server restarts. Methods implemented in AuthService include Register, Login, and DeleteAccount, and methods implemented in ChatService incldue SendMessage, GetUsers, and ReceiveMessage. These functions are called from the client side using the stub code.
+
+The client.py file includes client-side implementations for registering and logging in, sending and receiving messages, and the UI design for the chat service. There are two main "pages": a login page where a user is prompted to register or log in, and a home page where a user can see all the usernames in the database and then send chats to another user and receive incoming chats. When a user logs in, they are given all new unread messages since the last time they logged in. Messages are delivered on demand (with a slight up to one second delay), and sending + receiving messages occurs simultaneously.
+
 
