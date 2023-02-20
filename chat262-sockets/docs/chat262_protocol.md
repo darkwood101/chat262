@@ -27,7 +27,7 @@
 
 ## 1. Introduction
 
-Chat 262 protocol is request/response protocol that orchestrates communication between a client and a server. The protocol is layered atop TCP/IP.
+Chat 262 Protocol is request/response protocol that orchestrates communication between a client and a server. The protocol is layered atop TCP/IP.
 
 The server listens on a TCP socket, on TCP port 61079. (This port is in the range reserved for dynamic, private, and ephemeral ports. See [here](https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers#Dynamic,_private_or_ephemeral_ports).)
 
