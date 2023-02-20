@@ -21,6 +21,7 @@
   - [3.16. Delete Account Response](#316-delete-account-response)
   - [3.17. Wrong Version Response](#317-wrong-version-response)
   - [3.18. Invalid Type Response](#318-invalid-type-response)
+  - [3.19. Invalid Body Response](#319-invalid-body-response)
 - [4. Status Codes](#4-status-codes)
 
 
@@ -71,6 +72,7 @@ Bits 16–31 of the header represent the message type. The current specification
 - [Delete account response message](#316-delete-account-response) — type 208
 - [Wrong version response message](#317-wrong-version-response) — type 301
 - [Invalid type response message](#318-invalid-type-response) — type 302
+- [Invalid body response message](#319-invalid-body-response) — type 303
 
 Bits 32–63 of the header represent the length of the message body in bytes. Each of the message types listed above has the correspondingly defined message body.
 
@@ -404,13 +406,23 @@ The body length in the message header should be set to total length in bytes of 
 
 ### 3.18. Invalid Type Response
 
-The invalid type response is a special response sent after the server detects a message type that it does not know how to handle in a client's request.
+The invalid type response is a special response sent after the server detects a request with a message type that it does not know how to handle.
 
 The type of this message is **<u>302</u>**.
 
 The body of this message is **empty**. The body length in the header should be 0 bytes.
 
-After sending the wrong version response, the server will maintain the TCP connection with the client and wait for another request.
+After sending the invalid type response, the server will maintain the TCP connection with the client and wait for another request.
+
+### 3.19. Invalid Body Response
+
+The invalid type response is a special response sent after the server detects a request for which the body of the message is not formed properly (e.g. the length of a string does not match with the body length advertised in the header).
+
+The type of this message is **<u>303</u>**.
+
+The body of this message is **empty**. The body length in the header should be 0 bytes.
+
+After sending the invalid body response, the server will maintain the TCP connection with the client and wait for another request.
 
 ## 4. Status Codes
 
