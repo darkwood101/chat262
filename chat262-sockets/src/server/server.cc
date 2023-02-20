@@ -8,6 +8,7 @@
 #include <cinttypes>
 #include <cstring>
 #include <iostream>
+#include <signal.h>
 #include <stdexcept>
 #include <sys/socket.h>
 #include <thread>
@@ -85,6 +86,15 @@ void server::usage(char const* prog) const {
 }
 
 status server::start_listening() {
+    // Ignore SIGPIPE when writing to a closed socket
+    struct sigaction act;
+    memset(&act, 0, sizeof(act));
+    act.sa_handler = SIG_IGN;
+    if (sigaction(SIGPIPE, &act, nullptr) < 0) {
+        std::cerr << "Could not ignore SIGPIPE: " << strerror(errno) << "\n";
+        return status::error;
+    }
+
     server_fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd_ < 0) {
         logger::log_err("Could not create socket: %s\n", strerror(errno));
@@ -244,7 +254,7 @@ status server::send_msg(int client_fd,
     ssize_t sent = 0;
     size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
     while (total_sent != total_len) {
-        sent = send(client_fd, msg.get(), total_len, MSG_NOSIGNAL);
+        sent = send(client_fd, msg.get(), total_len, 0);
         if (sent < 0) {
             logger::log_err("Unable to send the message: %s\n",
                             strerror(errno));
