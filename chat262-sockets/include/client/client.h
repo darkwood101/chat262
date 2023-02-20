@@ -29,19 +29,7 @@ public:
                                std::vector<std::string>& correspondents);
     status delete_account(uint32_t& stat_code);
 
-#ifdef TESTING
-    void test_registration();
-    void test_login();
-    void test_logout();
-    void test_search_accounts();
-    void test_send_txt();
-#endif
-
-#ifndef TESTING
 private:
-#else
-public:
-#endif
     // Send the message `msg` to the server.
     // Throws `std::runtime_error` if the message cannot be sent (fatal).
     status send_msg(std::shared_ptr<chat262::message> msg) const;
