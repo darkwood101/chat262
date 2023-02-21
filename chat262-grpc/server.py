@@ -41,7 +41,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             storeData(db)
             response = chat_pb2.RegisterResponse(success=True, message = "\nRegistration successful.")
         else:
-            response = chat_pb2.RegisterResponse(success=False, message = "\n The username you requested is already taken.")
+            response = chat_pb2.RegisterResponse(success=False, message = "\nThe username you requested is already taken.")
         return response
 
     def Login(self, request, context):
