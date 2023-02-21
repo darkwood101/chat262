@@ -1,6 +1,6 @@
 # Chat 262
 
-Chat 262 is a basic chatting app that uses a server-client architecture. It offers the following features:
+Chat 262 is an interactive command-line chatting app that uses a server-client architecture. It offers the following features:
 
 - Register an account using a username and a password
 - Look up other Chat 262 users
