@@ -1,4 +1,6 @@
+# Python cache
 __pycache__/
 
-.DS_Store
-.db.pkl
+# Server database
+db.pkl
+
