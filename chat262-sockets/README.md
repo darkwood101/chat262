@@ -1,54 +1,17 @@
-#  Chat 262: The socket version
+#  Chat 262: The Socket Version
 
-- [1. Prerequisites](#1-prerequisites)
-  - [1.1. Linux](#11-linux)
-  - [1.2. macOS](#12-macos)
-- [2. Build](#2-build)
+The socket version of Chat 262 works by defining a custom wire protocol (Chat 262 Protocol) for exchanging the data between a Chat 262 client and a Chat 262 server. It is implemented in C++ and supports Linux and macOS.
 
+Follow the links below for more.
 
-## 1. Prerequisites
+## [Setup Instructions](docs/instructions.md)
 
-You will need the following prerequisites to build Chat 262:
+## [Chat 262 Protocol Specification](docs/chat262_protocol.md)
 
-- A C++ compiler with support for C++17
-- CMake (at least version 3.13)
-- make
+## [Chat 262 Protocol Implementation](docs/protocol_implementation.md)
 
-If you have these already, you can skip this section. Otherwise, see the following sections on how to install these on Linux and macOS.
+## [Server Implementation](docs/server.md)
 
-### 1.1. Linux
+## [Client Implementation](docs/client.md)
 
-We recommend installing from your distribution's package manager. If you have a Debian-based distribution (e.g. Ubuntu), you can run the following
-
-```console
-$ sudo apt install build-essential cmake make
-```
-
-### 1.2. macOS
-
-You can install g++ and make by running
-
-```console
-$ xcode-select --install
-```
-
-For CMake, you can download it from [here](https://cmake.org/download/).
-
-
-## 2. Build
-
-If you haven't cloned this repository yet, do it by running
-
-```console
-$ git clone https://github.com/darkwood101/chat262.git
-$ cd chat262/
-```
-
-To build the C++ version of Chat 262, run the following:
-```console
-$ cd chat262-sockets/
-$ cmake -S . -B build/
-$ cmake --build build/
-```
-
-This should generate `client` and `server` executables in the `chat262-sockets/` directory.
+## [Testing](docs/tests.md)
