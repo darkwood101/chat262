@@ -4,21 +4,12 @@
 #include "endianness.h"
 
 #include <arpa/inet.h>
-#include <atomic>
 #include <cerrno>
-#include <chrono>
-#include <condition_variable>
 #include <cstring>
 #include <iostream>
-#include <limits>
-#include <mutex>
-#include <poll.h>
 #include <signal.h>
-#include <sstream>
 #include <stdexcept>
 #include <sys/socket.h>
-#include <termios.h>
-#include <thread>
 #include <unistd.h>
 
 status client::connect_server(const uint32_t n_ip_addr) {
