@@ -8,6 +8,7 @@
   - [1.3. Firewall](#13-firewall)
 - [2. Build](#2-build)
 - [3. Running Chat 262](#3-running-chat-262)
+- [4. Testing](#4-testing)
 
 
 ## 1. Prerequisites
@@ -117,3 +118,35 @@ The server should let you know that a client connected:
 You got Chat 262 working! You can now interact with the client by following the on-screen instructions.
 
 When you want to shut down the server, you can just hit Ctrl-C to terminate it, or close the terminal window. Note that all state (registered accounts, exchanged texts, etc.) will be lost.
+
+## 4. Testing
+
+Chat 262 comes with some included tests (see [here](tests.md)). If you are interested in running these tests, you should follow these steps.
+
+By default (see [Section 2](#2-build)), CMake will not build the tests. To instruct CMake to build the tests as well, you will first need to reconfigure it:
+```console
+$ cmake -DTESTING=ON -S . -B build/
+```
+Like before, this tells CMake to use the current directory (.) as the source folder, and to store build configuration files in a build/ folder. This time, we also pass a flag (`TESTING=ON`), which tells CMake that we want to build tests as well. (`-D` is not a typo, it stands for define.)
+
+To compile the tests, run
+```console
+$ cmake --build build/
+```
+This will compile Chat 262 as well if it's not compiled already.
+
+To run the tests, first navigate to the built tests directory using
+```console
+$ cd build/tests/
+```
+Then, just run
+```console
+$ ctest
+```
+You should see something like the following:
+```console
+100% tests passed, 0 tests failed out of 9
+
+Total Test time (real) =   1.00 sec
+```
+If you modify Chat 262, it is a good idea to run these tests to make sure your changes don't break any existing Chat 262 functionality. If you add new functionality to Chat 262, it is a good idea to add new tests as well.
