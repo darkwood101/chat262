@@ -125,7 +125,7 @@ status server::start_listening() {
         return status::error;
     }
 
-    if (listen(server_fd_, 1) < 0) {
+    if (listen(server_fd_, 32) < 0) {
         logger::log_err("Could not listen on the socket: %s\n",
                         strerror(errno));
         return status::error;
@@ -185,6 +185,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
             logger::log_err("Unsupported protocol version %" PRIu16 "\n",
                             msg_hdr.version_);
             handle_wrong_version(client_fd);
+            break;
         }
 
         std::vector<uint8_t> body;
