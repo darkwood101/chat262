@@ -184,10 +184,7 @@ void server::handle_client(int client_fd, sockaddr_in client_addr) {
         if (msg_hdr.version_ != chat262::version) {
             logger::log_err("Unsupported protocol version %" PRIu16 "\n",
                             msg_hdr.version_);
-            auto msg =
-                chat262::wrong_version_response::serialize(chat262::version);
-            send_msg(client_fd, msg);
-            break;
+            handle_wrong_version(client_fd);
         }
 
         std::vector<uint8_t> body;
@@ -562,6 +559,11 @@ status server::handle_delete(int client_fd,
 
     database_.delete_user();
     msg = chat262::delete_response::serialize(chat262::status_code_ok);
+    return send_msg(client_fd, msg);
+}
+
+status server::handle_wrong_version(int client_fd) {
+    auto msg = chat262::wrong_version_response::serialize(chat262::version);
     return send_msg(client_fd, msg);
 }
 
