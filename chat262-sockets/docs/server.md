@@ -7,7 +7,7 @@
 
 ## 1. Introduction
 
-This document provides a very brief description of our implementation of the Chat 262 server.
+This document provides a very brief description of our implementation of the Chat 262 server. For instructions on how to run the server, see [here](instructions.md).
 
 ## 2. Server
 

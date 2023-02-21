@@ -8,7 +8,7 @@
 
 ## 1. Introduction
 
-This document provides a very brief description of our implementation of the Chat 262 client.
+This document provides a very brief description of our implementation of the Chat 262 client. For instructions on how to run the client, see [here](instructions.md).
 
 ## 2. Client
 

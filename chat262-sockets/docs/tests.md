@@ -19,3 +19,5 @@ All three parts are tested by writing custom client drivers, which make a wide r
 The interface is not unit-tested, since it largely performs visual operations, so it's tested by extensive usage.
 
 All tests are located in the [tests/](../tests/) directory.
+
+For instructions on how to run tests, see [here](instructions.md).
