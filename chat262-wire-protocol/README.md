@@ -1,6 +1,6 @@
-#  Chat 262: The Socket Version
+#  Chat 262: The Wire Protocol Version
 
-The socket version of Chat 262 works by defining a custom wire protocol (Chat 262 Protocol) for exchanging the data between a Chat 262 client and a Chat 262 server. It is implemented in C++ and supports Linux and macOS.
+The wire protocol version of Chat 262 works by defining a custom wire protocol (Chat 262 Protocol) for exchanging the data between a Chat 262 client and a Chat 262 server. It is implemented in C++ and supports Linux and macOS.
 
 Follow the links below for more.
 

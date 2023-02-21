@@ -57,7 +57,7 @@ If you successfully do this step, your Chat 262 server should be able to accept 
 If you haven't already, clone this repository and navigate to the root directory of the socket version of Chat 262 by running
 ```console
 $ git clone https://github.com/darkwood101/chat262.git
-$ cd chat262/chat262-sockets/
+$ cd chat262/chat262-wire-protocol/
 ```
 Alternatively, you can download the repository as a zip file and unzip it.
 
