@@ -1,6 +1,7 @@
 #include "server.h"
 
 #include "chat262_protocol.h"
+#include "endianness.h"
 #include "logger.h"
 
 #include <arpa/inet.h>
@@ -250,7 +251,8 @@ status server::send_msg(int client_fd,
                         std::shared_ptr<chat262::message> msg) const {
     size_t total_sent = 0;
     ssize_t sent = 0;
-    size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
+    size_t total_len =
+        sizeof(chat262::message_header) + e_le32toh(msg->hdr_.body_len_);
     while (total_sent != total_len) {
         sent = send(client_fd, msg.get(), total_len, 0);
         if (sent < 0) {

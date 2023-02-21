@@ -1,6 +1,7 @@
 #include "client.h"
 
 #include "chat262_protocol.h"
+#include "endianness.h"
 
 #include <arpa/inet.h>
 #include <atomic>
@@ -311,7 +312,8 @@ status client::delete_account(uint32_t& stat_code) {
 status client::send_msg(std::shared_ptr<chat262::message> msg) const {
     size_t total_sent = 0;
     ssize_t sent = 0;
-    size_t total_len = sizeof(chat262::message_header) + msg->hdr_.body_len_;
+    size_t total_len =
+        sizeof(chat262::message_header) + e_le32toh(msg->hdr_.body_len_);
     while (total_sent != total_len) {
         sent = send(server_fd_, msg.get(), total_len, 0);
         if (sent < 0) {
