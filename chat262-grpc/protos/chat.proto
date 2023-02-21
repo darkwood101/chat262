@@ -7,6 +7,7 @@ package chatservice;
 service AuthService {
   rpc Login (LoginRequest) returns (LoginResponse) {}
   rpc Register (RegisterRequest) returns (RegisterResponse) {}
+  rpc DeleteAccount (DeleteRequest) returns (DeleteResponse) {}
 }
 
 service ChatService {
@@ -38,6 +39,16 @@ message RegisterRequest {
 }
 
 message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message DeleteRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message DeleteResponse {
   bool success = 1;
   string message = 2;
 }

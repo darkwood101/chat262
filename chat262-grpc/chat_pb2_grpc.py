@@ -24,6 +24,11 @@ class AuthServiceStub(object):
                 request_serializer=chat__pb2.RegisterRequest.SerializeToString,
                 response_deserializer=chat__pb2.RegisterResponse.FromString,
                 )
+        self.DeleteAccount = channel.unary_unary(
+                '/chatservice.AuthService/DeleteAccount',
+                request_serializer=chat__pb2.DeleteRequest.SerializeToString,
+                response_deserializer=chat__pb2.DeleteResponse.FromString,
+                )
 
 
 class AuthServiceServicer(object):
@@ -41,6 +46,12 @@ class AuthServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def DeleteAccount(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AuthServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -53,6 +64,11 @@ def add_AuthServiceServicer_to_server(servicer, server):
                     servicer.Register,
                     request_deserializer=chat__pb2.RegisterRequest.FromString,
                     response_serializer=chat__pb2.RegisterResponse.SerializeToString,
+            ),
+            'DeleteAccount': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteAccount,
+                    request_deserializer=chat__pb2.DeleteRequest.FromString,
+                    response_serializer=chat__pb2.DeleteResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -95,6 +111,23 @@ class AuthService(object):
         return grpc.experimental.unary_unary(request, target, '/chatservice.AuthService/Register',
             chat__pb2.RegisterRequest.SerializeToString,
             chat__pb2.RegisterResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def DeleteAccount(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/chatservice.AuthService/DeleteAccount',
+            chat__pb2.DeleteRequest.SerializeToString,
+            chat__pb2.DeleteResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
