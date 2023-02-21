@@ -61,8 +61,9 @@ def run_home():
 
 def run_login():
     global username
-    choice = input("\nRegister or Login?\n\n")
+    choice = input("\nRegister, Login, or Delete Account?\n\n")
 
+    # register user
     if 'r' in choice.lower():
         print("Register with username and password.")
         username = input(">> Username: ")
@@ -76,8 +77,8 @@ def run_login():
         else:
             return 0
 
-
-    else:
+    # login user
+    elif 'l' in choice.lower():
         print("Login with your username and password.")
         username = input(">> Username: ")
         password = input(">> Password: ")
@@ -90,6 +91,15 @@ def run_login():
         else:
             return 0
 
+    # delete account
+    else:
+        print("To delete an account, you must log in with the username and password.")
+        username = input(">> Username: ")
+        password = input(">> Password: ")
+        request = chat_pb2.DeleteRequest(username=username, password=password)
+        response = auth_stub.DeleteAccount(request)
+        print(response.message)
+        return 0
 
 
 # set server IP address; if none provided, use local server

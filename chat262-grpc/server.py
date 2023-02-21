@@ -36,27 +36,40 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         p = request.password
         
         if u not in db['passwords']:
-            # register user
+            # associate username with password
             db['passwords'][u] = p
-            # db['login_status'][u] = False # later: automatically log user in
-            # stream = context.otherside_context().wrap(grpc.server_streaming).invoke_rpc()
-            # db["active_streams"][u] = stream
             storeData(db)
-            response = chat_pb2.LoginResponse(success=True, message = "\nRegistration successful.")
+            response = chat_pb2.RegisterResponse(success=True, message = "\nRegistration successful.")
         else:
-            response = chat_pb2.LoginResponse(success=False, message = "\n The username you requested is already taken.")
+            response = chat_pb2.RegisterResponse(success=False, message = "\n The username you requested is already taken.")
         return response
 
     def Login(self, request, context):
         u = request.username
         p = request.password
+
         # Check if the username and password are valid
         if u in db['passwords'] and p == db['passwords'][u]:
-            # db['login_status'][u] = True
-            # storeData(db)
             response = chat_pb2.LoginResponse(success=True, message = "\nLogin successful.")
+        elif u not in db['passwords']:
+            response = chat_pb2.LoginResponse(success=False, message = "\nERROR: Username does not exist in the database. Please try again.")
         else:
-            response = chat_pb2.LoginResponse(success=False, message = "\nERROR: Invalid username or password. Please try again.")
+            response = chat_pb2.LoginResponse(success=False, message = "\nERROR: Invalid password. Please try again.")
+        
+        return response
+
+    # Remove account from user-password database
+    # Any pending messages are still sent
+    def DeleteAccount(self, request, context):
+        u = request.username
+        p = request.password
+        if u in db['passwords'] and p == db['passwords'][u]:
+            db['passwords'].pop(u)            
+            response = chat_pb2.DeleteResponse(success=True, message = "\nAccount successfully deleted.")
+        elif u not in db['passwords']:
+            response = chat_pb2.DeleteResponse(success=False, message = "\nERROR: Username does not exist in the database.")
+        else:
+            response = chat_pb2.DeleteResponse(success=False, message = "\nERROR: Invalid password. Please try again.")
         return response
 
 class ChatService(chat_pb2_grpc.AuthServiceServicer):
@@ -74,9 +87,9 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
         if s in curr_users and r in curr_users:
             print(f'received message from {s} to {r}')
             db['messages'][r].append(request)
-            response = chat_pb2.LoginResponse(success = True, message = "Message successfully added.")
+            response = chat_pb2.SendResponse(success = True, message = "Message successfully added.")
         else:
-            response = chat_pb2.LoginResponse(success = False, message = "\nERROR: either sender or receiver are not in username database. Please try again!\n")
+            response = chat_pb2.SendResponse(success = False, message = "\nERROR: either sender or receiver are not in username database. Please try again!\n")
         return response
 
     def GetUsers(self, request, context):
@@ -91,19 +104,24 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
             db['messages'][r].pop(0)
             storeData(db)
 
+# function to start up server
+def serve(channel_name):
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
+    chat_pb2_grpc.add_AuthServiceServicer_to_server(AuthService(), server)
 
-# set server IP address; if none provided, use local server
-n_arg = len(sys.argv)
-channel_name = ''
-if n_arg == 1:
-    channel_name = 'localhost:50051'
-elif n_arg == 2:
-    channel_name = sys.argv[1] + ':50051'
+    server.add_insecure_port(channel_name)
+    server.start()
+    server.wait_for_termination()
 
-server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
-chat_pb2_grpc.add_AuthServiceServicer_to_server(AuthService(), server)
+if __name__ == "__main__":
+    
+    # set server IP address; if none provided, use local server
+    n_arg = len(sys.argv)
+    channel_name = ''
+    if n_arg == 1:
+        channel_name = 'localhost:50051'
+    elif n_arg == 2:
+        channel_name = sys.argv[1] + ':50051'
 
-server.add_insecure_port(channel_name)
-server.start()
-server.wait_for_termination()
+    serve(channel_name)
