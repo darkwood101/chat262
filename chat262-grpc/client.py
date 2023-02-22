@@ -1,13 +1,12 @@
 import grpc
 import chat_pb2
 import chat_pb2_grpc
-# import login
 import tkinter as tk
 import threading
 import sys
 import time
 
-
+# Function to receive a list of messages
 def receive_messages():
     global username
     while True:
@@ -16,6 +15,8 @@ def receive_messages():
             print(f'\n\n Received new message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
         time.sleep(1)
 
+# Function to send a single message to another specified user
+# Can only be accessed if a user is logged in
 def send_messages():
     global username
     while True:
@@ -28,6 +29,10 @@ def send_messages():
             print(response.message)
         time.sleep(1)
 
+# Runs the chat "home page", which displays an inbox of new messages since the last login
+# and also lists all the current usernames in the database. This function then starts up
+# two threads, one to send messages and one to receive messages, which constantly poll until
+# there are send requests or incoming messages.
 def run_home():
     global username
     print('\n----------')
@@ -53,12 +58,14 @@ def run_home():
         users.append(u.username)
     print('\nAll usernames: ', users)
 
-
+    # start up threads for sending + receiving messages
     threading.Thread(target = send_messages).start()
     threading.Thread(target = receive_messages).start()
     return 1
 
-
+# Runs authorization services including register, login, and delete account.
+# This is always the first prompt that is run as a user needs to be logged in
+# before they are able to access the "home page".
 def run_login():
     global username
     choice = input("\nRegister, Login, or Delete Account?\n\n")
@@ -102,7 +109,8 @@ def run_login():
         return 0
 
 
-# set server IP address; if none provided, use local server
+# Run client.
+# Set channel IP address; if none provided, use local server
 n_arg = len(sys.argv)
 channel_name = ''
 if n_arg == 1:
@@ -110,15 +118,18 @@ if n_arg == 1:
 elif n_arg == 2:
     channel_name = sys.argv[1] + ':50051'
 
-# 10.250.143.105:50051
+# Bind to server channel and create auth and chat stubs
 channel = grpc.insecure_channel(channel_name)
 auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
 chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
+# Create global username + logged_in variables
 username = ''
-page_status = 0 # 0 = login/register prompt, 1 = home page
+logged_in = 0 # 0 = not logged in, 1 = logged in
 
-while page_status == 0:
-    page_status = run_login()
+# Run authorization until user is logged in
+while logged_in == 0:
+    logged_in = run_login()
 
+# Run home page which provides chat services
 run_home()

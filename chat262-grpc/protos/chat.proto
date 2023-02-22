@@ -1,20 +1,24 @@
+// This proto file defines all services (AuthService and ChatService) and message types for all the request
+// and response types used in our service methods.
+
+// Command to generate client + server stub code:
 // python -m grpc_tools.protoc -I protos --python_out=. --pyi_out=. --grpc_python_out=. protos/chat.proto
 
 syntax = "proto3";
-
 package chatservice;
 
+// AuthService handles register, login, and delete account requests
 service AuthService {
   rpc Login (LoginRequest) returns (LoginResponse) {}
   rpc Register (RegisterRequest) returns (RegisterResponse) {}
   rpc DeleteAccount (DeleteRequest) returns (DeleteResponse) {}
 }
 
+// ChatService handles send/receive message requests and getting all the current users
 service ChatService {
   rpc SendMessage (SendRequest) returns (SendResponse) {}
   rpc ReceiveMessage (User) returns (stream ChatMessage) {}
   rpc GetUsers (Empty) returns (stream User) {}
-  // rpc Receive
 }
 
 message Empty {}

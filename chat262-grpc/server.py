@@ -6,30 +6,32 @@ from collections import defaultdict
 import sys
 import pickle
 
-
+# Function to update db.pkl file
 def storeData(db):
     with open('db.pkl', 'wb') as dbfile:
         pickle.dump(db, dbfile)
   
-# delete pkl file every time we make a change here
+# Function to load data from existing pickle file
 def loadData():
     try:
         with open('db.pkl', 'rb')  as dbfile:
             db = pickle.load(dbfile)
     except:
+        # Database which keeps track of username-password combos and chat messages
         db = {
-            # "user_pass": {}, # key: username (str), value: password (str)
-            # "login_status": {}, # key: username (str), value: login status (bool)
-            # "active_streams": dict(), # whether we can talk to a user
             "passwords": dict(),
             "messages": defaultdict(list)
-            # "messages": {} # key: sender_username, value: dict{key: sender, value: list of messages}
         }
     return db
 
+# Load data, which persists across server restarts
 db = loadData()
 
+# AuthService class provides Register, Login, and DeleteAccount functions
+# These functions are called from the client using the auth_stub
 class AuthService(chat_pb2_grpc.AuthServiceServicer):
+
+    # Register a user into the database by associating a specific username and password
     def Register(self, request, context):
         # Check if the username and password are valid
         u = request.username
@@ -44,6 +46,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             response = chat_pb2.RegisterResponse(success=False, message = "\nThe username you requested is already taken.")
         return response
 
+    # Checks credentials and completes login 
     def Login(self, request, context):
         u = request.username
         p = request.password
@@ -72,30 +75,31 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             response = chat_pb2.DeleteResponse(success=False, message = "\nERROR: Invalid password. Please try again.")
         return response
 
+# AuthService class provides SendMessage, GetUsers, and ReceiveMessage functions
+# These functions are called from the client using the chat_stub
 class ChatService(chat_pb2_grpc.AuthServiceServicer):
+
+    # Send message to specified receiver with body of message
     def SendMessage(self, request, context):
-        # Check if the username and password are valid
         curr_users = db['passwords'].keys()
         s = request.sender
         r = request.receiver
         b = request.body
-        # print('sender', s)
-        # print('receiver', r)
-        # print('body', request.body)
 
-        # make sure both users are registered + sender is logged in
+        # Ensure both usernames are valid
         if s in curr_users and r in curr_users:
-            # print(f'received message from {s} to {r}')
             db['messages'][r].append(request)
             response = chat_pb2.SendResponse(success = True, message = "Message successfully added.")
         else:
             response = chat_pb2.SendResponse(success = False, message = "\nERROR: either sender or receiver are not in username database. Please try again!\n")
         return response
 
+    # Get all users currently in database
     def GetUsers(self, request, context):
         for u in db['passwords'].keys():
             yield chat_pb2.User(username = u)
     
+    # Receives all unread messages for a specific user and removes these messages from the database
     def ReceiveMessage(self, request, context):
         r = request.username
         for i in range(len(db['messages'][r])):
@@ -104,7 +108,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
             db['messages'][r].pop(0)
             storeData(db)
 
-# function to start up server
+# Function to start up server
 def serve(channel_name):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
@@ -114,9 +118,9 @@ def serve(channel_name):
     server.start()
     server.wait_for_termination()
 
+# Main method that collects server IP address as a command line argument
+# If no IP address is provided, localhost is used
 if __name__ == "__main__":
-    
-    # set server IP address; if none provided, use local server
     n_arg = len(sys.argv)
     channel_name = ''
     if n_arg == 1:
