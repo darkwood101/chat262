@@ -79,13 +79,13 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
         s = request.sender
         r = request.receiver
         b = request.body
-        print('sender', s)
-        print('receiver', r)
-        print('body', request.body)
+        # print('sender', s)
+        # print('receiver', r)
+        # print('body', request.body)
 
         # make sure both users are registered + sender is logged in
         if s in curr_users and r in curr_users:
-            print(f'received message from {s} to {r}')
+            # print(f'received message from {s} to {r}')
             db['messages'][r].append(request)
             response = chat_pb2.SendResponse(success = True, message = "Message successfully added.")
         else:
