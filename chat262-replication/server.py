@@ -105,7 +105,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
         for i in range(len(db['messages'][r])):
             m = db['messages'][r][0]
             yield chat_pb2.ChatMessage(sender = m.sender, body = m.body)
-            db['messages'][r].pop(0)
+            # db['messages'][r].pop(0)
             storeData(db)
 
 # Function to start up server

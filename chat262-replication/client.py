@@ -13,41 +13,55 @@ curr_auth_stub = None
 curr_chat_stub = None
 
 chat_stub_lock = threading.Lock()
+num_messages = 0
 
 # Function to receive a list of messages
 def receive_messages():
     global username
+    global num_messages
+
     while True:
         chat_stub_lock.acquire()
         message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
         chat_stub_lock.release()
 
-        ## TODO: ONLY PRINT IF length of messages changes (so it's not constantly there)
-        for m in message_list:
-            print(f'\n\n Received new message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
-        time.sleep(1)
+        # Only print messages if there is a change in the number of messages
+        if len(message_list) != num_messages:
+            num_messages = len(message_list)
+            for m in message_list:
+                print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
+            time.sleep(1)
 
 # Function to send a single message to another specified user
 # Can only be accessed if a user is logged in
 def send_messages():
     global username
+    global curr_leader
     while True:
+        # poll for user input
         receiver = input('\n>> Enter recipient username: ')
         body = input('>> Enter message body: ')
+
         request = chat_pb2.SendRequest(sender=username, receiver=receiver, body=body)
+        
         try:
             chat_stub_lock.acquire()
-            response = curr_chat_stub.SendMessage(request)
+            response = curr_chat_stub.SendMessage(request, timeout = 1) # timeout if more than 1 second
+            if not response.success:
+                print(response.message)
             chat_stub_lock.release()
-            # TODO: Implement timeout here
         except:
-            # If send message fails, assume that the current leader has crashed 
-            # Connect to new leader
-            connect()
-            # FILL IN
+            # If send message fails / times out, assume that the current leader has crashed and connect to new leader
+            curr_leader += 1 
+            
+            # Check if all servers have failed
+            if curr_leader > 2:
+                print("All 3 servers have failed.")
+                return
+            
+            # Connect to next leader
+            connect(ip_addresses[curr_leader])
         
-        if not response.success:
-            print(response.message)
         time.sleep(1)
 
 # Runs the chat "home page", which displays an inbox of new messages since the last login
@@ -134,6 +148,8 @@ def connect(server_ip):
     global curr_chat_stub
     channel = grpc.insecure_channel(server_ip + ':50051')
     curr_auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
+
+    # TODO: add lock here?
     curr_chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
 def main():
@@ -145,8 +161,6 @@ def main():
     # Bind to server channel and create auth and chat stubs
     connect(ip_addresses[curr_leader])
 
-    # Create global username + logged_in variables
-    username = ''
     logged_in = 0 # 0 = not logged in, 1 = logged in
 
     # Run authorization until user is logged in
