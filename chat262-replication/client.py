@@ -141,7 +141,7 @@ def main():
         print("Error...")
         return
     curr_leader = 0
-    ip_addresses = sys.argv[2:]
+    ip_addresses = sys.argv[1:]
     # Bind to server channel and create auth and chat stubs
     connect(ip_addresses[curr_leader])
 
