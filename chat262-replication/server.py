@@ -118,14 +118,24 @@ def serve(channel_name):
     server.start()
     server.wait_for_termination()
 
+
+def main():
+    global am_i_leader
+    global my_id
+    global ip_addresses
+    if len(sys.argv) != 5:
+        print("Error...")
+        return
+    my_id = int(sys.argv[1])
+    if my_id < 0 or my_id > 2:
+        print("Error")
+        return
+    am_i_leader = (my_id == 0)
+    ip_addresses = sys.argv[2:]
+    channel_name = ip_addresses[my_id] + ':50051'
+    serve(channel_name)
+
 # Main method that collects server IP address as a command line argument
 # If no IP address is provided, localhost is used
 if __name__ == "__main__":
-    n_arg = len(sys.argv)
-    channel_name = ''
-    if n_arg == 1:
-        channel_name = 'localhost:50051'
-    elif n_arg == 2:
-        channel_name = sys.argv[1] + ':50051'
-
-    serve(channel_name)
+    main()

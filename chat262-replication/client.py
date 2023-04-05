@@ -6,11 +6,16 @@ import threading
 import sys
 import time
 
+curr_leader = None
+ip_addresses = None
+curr_auth_stub = None
+curr_chat_stub = None
+
 # Function to receive a list of messages
 def receive_messages():
     global username
     while True:
-        message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+        message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
         for m in message_list:
             print(f'\n\n Received new message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
         time.sleep(1)
@@ -23,7 +28,10 @@ def send_messages():
         receiver = input('\n>> Enter recipient username: ')
         body = input('>> Enter message body: ')
         request = chat_pb2.SendRequest(sender=username, receiver=receiver, body=body)
-        response = chat_stub.SendMessage(request)
+        try:
+            response = curr_chat_stub.SendMessage(request)
+        except:
+            connect()
         
         if not response.success:
             print(response.message)
@@ -39,7 +47,7 @@ def run_home():
     print("\nWELCOME TO THE CHAT HOME PAGE")
 
     print('\nInbox [new messages since last login]:')
-    message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+    message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
     empty_inbox = True
     for m in message_list:
         print(f'{m.sender}: {m.body}\n')
@@ -47,7 +55,7 @@ def run_home():
     if empty_inbox:
         print("No new messages to show.")
 
-    user_list = chat_stub.GetUsers(chat_pb2.Empty())
+    user_list = curr_chat_stub.GetUsers(chat_pb2.Empty())
 
     print('\n----------')
 
@@ -76,7 +84,7 @@ def run_login():
         username = input(">> Username: ")
         password = input(">> Password: ")
         request = chat_pb2.RegisterRequest(username=username, password=password)
-        response = auth_stub.Register(request)
+        response = curr_auth_stub.Register(request)
         print(response.message)
 
         if response.success:
@@ -90,7 +98,7 @@ def run_login():
         username = input(">> Username: ")
         password = input(">> Password: ")
         request = chat_pb2.LoginRequest(username=username, password=password)
-        response = auth_stub.Login(request)
+        response = curr_auth_stub.Login(request)
         print(response.message)
 
         if response.success:
@@ -104,32 +112,36 @@ def run_login():
         username = input(">> Username: ")
         password = input(">> Password: ")
         request = chat_pb2.DeleteRequest(username=username, password=password)
-        response = auth_stub.DeleteAccount(request)
+        response = curr_auth_stub.DeleteAccount(request)
         print(response.message)
         return 0
 
+def connect(server_ip):
+    global curr_auth_stub
+    global curr_chat_stub
+    channel = grpc.insecure_channel(server_ip + ':50051')
+    curr_auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
+    curr_chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
-# Run client.
-# Set channel IP address; if none provided, use local server
-n_arg = len(sys.argv)
-channel_name = ''
-if n_arg == 1:
-    channel_name = 'localhost:50051'
-elif n_arg == 2:
-    channel_name = sys.argv[1] + ':50051'
+def main():
+    if len(sys.argv) != 4:
+        print("Error...")
+        return
+    curr_leader = 0
+    ip_addresses = sys.argv[2:]
+    # Bind to server channel and create auth and chat stubs
+    connect(ip_addresses[curr_leader])
 
-# Bind to server channel and create auth and chat stubs
-channel = grpc.insecure_channel(channel_name)
-auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
-chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
+    # Create global username + logged_in variables
+    username = ''
+    logged_in = 0 # 0 = not logged in, 1 = logged in
 
-# Create global username + logged_in variables
-username = ''
-logged_in = 0 # 0 = not logged in, 1 = logged in
+    # Run authorization until user is logged in
+    while logged_in == 0:
+        logged_in = run_login()
 
-# Run authorization until user is logged in
-while logged_in == 0:
-    logged_in = run_login()
+    # Run home page which provides chat services
+    run_home()
 
-# Run home page which provides chat services
-run_home()
+if __name__=="__main__":
+    main()
