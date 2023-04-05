@@ -67,10 +67,12 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
     # Remove account from user-password database
     # Any pending messages are still sent
     def DeleteAccount(self, request, context):
+        global db
         u = request.username
         p = request.password
         if u in db['passwords'] and p == db['passwords'][u]:
             db['passwords'].pop(u)
+            storeData(db)
             response = chat_pb2.DeleteResponse(success=True, message = "\nAccount successfully deleted.")
         elif u not in db['passwords']:
             response = chat_pb2.DeleteResponse(success=False, message = "\nERROR: Username does not exist in the database.")
@@ -118,6 +120,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
         # Ensure both usernames are valid
         if s in curr_users and r in curr_users:
             db['messages'][r].append(request)
+            storeData(db)
             response = chat_pb2.SendResponse(success = True, message = "Message successfully added.")
         else:
             response = chat_pb2.SendResponse(success = False, message = "\nERROR: either sender or receiver are not in username database. Please try again!\n")
@@ -131,11 +134,10 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
     # Receives all unread messages for a specific user and removes these messages from the database
     def ReceiveMessage(self, request, context):
         r = request.username
-        for i in range(len(db['messages'][r])):
-            m = db['messages'][r][i]
-            yield chat_pb2.ChatMessage(sender = m.sender, body = m.body)
-            # db['messages'][r].pop(0)
-            storeData(db)
+        chats = []
+        for m in db['messages'][r]:
+            chats.append('From ' + m.sender + ': ' + m.body)
+        return chat_pb2.AllChats()
 
 # Function to start up server
 def serve(channel_name):

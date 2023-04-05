@@ -6,7 +6,8 @@ import chat_pb2 as chat__pb2
 
 
 class AuthServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """AuthService handles register, login, and delete account requests
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -32,7 +33,8 @@ class AuthServiceStub(object):
 
 
 class AuthServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """AuthService handles register, login, and delete account requests
+    """
 
     def Login(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -78,7 +80,8 @@ def add_AuthServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class AuthService(object):
-    """Missing associated documentation comment in .proto file."""
+    """AuthService handles register, login, and delete account requests
+    """
 
     @staticmethod
     def Login(request,
@@ -133,7 +136,8 @@ class AuthService(object):
 
 
 class ChatServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """ChatService handles send/receive message requests and getting all the current users
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -146,10 +150,10 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.SendRequest.SerializeToString,
                 response_deserializer=chat__pb2.SendResponse.FromString,
                 )
-        self.ReceiveMessage = channel.unary_stream(
+        self.ReceiveMessage = channel.unary_unary(
                 '/chatservice.ChatService/ReceiveMessage',
                 request_serializer=chat__pb2.User.SerializeToString,
-                response_deserializer=chat__pb2.ChatMessage.FromString,
+                response_deserializer=chat__pb2.AllChats.FromString,
                 )
         self.GetUsers = channel.unary_stream(
                 '/chatservice.ChatService/GetUsers',
@@ -159,7 +163,8 @@ class ChatServiceStub(object):
 
 
 class ChatServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """ChatService handles send/receive message requests and getting all the current users
+    """
 
     def SendMessage(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -187,10 +192,10 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.SendRequest.FromString,
                     response_serializer=chat__pb2.SendResponse.SerializeToString,
             ),
-            'ReceiveMessage': grpc.unary_stream_rpc_method_handler(
+            'ReceiveMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.ReceiveMessage,
                     request_deserializer=chat__pb2.User.FromString,
-                    response_serializer=chat__pb2.ChatMessage.SerializeToString,
+                    response_serializer=chat__pb2.AllChats.SerializeToString,
             ),
             'GetUsers': grpc.unary_stream_rpc_method_handler(
                     servicer.GetUsers,
@@ -205,7 +210,8 @@ def add_ChatServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class ChatService(object):
-    """Missing associated documentation comment in .proto file."""
+    """ChatService handles send/receive message requests and getting all the current users
+    """
 
     @staticmethod
     def SendMessage(request,
@@ -235,9 +241,9 @@ class ChatService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/chatservice.ChatService/ReceiveMessage',
+        return grpc.experimental.unary_unary(request, target, '/chatservice.ChatService/ReceiveMessage',
             chat__pb2.User.SerializeToString,
-            chat__pb2.ChatMessage.FromString,
+            chat__pb2.AllChats.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

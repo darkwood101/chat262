@@ -29,7 +29,8 @@ def receive_messages():
         if len(message_list) != num_messages:
             num_messages = len(message_list)
             for m in message_list:
-                print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
+                print(m + '\n')
+                # print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
             time.sleep(1)
 
 # Function to send a single message to another specified user
@@ -77,6 +78,7 @@ def run_home():
     message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
     empty_inbox = True
     for m in message_list:
+        # TODO: change this
         print(f'{m.sender}: {m.body}\n')
         empty_inbox = False
     if empty_inbox:

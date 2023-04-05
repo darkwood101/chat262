@@ -17,7 +17,7 @@ service AuthService {
 // ChatService handles send/receive message requests and getting all the current users
 service ChatService {
   rpc SendMessage (SendRequest) returns (SendResponse) {}
-  rpc ReceiveMessage (User) returns (stream ChatMessage) {}
+  rpc ReceiveMessage (User) returns (AllChats) {}
   rpc GetUsers (Empty) returns (stream User) {}
 }
 
@@ -72,8 +72,6 @@ message SendResponse {
   string message = 2;
 }
 
-message ChatMessage {
-  string sender = 1;
-  string body = 2;
-  bool is_client = 3;
+message AllChats {
+  repeated string chats = 1;
 }

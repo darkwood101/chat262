@@ -1,24 +1,25 @@
+from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Optional as _Optional
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-class ChatMessage(_message.Message):
-    __slots__ = ["body", "sender"]
-    BODY_FIELD_NUMBER: _ClassVar[int]
-    SENDER_FIELD_NUMBER: _ClassVar[int]
-    body: str
-    sender: str
-    def __init__(self, sender: _Optional[str] = ..., body: _Optional[str] = ...) -> None: ...
+class AllChats(_message.Message):
+    __slots__ = ["chats"]
+    CHATS_FIELD_NUMBER: _ClassVar[int]
+    chats: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, chats: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class DeleteRequest(_message.Message):
-    __slots__ = ["password", "username"]
+    __slots__ = ["is_client", "password", "username"]
+    IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     PASSWORD_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    is_client: bool
     password: str
     username: str
-    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ...) -> None: ...
+    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ...) -> None: ...
 
 class DeleteResponse(_message.Message):
     __slots__ = ["message", "success"]
@@ -33,12 +34,14 @@ class Empty(_message.Message):
     def __init__(self) -> None: ...
 
 class LoginRequest(_message.Message):
-    __slots__ = ["password", "username"]
+    __slots__ = ["is_client", "password", "username"]
+    IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     PASSWORD_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    is_client: bool
     password: str
     username: str
-    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ...) -> None: ...
+    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ...) -> None: ...
 
 class LoginResponse(_message.Message):
     __slots__ = ["message", "success"]
@@ -49,12 +52,14 @@ class LoginResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
 
 class RegisterRequest(_message.Message):
-    __slots__ = ["password", "username"]
+    __slots__ = ["is_client", "password", "username"]
+    IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     PASSWORD_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    is_client: bool
     password: str
     username: str
-    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ...) -> None: ...
+    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ...) -> None: ...
 
 class RegisterResponse(_message.Message):
     __slots__ = ["message", "success"]
@@ -65,14 +70,16 @@ class RegisterResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
 
 class SendRequest(_message.Message):
-    __slots__ = ["body", "receiver", "sender"]
+    __slots__ = ["body", "is_client", "receiver", "sender"]
     BODY_FIELD_NUMBER: _ClassVar[int]
+    IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     RECEIVER_FIELD_NUMBER: _ClassVar[int]
     SENDER_FIELD_NUMBER: _ClassVar[int]
     body: str
+    is_client: bool
     receiver: str
     sender: str
-    def __init__(self, sender: _Optional[str] = ..., receiver: _Optional[str] = ..., body: _Optional[str] = ...) -> None: ...
+    def __init__(self, sender: _Optional[str] = ..., receiver: _Optional[str] = ..., body: _Optional[str] = ..., is_client: bool = ...) -> None: ...
 
 class SendResponse(_message.Message):
     __slots__ = ["message", "success"]
