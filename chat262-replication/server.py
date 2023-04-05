@@ -45,18 +45,18 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             print("Server %d has now become the leader" % (my_id))
             am_i_leader = True
         if am_i_leader:
-            for i in range(len(chat_stubs)):
-                if chat_stubs[i] is None:
+            for i in range(len(auth_stubs)):
+                if auth_stubs[i] is None:
                     print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
                     continue
                 try:
                     request.is_client = False
-                    chat_stubs[i].SendMessage(request)
+                    auth_stubs[i].Register(request)
                     request.is_client = True
                     print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
                 except:
                     print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
-                    chat_stubs[i] = None
+                    auth_stubs[i] = None
         else:
             print("Server %d received a replication request" % (my_id))
 
@@ -103,13 +103,13 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
             print("Server %d has now become the leader" % (my_id))
             am_i_leader = True
         if am_i_leader:
-            for i in range(len(chat_stubs)):
-                if chat_stubs[i] is None:
+            for i in range(len(auth_stubs)):
+                if auth_stubs[i] is None:
                     print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
                     continue
                 try:
                     request.is_client = False
-                    chat_stubs[i].SendMessage(request)
+                    auth_stubs[i].DeleteAccount(request)
                     request.is_client = True
                     print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
                 except:
