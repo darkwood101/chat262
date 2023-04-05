@@ -34,7 +34,32 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
 
     # Register a user into the database by associating a specific username and password
     def Register(self, request, context):
+        global am_i_leader
+        global my_id
+        global ip_addresses
+        global chat_stubs
+        global auth_stubs
         global db
+
+        if request.is_client and not am_i_leader:
+            print("Server %d has now become the leader" % (my_id))
+            am_i_leader = True
+        if am_i_leader:
+            for i in range(len(chat_stubs)):
+                if chat_stubs[i] is None:
+                    print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                    continue
+                try:
+                    request.is_client = False
+                    chat_stubs[i].SendMessage(request)
+                    request.is_client = True
+                    print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
+                except:
+                    print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                    chat_stubs[i] = None
+        else:
+            print("Server %d received a replication request" % (my_id))
+
         # Check if the username and password are valid
         u = request.username
         p = request.password
@@ -67,7 +92,32 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
     # Remove account from user-password database
     # Any pending messages are still sent
     def DeleteAccount(self, request, context):
+        global am_i_leader
+        global my_id
+        global ip_addresses
+        global chat_stubs
+        global auth_stubs
         global db
+
+        if request.is_client and not am_i_leader:
+            print("Server %d has now become the leader" % (my_id))
+            am_i_leader = True
+        if am_i_leader:
+            for i in range(len(chat_stubs)):
+                if chat_stubs[i] is None:
+                    print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                    continue
+                try:
+                    request.is_client = False
+                    chat_stubs[i].SendMessage(request)
+                    request.is_client = True
+                    print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
+                except:
+                    print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                    chat_stubs[i] = None
+        else:
+            print("Server %d received a replication request" % (my_id))
+
         u = request.username
         p = request.password
         if u in db['passwords'] and p == db['passwords'][u]:
@@ -101,14 +151,14 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
                 if chat_stubs[i] is None:
                     print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
                     continue
-                # try:
-                request.is_client = False
-                chat_stubs[i].SendMessage(request)
-                request.is_client = True
-                print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
-                # except:
-                #     print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
-                #     chat_stubs[i] = None
+                try:
+                    request.is_client = False
+                    chat_stubs[i].SendMessage(request)
+                    request.is_client = True
+                    print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
+                except:
+                    print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                    chat_stubs[i] = None
         else:
             print("Server %d received a replication request" % (my_id))
 
