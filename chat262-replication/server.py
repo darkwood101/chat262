@@ -8,13 +8,17 @@ import pickle
 
 # Function to update db.pkl file
 def storeData(db):
-    with open('db.pkl', 'wb') as dbfile:
+    global my_id
+    db_name = "db" + str(my_id) + ".pkl"
+    with open(db_name, 'wb') as dbfile:
         pickle.dump(db, dbfile)
-  
+
 # Function to load data from existing pickle file
 def loadData():
+    global my_id
+    db_name = "db" + str(my_id) + ".pkl"
     try:
-        with open('db.pkl', 'rb')  as dbfile:
+        with open(db_name, 'rb')  as dbfile:
             db = pickle.load(dbfile)
     except:
         # Database which keeps track of username-password combos and chat messages
@@ -24,15 +28,13 @@ def loadData():
         }
     return db
 
-# Load data, which persists across server restarts
-db = loadData()
-
 # AuthService class provides Register, Login, and DeleteAccount functions
 # These functions are called from the client using the auth_stub
 class AuthService(chat_pb2_grpc.AuthServiceServicer):
 
     # Register a user into the database by associating a specific username and password
     def Register(self, request, context):
+        global db
         # Check if the username and password are valid
         u = request.username
         p = request.password
@@ -48,6 +50,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
 
     # Checks credentials and completes login 
     def Login(self, request, context):
+        global db
         u = request.username
         p = request.password
 
@@ -67,7 +70,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         u = request.username
         p = request.password
         if u in db['passwords'] and p == db['passwords'][u]:
-            db['passwords'].pop(u)            
+            db['passwords'].pop(u)
             response = chat_pb2.DeleteResponse(success=True, message = "\nAccount successfully deleted.")
         elif u not in db['passwords']:
             response = chat_pb2.DeleteResponse(success=False, message = "\nERROR: Username does not exist in the database.")
@@ -81,6 +84,32 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
 
     # Send message to specified receiver with body of message
     def SendMessage(self, request, context):
+        global am_i_leader
+        global my_id
+        global ip_addresses
+        global chat_stubs
+        global auth_stubs
+        global db
+
+        if request.is_client and not am_i_leader:
+            print("Server %d has now become the leader" % (my_id))
+            am_i_leader = True
+        if am_i_leader:
+            for i in range(len(chat_stubs)):
+                if chat_stubs[i] is None:
+                    print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                    continue
+                # try:
+                request.is_client = False
+                chat_stubs[i].SendMessage(request)
+                request.is_client = True
+                print("Server %d replicated to server %d" % (my_id, my_id + i + 1))
+                # except:
+                #     print("Server %d failed to replicate to server %d" % (my_id, my_id + i + 1))
+                #     chat_stubs[i] = None
+        else:
+            print("Server %d received a replication request" % (my_id))
+
         curr_users = db['passwords'].keys()
         s = request.sender
         r = request.receiver
@@ -103,13 +132,18 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
     def ReceiveMessage(self, request, context):
         r = request.username
         for i in range(len(db['messages'][r])):
-            m = db['messages'][r][0]
+            m = db['messages'][r][i]
             yield chat_pb2.ChatMessage(sender = m.sender, body = m.body)
             # db['messages'][r].pop(0)
             storeData(db)
 
 # Function to start up server
 def serve(channel_name):
+    global am_i_leader
+    global my_id
+    global ip_addresses
+    global chat_stubs
+    global auth_stubs
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_ChatServiceServicer_to_server(ChatService(), server)
     chat_pb2_grpc.add_AuthServiceServicer_to_server(AuthService(), server)
@@ -123,6 +157,9 @@ def main():
     global am_i_leader
     global my_id
     global ip_addresses
+    global chat_stubs
+    global auth_stubs
+    global db
     if len(sys.argv) != 5:
         print("Error...")
         return
@@ -133,6 +170,14 @@ def main():
     am_i_leader = (my_id == 0)
     ip_addresses = sys.argv[2:]
     channel_name = ip_addresses[my_id] + ':50051'
+    auth_stubs = []
+    chat_stubs = []
+    # Load data, which persists across server restarts
+    db = loadData()
+    for i in range(my_id + 1, 3):
+        channel = grpc.insecure_channel(ip_addresses[i] + ':50051')
+        auth_stubs.append(chat_pb2_grpc.AuthServiceStub(channel))
+        chat_stubs.append(chat_pb2_grpc.ChatServiceStub(channel))
     serve(channel_name)
 
 # Main method that collects server IP address as a command line argument

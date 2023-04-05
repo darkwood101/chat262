@@ -6,6 +6,10 @@ from collections import defaultdict
 import sys
 import pickle
 
+am_i_leader = False
+my_id = 0
+ip_addresses = ["", "", ""]
+
 # Function to update db.pkl file
 def storeData(db):
     with open('db.pkl', 'wb') as dbfile:
@@ -121,6 +125,15 @@ def serve(channel_name):
 # Main method that collects server IP address as a command line argument
 # If no IP address is provided, localhost is used
 if __name__ == "__main__":
+    if len(sys.argv) != 5:
+        print("Error...")
+        return
+    my_id = int(sys.argv[1])
+    if my_id < 0 or my_id > 2:
+        print("Error")
+        return
+    ip_addresses = sys.argv[2:]
+    channel_name = ip_addresses[my_id] + ':50051'
     n_arg = len(sys.argv)
     channel_name = ''
     if n_arg == 1:
