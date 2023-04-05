@@ -30,6 +30,7 @@ message User{
 message LoginRequest {
   string username = 1;
   string password = 2;
+  bool is_client = 3;
 }
 
 message LoginResponse {
@@ -40,6 +41,7 @@ message LoginResponse {
 message RegisterRequest {
   string username = 1;
   string password = 2;
+  bool is_client = 3;
 }
 
 message RegisterResponse {
@@ -50,6 +52,7 @@ message RegisterResponse {
 message DeleteRequest {
   string username = 1;
   string password = 2;
+  bool is_client = 3;
 }
 
 message DeleteResponse {
@@ -61,6 +64,7 @@ message SendRequest {
   string sender = 1;
   string receiver = 2;
   string body = 3;
+  bool is_client = 4;
 }
 
 message SendResponse {
@@ -71,4 +75,5 @@ message SendResponse {
 message ChatMessage {
   string sender = 1;
   string body = 2;
+  bool is_client = 3;
 }

@@ -5,17 +5,24 @@ import tkinter as tk
 import threading
 import sys
 import time
+import threading
 
 curr_leader = None
 ip_addresses = None
 curr_auth_stub = None
 curr_chat_stub = None
 
+chat_stub_lock = threading.Lock()
+
 # Function to receive a list of messages
 def receive_messages():
     global username
     while True:
+        chat_stub_lock.acquire()
         message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+        chat_stub_lock.release()
+
+        ## TODO: ONLY PRINT IF length of messages changes (so it's not constantly there)
         for m in message_list:
             print(f'\n\n Received new message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
         time.sleep(1)
@@ -29,9 +36,15 @@ def send_messages():
         body = input('>> Enter message body: ')
         request = chat_pb2.SendRequest(sender=username, receiver=receiver, body=body)
         try:
+            chat_stub_lock.acquire()
             response = curr_chat_stub.SendMessage(request)
+            chat_stub_lock.release()
+            # TODO: Implement timeout here
         except:
+            # If send message fails, assume that the current leader has crashed 
+            # Connect to new leader
             connect()
+            # FILL IN
         
         if not response.success:
             print(response.message)
