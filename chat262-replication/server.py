@@ -137,7 +137,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
         chats = []
         for m in db['messages'][r]:
             chats.append('From ' + m.sender + ': ' + m.body)
-        return chat_pb2.AllChats()
+        return chat_pb2.AllChats(chats=chats)
 
 # Function to start up server
 def serve(channel_name):

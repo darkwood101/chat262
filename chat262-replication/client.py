@@ -22,7 +22,7 @@ def receive_messages():
 
     while True:
         chat_stub_lock.acquire()
-        message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+        message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username)).chats
         chat_stub_lock.release()
 
         # Only print messages if there is a change in the number of messages
@@ -31,7 +31,7 @@ def receive_messages():
             for m in message_list:
                 print(m + '\n')
                 # print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
-            time.sleep(1)
+        time.sleep(1)
 
 # Function to send a single message to another specified user
 # Can only be accessed if a user is logged in
@@ -62,8 +62,6 @@ def send_messages():
             
             # Connect to next leader
             connect(ip_addresses[curr_leader])
-        
-        time.sleep(1)
 
 # Runs the chat "home page", which displays an inbox of new messages since the last login
 # and also lists all the current usernames in the database. This function then starts up
@@ -75,11 +73,11 @@ def run_home():
     print("\nWELCOME TO THE CHAT HOME PAGE")
 
     print('\nInbox [new messages since last login]:')
-    message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username))
+    message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username)).chats
     empty_inbox = True
     for m in message_list:
         # TODO: change this
-        print(f'{m.sender}: {m.body}\n')
+        print(m)
         empty_inbox = False
     if empty_inbox:
         print("No new messages to show.")
