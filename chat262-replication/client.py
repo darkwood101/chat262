@@ -27,10 +27,13 @@ def receive_messages():
 
         # Only print messages if there is a change in the number of messages
         if len(message_list) != num_messages:
+            if num_messages != 0:
+                print('')
+                for m in message_list:
+                    print(m + '\n')
+                    # print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
+            print('>> Enter recipient username: ', end = '')
             num_messages = len(message_list)
-            for m in message_list:
-                print(m + '\n')
-                # print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
         time.sleep(1)
 
 # Function to send a single message to another specified user
@@ -72,12 +75,12 @@ def run_home():
     print('\n----------')
     print("\nWELCOME TO THE CHAT HOME PAGE")
 
-    print('\nInbox [new messages since last login]:')
+    print('\nInbox [all messages to you]:')
     message_list = curr_chat_stub.ReceiveMessage(chat_pb2.User(username = username)).chats
     empty_inbox = True
+    print('')
     for m in message_list:
-        # TODO: change this
-        print(m)
+        print(m + '\n')
         empty_inbox = False
     if empty_inbox:
         print("No new messages to show.")
