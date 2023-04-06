@@ -6,7 +6,7 @@ from collections import defaultdict
 import sys
 import pickle
 
-class global_params:
+class server_params:
     def __init__(self):
         # True iff this server is the leader
         self.am_i_leader: bool = None
@@ -23,7 +23,7 @@ class global_params:
         # Database for this server
         self.db: dict = None
 
-g_params = global_params()
+g_params = server_params()
 
 # Dump the database from g_params.db into a database file
 def storeData():
@@ -217,7 +217,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
                     # Send a replication request, but label it as not coming
                     # from a client
                     request.is_client = False
-                    g_params.chat_stubs[i].DeleteAccount(request)
+                    g_params.chat_stubs[i].SendMessage(request)
                     request.is_client = True
                     print("Server %d: Successfully replicated to server %d" %
                           (g_params.my_id, g_params.my_id + i + 1))
