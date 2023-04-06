@@ -4,6 +4,7 @@ import chat_pb2_grpc
 import tkinter as tk
 import threading
 import sys
+import os
 import time
 import threading
 
@@ -17,19 +18,24 @@ class client_params:
         self.curr_chat_stub: chat_pb2_grpc.ChatServiceStub = None
         # Auth service stub for the current leader
         self.curr_auth_stub: chat_pb2_grpc.AuthServiceStub = None
+        # Lock for the chat stub, so that the receiving and sending thread don't
+        # access it at the same time
+        self.chat_stub_lock = None
         # The logged in user's username
         self.username: str = None
+        # The total number of messages in the inbox
+        self.num_messages = None
+
 
 g_params = client_params()
 
-chat_stub_lock = threading.Lock()
-num_messages = 0
-
-def send_request(stub, rpc_name, *args, **kwargs):
+def send_request(stub_name, rpc_name, request):
     global g_params
     while True:
         try:
-            return getattr(getattr(g_params, stub), rpc_name)(*args, **kwargs, timeout=1)
+            return getattr(getattr(g_params, stub_name), rpc_name)(
+                request, timeout=1
+            )
         except:
             # If send message fails / times out, assume that the current leader
             # has crashed and connect to new leader
@@ -38,31 +44,39 @@ def send_request(stub, rpc_name, *args, **kwargs):
             # Check if all servers have failed
             if g_params.curr_leader > 2:
                 print("All 3 servers have failed.")
-                sys.exit(0)
+                os._exit(0)
 
             # Connect to next leader
             connect(g_params.ip_addresses[g_params.curr_leader])
 
 # Function to receive a list of messages
-def receive_messages():
-    global num_messages
+def receive_messages(homepage=False):
     global g_params
 
     while True:
+        # Receive messages from the server
         request = chat_pb2.User(username = g_params.username)
-        chat_stub_lock.acquire()
-        message_list = send_request("curr_chat_stub", "ReceiveMessage", request).chats
-        chat_stub_lock.release()
+        g_params.chat_stub_lock.acquire()
+        message_list = send_request(
+            stub_name = "curr_chat_stub",
+            rpc_name = "ReceiveMessage",
+            request = request
+        ).chats
+        g_params.chat_stub_lock.release()
 
         # Only print messages if there is a change in the number of messages
-        if len(message_list) != num_messages:
-            if num_messages != 0:
-                print('')
-                for m in message_list:
-                    print(m + '\n')
-                    # print(f'\n\n Message from {m.sender}: {m.body}\n\n>> Enter recipient username: ', end = '')
-            print('>> Enter recipient username: ', end = '')
-            num_messages = len(message_list)
+        if len(message_list) != g_params.num_messages:
+            print('\n\n[YOUR MESSAGES]')
+            for m in message_list:
+                print(m + '\n')
+            if not homepage:
+                print('>> Enter recipient username: ', end = '', flush = True)
+            g_params.num_messages = len(message_list)
+
+        # Exit only if we are receiving for the homepage (in the main thread)
+        if homepage:
+            break
+
         time.sleep(1)
 
 # Function to send a single message to another specified user
@@ -70,42 +84,46 @@ def receive_messages():
 def send_messages():
     global g_params
     while True:
-        # poll for user input
+        # Wait for user input
         receiver = input('\n>> Enter recipient username: ')
         body = input('>> Enter message body: ')
 
-        request = chat_pb2.SendRequest(sender=g_params.username, receiver=receiver, body=body, is_client=True)
+        # Send the request to the server
+        request = chat_pb2.SendRequest(
+            sender = g_params.username,
+            receiver = receiver,
+            body = body,
+            is_client = True
+        )
+        g_params.chat_stub_lock.acquire()
+        response = send_request(
+            stub_name = "curr_chat_stub",
+            rpc_name = "SendMessage",
+            request = request)
+        g_params.chat_stub_lock.release()
 
-        chat_stub_lock.acquire()
-        response = send_request("curr_chat_stub", "SendMessage", request)
+        # If it failed, let the user know
         if not response.success:
             print(response.message)
-        chat_stub_lock.release()
 
-# Runs the chat "home page", which displays an inbox of new messages since the last login
-# and also lists all the current usernames in the database. This function then starts up
-# two threads, one to send messages and one to receive messages, which constantly poll until
-# there are send requests or incoming messages.
+# Runs the chat "home page", which displays an inbox of new messages since the
+# last login and also lists all the current usernames in the database. This
+# function then starts up two threads, one to send messages and one to receive
+# messages, which constantly poll until there are send requests or incoming
+# messages.
 def run_home():
     global g_params
     print('\n----------')
     print("\nWELCOME TO THE CHAT HOME PAGE")
 
-    print('\nInbox [all messages to you]:')
-    request = chat_pb2.User(username = g_params.username)
-    message_list = send_request("curr_chat_stub", "ReceiveMessage", request).chats
-    empty_inbox = True
-    print('')
-    for m in message_list:
-        print(m + '\n')
-        empty_inbox = False
-    if empty_inbox:
-        print("No new messages to show.")
+    receive_messages(homepage = True)
 
     request = chat_pb2.Empty()
-    user_list = send_request("curr_chat_stub", "GetUsers", request)
-
-    print('\n----------')
+    user_list = send_request(
+        stub_name = "curr_chat_stub",
+        rpc_name = "GetUsers",
+        request = request
+    )
 
     print('\nChat with another user!')
 
@@ -131,8 +149,16 @@ def run_login():
         print("Register with username and password.")
         username = input(">> Username: ")
         password = input(">> Password: ")
-        request = chat_pb2.RegisterRequest(username=username, password=password, is_client=True)
-        response = send_request("curr_auth_stub", "Register", request)
+        request = chat_pb2.RegisterRequest(
+            username = username,
+            password = password,
+            is_client = True
+        )
+        response = send_request(
+            stub_name = "curr_auth_stub",
+            rpc_name = "Register",
+            request = request
+        )
         print(response.message)
         if response.success:
             g_params.username = username
@@ -144,8 +170,16 @@ def run_login():
         print("Login with your username and password.")
         username = input(">> Username: ")
         password = input(">> Password: ")
-        request = chat_pb2.LoginRequest(username=username, password=password, is_client=True)
-        response = send_request("curr_auth_stub", "Login", request)
+        request = chat_pb2.LoginRequest(
+            username = username,
+            password = password,
+            is_client = True
+        )
+        response = send_request(
+            stub_name = "curr_auth_stub",
+            rpc_name = "Login",
+            request = request
+        )
         print(response.message)
         if response.success:
             g_params.username = username
@@ -157,8 +191,15 @@ def run_login():
         print("To delete an account, you must log in with the username and password.")
         username = input(">> Username: ")
         password = input(">> Password: ")
-        request = chat_pb2.DeleteRequest(username=username, password=password, is_client=True)
-        response = send_request("curr_auth_stub", "DeleteAccount", request)
+        request = chat_pb2.DeleteRequest(
+            username = username,
+            password = password,
+            is_client = True
+        )
+        response = send_request(
+            stub_name = "curr_auth_stub",
+            rpc_name = "DeleteAccount",
+            request = request)
         print(response.message)
         return False
 
@@ -183,6 +224,10 @@ def main():
     g_params.ip_addresses = sys.argv[1:]
     # Bind to server channel and create auth and chat stubs
     connect(g_params.ip_addresses[g_params.curr_leader])
+    # Initialize the chat stub lock
+    g_params.chat_stub_lock = threading.Lock()
+    # Initialize the number of messages
+    g_params.num_messages = 0
 
     # Run authorization until user is logged in
     logged_in = False
