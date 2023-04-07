@@ -6,7 +6,6 @@
 import grpc
 import chat_pb2
 import chat_pb2_grpc
-from server import main
 import subprocess
 import time
 import os
@@ -176,9 +175,6 @@ def connect():
     return auth_stub, chat_stub
 
 if __name__ == "__main__":
-    # start up server with given IP address
-    # sleep to avoid race conditions
-
     try:
         test_double_registration()
         print('Test 1 (persistent double registration) passed.')

@@ -6,7 +6,6 @@
 import grpc
 import chat_pb2
 import chat_pb2_grpc
-from server import main
 import subprocess
 import time
 import os
