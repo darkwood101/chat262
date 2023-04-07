@@ -11,6 +11,7 @@ import subprocess
 import time
 import os
 import sys
+import traceback
 
 # Basic registration test
 def test_auth1(auth_stub, chat_stub):
