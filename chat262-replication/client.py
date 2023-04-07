@@ -208,7 +208,7 @@ def connect(server_ip):
     # TODO: add lock here?
     g_params.curr_chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
-def start():
+def do_start():
     # Run authorization until user is logged in
     logged_in = False
     while not logged_in:
@@ -235,7 +235,7 @@ def main(argv, start = False):
     # Initialize the number of messages
     g_params.num_messages = 0
     if start:
-        start()
+        do_start()
 
 if __name__=="__main__":
     main(sys.argv, start = True)
