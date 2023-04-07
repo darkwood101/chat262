@@ -24,7 +24,7 @@ class client_params:
         # The logged in user's username
         self.username: str = None
         # The total number of messages in the inbox
-        self.num_messages = None
+        self.num_messages: int = None
 
 
 g_params = client_params()
