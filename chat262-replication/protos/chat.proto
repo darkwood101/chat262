@@ -42,6 +42,7 @@ message RegisterRequest {
   string username = 1;
   string password = 2;
   bool is_client = 3;
+  uint64 counter = 4;
 }
 
 message RegisterResponse {
@@ -53,6 +54,7 @@ message DeleteRequest {
   string username = 1;
   string password = 2;
   bool is_client = 3;
+  uint64 counter = 4;
 }
 
 message DeleteResponse {
@@ -65,6 +67,7 @@ message SendRequest {
   string receiver = 2;
   string body = 3;
   bool is_client = 4;
+  uint64 counter = 5;
 }
 
 message SendResponse {

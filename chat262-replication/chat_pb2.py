@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x0b\x63hatservice\"\x07\n\x05\x45mpty\"\x18\n\x04User\x12\x10\n\x08username\x18\x01 \x01(\t\"E\n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\tis_client\x18\x03 \x01(\x08\"1\n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"H\n\x0fRegisterRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\tis_client\x18\x03 \x01(\x08\"4\n\x10RegisterResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"F\n\rDeleteRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\tis_client\x18\x03 \x01(\x08\"2\n\x0e\x44\x65leteResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"P\n\x0bSendRequest\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08receiver\x18\x02 \x01(\t\x12\x0c\n\x04\x62ody\x18\x03 \x01(\t\x12\x11\n\tis_client\x18\x04 \x01(\x08\"0\n\x0cSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x19\n\x08\x41llChats\x12\r\n\x05\x63hats\x18\x01 \x03(\t\"\x19\n\x08\x41llUsers\x12\r\n\x05users\x18\x01 \x03(\t2\xe6\x01\n\x0b\x41uthService\x12@\n\x05Login\x12\x19.chatservice.LoginRequest\x1a\x1a.chatservice.LoginResponse\"\x00\x12I\n\x08Register\x12\x1c.chatservice.RegisterRequest\x1a\x1d.chatservice.RegisterResponse\"\x00\x12J\n\rDeleteAccount\x12\x1a.chatservice.DeleteRequest\x1a\x1b.chatservice.DeleteResponse\"\x00\x32\xca\x01\n\x0b\x43hatService\x12\x44\n\x0bSendMessage\x12\x18.chatservice.SendRequest\x1a\x19.chatservice.SendResponse\"\x00\x12<\n\x0eReceiveMessage\x12\x11.chatservice.User\x1a\x15.chatservice.AllChats\"\x00\x12\x37\n\x08GetUsers\x12\x12.chatservice.Empty\x1a\x15.chatservice.AllUsers\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nchat.proto\x12\x0b\x63hatservice\"\x07\n\x05\x45mpty\"\x18\n\x04User\x12\x10\n\x08username\x18\x01 \x01(\t\"E\n\x0cLoginRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\tis_client\x18\x03 \x01(\x08\"1\n\rLoginResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"Y\n\x0fRegisterRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\tis_client\x18\x03 \x01(\x08\x12\x0f\n\x07\x63ounter\x18\x04 \x01(\x04\"4\n\x10RegisterResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"W\n\rDeleteRequest\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x11\n\tis_client\x18\x03 \x01(\x08\x12\x0f\n\x07\x63ounter\x18\x04 \x01(\x04\"2\n\x0e\x44\x65leteResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"a\n\x0bSendRequest\x12\x0e\n\x06sender\x18\x01 \x01(\t\x12\x10\n\x08receiver\x18\x02 \x01(\t\x12\x0c\n\x04\x62ody\x18\x03 \x01(\t\x12\x11\n\tis_client\x18\x04 \x01(\x08\x12\x0f\n\x07\x63ounter\x18\x05 \x01(\x04\"0\n\x0cSendResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x19\n\x08\x41llChats\x12\r\n\x05\x63hats\x18\x01 \x03(\t\"\x19\n\x08\x41llUsers\x12\r\n\x05users\x18\x01 \x03(\t2\xe6\x01\n\x0b\x41uthService\x12@\n\x05Login\x12\x19.chatservice.LoginRequest\x1a\x1a.chatservice.LoginResponse\"\x00\x12I\n\x08Register\x12\x1c.chatservice.RegisterRequest\x1a\x1d.chatservice.RegisterResponse\"\x00\x12J\n\rDeleteAccount\x12\x1a.chatservice.DeleteRequest\x1a\x1b.chatservice.DeleteResponse\"\x00\x32\xca\x01\n\x0b\x43hatService\x12\x44\n\x0bSendMessage\x12\x18.chatservice.SendRequest\x1a\x19.chatservice.SendResponse\"\x00\x12<\n\x0eReceiveMessage\x12\x11.chatservice.User\x1a\x15.chatservice.AllChats\"\x00\x12\x37\n\x08GetUsers\x12\x12.chatservice.Empty\x1a\x15.chatservice.AllUsers\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'chat_pb2', globals())
@@ -29,23 +29,23 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _LOGINRESPONSE._serialized_start=133
   _LOGINRESPONSE._serialized_end=182
   _REGISTERREQUEST._serialized_start=184
-  _REGISTERREQUEST._serialized_end=256
-  _REGISTERRESPONSE._serialized_start=258
-  _REGISTERRESPONSE._serialized_end=310
-  _DELETEREQUEST._serialized_start=312
-  _DELETEREQUEST._serialized_end=382
-  _DELETERESPONSE._serialized_start=384
-  _DELETERESPONSE._serialized_end=434
-  _SENDREQUEST._serialized_start=436
-  _SENDREQUEST._serialized_end=516
-  _SENDRESPONSE._serialized_start=518
-  _SENDRESPONSE._serialized_end=566
-  _ALLCHATS._serialized_start=568
-  _ALLCHATS._serialized_end=593
-  _ALLUSERS._serialized_start=595
-  _ALLUSERS._serialized_end=620
-  _AUTHSERVICE._serialized_start=623
-  _AUTHSERVICE._serialized_end=853
-  _CHATSERVICE._serialized_start=856
-  _CHATSERVICE._serialized_end=1058
+  _REGISTERREQUEST._serialized_end=273
+  _REGISTERRESPONSE._serialized_start=275
+  _REGISTERRESPONSE._serialized_end=327
+  _DELETEREQUEST._serialized_start=329
+  _DELETEREQUEST._serialized_end=416
+  _DELETERESPONSE._serialized_start=418
+  _DELETERESPONSE._serialized_end=468
+  _SENDREQUEST._serialized_start=470
+  _SENDREQUEST._serialized_end=567
+  _SENDRESPONSE._serialized_start=569
+  _SENDRESPONSE._serialized_end=617
+  _ALLCHATS._serialized_start=619
+  _ALLCHATS._serialized_end=644
+  _ALLUSERS._serialized_start=646
+  _ALLUSERS._serialized_end=671
+  _AUTHSERVICE._serialized_start=674
+  _AUTHSERVICE._serialized_end=904
+  _CHATSERVICE._serialized_start=907
+  _CHATSERVICE._serialized_end=1109
 # @@protoc_insertion_point(module_scope)

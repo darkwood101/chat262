@@ -18,14 +18,16 @@ class AllUsers(_message.Message):
     def __init__(self, users: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class DeleteRequest(_message.Message):
-    __slots__ = ["is_client", "password", "username"]
+    __slots__ = ["counter", "is_client", "password", "username"]
+    COUNTER_FIELD_NUMBER: _ClassVar[int]
     IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     PASSWORD_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    counter: int
     is_client: bool
     password: str
     username: str
-    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ...) -> None: ...
+    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ..., counter: _Optional[int] = ...) -> None: ...
 
 class DeleteResponse(_message.Message):
     __slots__ = ["message", "success"]
@@ -58,14 +60,16 @@ class LoginResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
 
 class RegisterRequest(_message.Message):
-    __slots__ = ["is_client", "password", "username"]
+    __slots__ = ["counter", "is_client", "password", "username"]
+    COUNTER_FIELD_NUMBER: _ClassVar[int]
     IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     PASSWORD_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    counter: int
     is_client: bool
     password: str
     username: str
-    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ...) -> None: ...
+    def __init__(self, username: _Optional[str] = ..., password: _Optional[str] = ..., is_client: bool = ..., counter: _Optional[int] = ...) -> None: ...
 
 class RegisterResponse(_message.Message):
     __slots__ = ["message", "success"]
@@ -76,16 +80,18 @@ class RegisterResponse(_message.Message):
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
 
 class SendRequest(_message.Message):
-    __slots__ = ["body", "is_client", "receiver", "sender"]
+    __slots__ = ["body", "counter", "is_client", "receiver", "sender"]
     BODY_FIELD_NUMBER: _ClassVar[int]
+    COUNTER_FIELD_NUMBER: _ClassVar[int]
     IS_CLIENT_FIELD_NUMBER: _ClassVar[int]
     RECEIVER_FIELD_NUMBER: _ClassVar[int]
     SENDER_FIELD_NUMBER: _ClassVar[int]
     body: str
+    counter: int
     is_client: bool
     receiver: str
     sender: str
-    def __init__(self, sender: _Optional[str] = ..., receiver: _Optional[str] = ..., body: _Optional[str] = ..., is_client: bool = ...) -> None: ...
+    def __init__(self, sender: _Optional[str] = ..., receiver: _Optional[str] = ..., body: _Optional[str] = ..., is_client: bool = ..., counter: _Optional[int] = ...) -> None: ...
 
 class SendResponse(_message.Message):
     __slots__ = ["message", "success"]

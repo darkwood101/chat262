@@ -97,18 +97,33 @@ def test_chat1(auth_stub, chat_stub):
 
 # Attempt to send message to user that doesn't exist
 def test_chat2(auth_stub, chat_stub):
-    request = chat_pb2.SendRequest(sender='user1', receiver='baduser', body='Oops')
+    request = chat_pb2.SendRequest(
+        sender='user1',
+        receiver='baduser',
+        body='Oops',
+        is_client=True
+    )
     response = chat_stub.SendMessage(request)
     assert(response.success == False)
     return True
 
 # Sending + receive messages from different users
 def test_chat3(auth_stub, chat_stub):
-    request = chat_pb2.SendRequest(sender='user1', receiver='user3', body='1')
+    request = chat_pb2.SendRequest(
+        sender='user1',
+        receiver='user3',
+        body='1',
+        is_client=True
+    )
     response = chat_stub.SendMessage(request)
     assert(response.success == True)
 
-    request = chat_pb2.SendRequest(sender='user2', receiver='user3', body='2')
+    request = chat_pb2.SendRequest(
+        sender='user2',
+        receiver='user3',
+        body='2',
+        is_client=True
+    )
     response = chat_stub.SendMessage(request)
     assert(response.success == True)
 
@@ -121,11 +136,19 @@ def test_chat3(auth_stub, chat_stub):
 
 # Delete account test
 def test_delete(auth_stub, chat_stub):
-    request = chat_pb2.DeleteRequest(username='user3', password='pass3')
+    request = chat_pb2.DeleteRequest(
+        username='user3',
+        password='pass3',
+        is_client=True
+    )
     response = auth_stub.DeleteAccount(request)
     assert(response.success == True)
 
-    request = chat_pb2.LoginRequest(username='user3', password='pass3')
+    request = chat_pb2.LoginRequest(
+        username='user3',
+        password='pass3',
+        is_client=True
+    )
     response = auth_stub.Login(request)
     assert(response.success == False)
 

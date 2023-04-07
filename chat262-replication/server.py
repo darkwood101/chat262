@@ -5,6 +5,8 @@ import chat_pb2_grpc
 from collections import defaultdict
 import sys
 import pickle
+from copy import deepcopy
+import traceback
 
 class server_params:
     def __init__(self):
@@ -22,6 +24,10 @@ class server_params:
         self.db_name: str = None
         # Database for this server
         self.db: dict = None
+        # Replication counter
+        self.counter: int = None
+        # Last seen replication request
+        self.last_request = None
 
 g_params = server_params()
 
@@ -31,6 +37,12 @@ def replicate(stubs, rpc_name, request):
     if request.is_client and not g_params.am_i_leader:
         print("Server %d: I am now the leader" % (g_params.my_id))
         g_params.am_i_leader = True
+        if g_params.last_request is not None:
+            replicate(
+                g_params.last_request[0],
+                g_params.last_request[1],
+                g_params.last_request[2]
+            )
 
     # If this server is the leader, try to replicate
     if g_params.am_i_leader:
@@ -46,10 +58,12 @@ def replicate(stubs, rpc_name, request):
                 # Send a replication request, but label it as not coming
                 # from a client
                 request.is_client = False
+                request.counter = g_params.counter + 1
                 getattr(stubs[i], rpc_name)(request)
                 request.is_client = True
                 print("Server %d: Successfully replicated to server %d" %
                         (g_params.my_id, g_params.my_id + i + 1))
+                g_params.counter += 1
             except:
                 # Remove the stub so that we don't try again
                 print("Server %d: Server %d is down, failed to replicate" %
@@ -58,6 +72,7 @@ def replicate(stubs, rpc_name, request):
     else:
         print("Server %d: Replicating a request" %
                 (g_params.my_id))
+        g_params.last_request = [stubs, rpc_name, request]
 
 # Dump the database from g_params.db into a database file
 def storeData():
@@ -90,6 +105,16 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         global g_params
 
         replicate(g_params.auth_stubs, "Register", request)
+        # Don't do anything if we have seen this request before
+        if not request.is_client:
+            if request.counter <= g_params.counter:
+                response = chat_pb2.RegisterResponse(
+                    success = True,
+                    message = "\nRegistration successful."
+                )
+                return response
+            else:
+                g_params.counter = request.counter
 
         # Check if the username and password are valid
         u = request.username
@@ -141,6 +166,16 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
         global g_params
 
         replicate(g_params.auth_stubs, "DeleteAccount", request)
+        # Don't do anything if we have seen this request before
+        if not request.is_client:
+            if request.counter <= g_params.counter:
+                response = chat_pb2.DeleteResponse(
+                    success = True,
+                    message = "\nAccount successfully deleted."
+                )
+                return response
+            else:
+                g_params.counter = request.counter
 
         u = request.username
         p = request.password
@@ -173,6 +208,16 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
         global g_params
 
         replicate(g_params.chat_stubs, "SendMessage", request)
+        # Don't do anything if we have seen this request before
+        if not request.is_client:
+            if request.counter <= g_params.counter:
+                response = chat_pb2.SendResponse(
+                    success = True,
+                    message = "Message successfully added."
+                )
+                return response
+            else:
+                g_params.counter = request.counter
 
         curr_users = g_params.db['passwords'].keys()
         s = request.sender
@@ -245,6 +290,8 @@ def main(argv):
     # Load data, which persists across server restarts
     g_params.db_name = "db" + str(g_params.my_id) + ".pkl"
     loadData()
+    # Initialize replication counter to 0
+    g_params.counter = 0
     # Start the server on the given IP
     serve(g_params.ip_addresses[g_params.my_id] + ':50051')
 
