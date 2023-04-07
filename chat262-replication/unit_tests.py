@@ -74,11 +74,8 @@ def test_getusers(auth_stub, chat_stub):
     response = auth_stub.Register(request)
     assert(response.success == True)
 
-    user_list_response = chat_stub.GetUsers(chat_pb2.Empty())
-    users = []
-    for u in user_list_response:
-        users.append(u.username)
-    assert(users == ['user1', 'user2', 'user3'])
+    user_list_response = chat_stub.GetUsers(chat_pb2.Empty()).users
+    assert(user_list_response == ['user1', 'user2', 'user3'])
     return True
 
 # Basic send + receive message test

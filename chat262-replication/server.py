@@ -197,8 +197,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
 
     # Get all users currently in database
     def GetUsers(self, request, context):
-        for u in g_params.db['passwords'].keys():
-            yield chat_pb2.User(username = u)
+        return chat_pb2.AllUsers(users = g_params.db['passwords'].keys())
 
     # Receives all unread messages for a specific user and removes these
     # messages from the database

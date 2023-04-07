@@ -85,11 +85,11 @@ def test_get_users():
     auth_stub, chat_stub = connect()
 
     request = chat_pb2.Empty()
-    user_list = chat_stub.GetUsers(request)
+    user_list = chat_stub.GetUsers(request).users
     expected_users = ['user1', 'user2']
     for user in user_list:
-        assert(user.username in expected_users)
-        expected_users.remove(user.username)
+        assert(user in expected_users)
+        expected_users.remove(user)
     assert(len(expected_users) == 0)
 
     kill_server(server)
@@ -97,11 +97,11 @@ def test_get_users():
     auth_stub, chat_stub = connect()
 
     request = chat_pb2.Empty()
-    user_list = chat_stub.GetUsers(request)
+    user_list = chat_stub.GetUsers(request).users
     expected_users = ['user1', 'user2']
     for user in user_list:
-        assert(user.username in expected_users)
-        expected_users.remove(user.username)
+        assert(user in expected_users)
+        expected_users.remove(user)
     assert(len(expected_users) == 0)
 
     kill_server(server)
@@ -151,11 +151,11 @@ def test_delete():
     auth_stub, chat_stub = connect()
 
     request = chat_pb2.Empty()
-    user_list = chat_stub.GetUsers(request)
+    user_list = chat_stub.GetUsers(request).users
     expected_users = ['user2']
     for user in user_list:
-        assert(user.username in expected_users)
-        expected_users.remove(user.username)
+        assert(user in expected_users)
+        expected_users.remove(user)
     assert(len(expected_users) == 0)
 
     kill_server(server)

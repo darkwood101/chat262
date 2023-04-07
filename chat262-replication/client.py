@@ -123,14 +123,11 @@ def run_home():
         stub_name = "curr_chat_stub",
         rpc_name = "GetUsers",
         request = request
-    )
+    ).users
 
     print('\nChat with another user!')
 
-    users = []
-    for u in user_list:
-        users.append(u.username)
-    print('\nAll usernames: ', users)
+    print('\nAll usernames: ', user_list)
 
     # start up threads for sending + receiving messages
     threading.Thread(target = send_messages).start()
@@ -211,24 +208,7 @@ def connect(server_ip):
     # TODO: add lock here?
     g_params.curr_chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
-def main():
-    global g_params
-    if len(sys.argv) != 4:
-        print("Usage: python3 %s"
-              " <server 0 IP> <server 1 IP> <server 2 IP>" %
-              sys.argv[0])
-        return
-    # Server 0 is the leader in the beginning
-    g_params.curr_leader = 0
-    # Get IP addresses from command line
-    g_params.ip_addresses = sys.argv[1:]
-    # Bind to server channel and create auth and chat stubs
-    connect(g_params.ip_addresses[g_params.curr_leader])
-    # Initialize the chat stub lock
-    g_params.chat_stub_lock = threading.Lock()
-    # Initialize the number of messages
-    g_params.num_messages = 0
-
+def start():
     # Run authorization until user is logged in
     logged_in = False
     while not logged_in:
@@ -237,5 +217,25 @@ def main():
     # Run home page which provides chat services
     run_home()
 
+def main(argv, start = False):
+    global g_params
+    if len(argv) != 4:
+        print("Usage: python3 %s"
+              " <server 0 IP> <server 1 IP> <server 2 IP>" %
+              argv[0])
+        return
+    # Server 0 is the leader in the beginning
+    g_params.curr_leader = 0
+    # Get IP addresses from command line
+    g_params.ip_addresses = argv[1:]
+    # Bind to server channel and create auth and chat stubs
+    connect(g_params.ip_addresses[g_params.curr_leader])
+    # Initialize the chat stub lock
+    g_params.chat_stub_lock = threading.Lock()
+    # Initialize the number of messages
+    g_params.num_messages = 0
+    if start:
+        start()
+
 if __name__=="__main__":
-    main()
+    main(sys.argv, start = True)

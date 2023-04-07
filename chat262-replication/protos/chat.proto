@@ -18,7 +18,7 @@ service AuthService {
 service ChatService {
   rpc SendMessage (SendRequest) returns (SendResponse) {}
   rpc ReceiveMessage (User) returns (AllChats) {}
-  rpc GetUsers (Empty) returns (stream User) {}
+  rpc GetUsers (Empty) returns (AllUsers) {}
 }
 
 message Empty {}
@@ -74,4 +74,8 @@ message SendResponse {
 
 message AllChats {
   repeated string chats = 1;
+}
+
+message AllUsers {
+  repeated string users = 1;
 }

@@ -11,6 +11,12 @@ class AllChats(_message.Message):
     chats: _containers.RepeatedScalarFieldContainer[str]
     def __init__(self, chats: _Optional[_Iterable[str]] = ...) -> None: ...
 
+class AllUsers(_message.Message):
+    __slots__ = ["users"]
+    USERS_FIELD_NUMBER: _ClassVar[int]
+    users: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, users: _Optional[_Iterable[str]] = ...) -> None: ...
+
 class DeleteRequest(_message.Message):
     __slots__ = ["is_client", "password", "username"]
     IS_CLIENT_FIELD_NUMBER: _ClassVar[int]

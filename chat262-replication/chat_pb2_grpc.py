@@ -155,10 +155,10 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.User.SerializeToString,
                 response_deserializer=chat__pb2.AllChats.FromString,
                 )
-        self.GetUsers = channel.unary_stream(
+        self.GetUsers = channel.unary_unary(
                 '/chatservice.ChatService/GetUsers',
                 request_serializer=chat__pb2.Empty.SerializeToString,
-                response_deserializer=chat__pb2.User.FromString,
+                response_deserializer=chat__pb2.AllUsers.FromString,
                 )
 
 
@@ -197,10 +197,10 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.User.FromString,
                     response_serializer=chat__pb2.AllChats.SerializeToString,
             ),
-            'GetUsers': grpc.unary_stream_rpc_method_handler(
+            'GetUsers': grpc.unary_unary_rpc_method_handler(
                     servicer.GetUsers,
                     request_deserializer=chat__pb2.Empty.FromString,
-                    response_serializer=chat__pb2.User.SerializeToString,
+                    response_serializer=chat__pb2.AllUsers.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -258,8 +258,8 @@ class ChatService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/chatservice.ChatService/GetUsers',
+        return grpc.experimental.unary_unary(request, target, '/chatservice.ChatService/GetUsers',
             chat__pb2.Empty.SerializeToString,
-            chat__pb2.User.FromString,
+            chat__pb2.AllUsers.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
