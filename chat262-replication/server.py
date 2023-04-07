@@ -25,6 +25,40 @@ class server_params:
 
 g_params = server_params()
 
+def replicate(stubs, rpc_name, request):
+    global g_params
+    # If this server receives a client request, it must be the leader
+    if request.is_client and not g_params.am_i_leader:
+        print("Server %d: I am now the leader" % (g_params.my_id))
+        g_params.am_i_leader = True
+
+    # If this server is the leader, try to replicate
+    if g_params.am_i_leader:
+        print("Server %d: The leader received a request" % (g_params.my_id))
+        for i in range(len(stubs)):
+            # If the stub does not exist, we already noted before the
+            # server is down
+            if stubs[i] is None:
+                print("Server %d: server %d is down, not replicating to it" %
+                        (g_params.my_id, g_params.my_id + i + 1))
+                continue
+            try:
+                # Send a replication request, but label it as not coming
+                # from a client
+                request.is_client = False
+                getattr(stubs[i], rpc_name)(request)
+                request.is_client = True
+                print("Server %d: Successfully replicated to server %d" %
+                        (g_params.my_id, g_params.my_id + i + 1))
+            except:
+                # Remove the stub so that we don't try again
+                print("Server %d: Server %d is down, failed to replicate" %
+                        (g_params.my_id, g_params.my_id + i + 1))
+                stubs[i] = None
+    else:
+        print("Server %d: Replicating a request" %
+                (g_params.my_id))
+
 # Dump the database from g_params.db into a database file
 def storeData():
     global g_params
@@ -55,37 +89,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
     def Register(self, request, context):
         global g_params
 
-        # If this server receives a client request, it must be the leader
-        if request.is_client and not g_params.am_i_leader:
-            print("Server %d: I am now the leader" % (g_params.my_id))
-            g_params.am_i_leader = True
-
-        # If this server is the leader, try to replicate
-        if g_params.am_i_leader:
-            print("Server %d: The leader received a request" % (g_params.my_id))
-            for i in range(len(g_params.auth_stubs)):
-                # If an auth stub does not exist, we already noted before the
-                # server is down
-                if g_params.auth_stubs[i] is None:
-                    print("Server %d: server %d is down, not replicating to it" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                    continue
-                try:
-                    # Send a replication request, but label it as not coming
-                    # from a client
-                    request.is_client = False
-                    g_params.auth_stubs[i].Register(request)
-                    request.is_client = True
-                    print("Server %d: Successfully replicated to server %d" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                except:
-                    # Remove the auth stub so that we don't try again
-                    print("Server %d: Server %d is down, failed to replicate" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                    g_params.auth_stubs[i] = None
-        else:
-            print("Server %d: Replicating a request" %
-                  (g_params.my_id))
+        replicate(g_params.auth_stubs, "Register", request)
 
         # Check if the username and password are valid
         u = request.username
@@ -136,37 +140,7 @@ class AuthService(chat_pb2_grpc.AuthServiceServicer):
     def DeleteAccount(self, request, context):
         global g_params
 
-        # If this server receives a client request, it must be the leader
-        if request.is_client and not g_params.am_i_leader:
-            print("Server %d: I am now the leader" % (g_params.my_id))
-            g_params.am_i_leader = True
-
-        # If this server is the leader, try to replicate
-        if g_params.am_i_leader:
-            print("Server %d: The leader received a request" % (g_params.my_id))
-            for i in range(len(g_params.auth_stubs)):
-                # If an auth stub does not exist, we already noted before the
-                # server is down
-                if g_params.auth_stubs[i] is None:
-                    print("Server %d: server %d is down, not replicating to it" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                    continue
-                try:
-                    # Send a replication request, but label it as not coming
-                    # from a client
-                    request.is_client = False
-                    g_params.auth_stubs[i].DeleteAccount(request)
-                    request.is_client = True
-                    print("Server %d: Successfully replicated to server %d" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                except:
-                    # Remove the auth stub so that we don't try again
-                    print("Server %d: Server %d is down, failed to replicate" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                    g_params.auth_stubs[i] = None
-        else:
-            print("Server %d: Replicating a request" %
-                  (g_params.my_id))
+        replicate(g_params.auth_stubs, "DeleteAccount", request)
 
         u = request.username
         p = request.password
@@ -198,37 +172,7 @@ class ChatService(chat_pb2_grpc.AuthServiceServicer):
     def SendMessage(self, request, context):
         global g_params
 
-        # If this server receives a client request, it must be the leader
-        if request.is_client and not g_params.am_i_leader:
-            print("Server %d: I am now the leader" % (g_params.my_id))
-            g_params.am_i_leader = True
-
-        # If this server is the leader, try to replicate
-        if g_params.am_i_leader:
-            print("Server %d: The leader received a request" % (g_params.my_id))
-            for i in range(len(g_params.chat_stubs)):
-                # If an chat stub does not exist, we already noted before the
-                # server is down
-                if g_params.chat_stubs[i] is None:
-                    print("Server %d: server %d is down, not replicating to it" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                    continue
-                try:
-                    # Send a replication request, but label it as not coming
-                    # from a client
-                    request.is_client = False
-                    g_params.chat_stubs[i].SendMessage(request)
-                    request.is_client = True
-                    print("Server %d: Successfully replicated to server %d" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                except:
-                    # Remove the chat stub so that we don't try again
-                    print("Server %d: Server %d is down, failed to replicate" %
-                          (g_params.my_id, g_params.my_id + i + 1))
-                    g_params.chat_stubs[i] = None
-        else:
-            print("Server %d: Replicating a request" %
-                  (g_params.my_id))
+        replicate(g_params.chat_stubs, "SendMessage", request)
 
         curr_users = g_params.db['passwords'].keys()
         s = request.sender
