@@ -1,6 +1,6 @@
 # 
 # Unit tests for the gRPC chat service implementation
-# NOTE: If db.pkl exists as a file, make sure to delete it before running these tests
+# NOTE: If any db*.pkl exist, make sure to delete them before running these tests
 # 
 
 import grpc
