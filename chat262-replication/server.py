@@ -219,22 +219,22 @@ def serve(channel_name):
     server.start()
     server.wait_for_termination()
 
-def main():
+def main(argv):
     global g_params
-    if len(sys.argv) != 5:
+    if len(argv) != 5:
         print("Usage: python3 %s"
               " <server ID> <server 0 IP> <server 1 IP> <server 2 IP>" %
-              sys.argv[0])
+              argv[0])
         return
     # Get server ID from command line
-    g_params.my_id = int(sys.argv[1])
+    g_params.my_id = int(argv[1])
     if g_params.my_id < 0 or g_params.my_id > 2:
         print("Server ID has to be in \{0, 1, 2\}")
         return
     # In the beginning, only server 0 is the leader
     g_params.am_i_leader = (g_params.my_id == 0)
     # Get IP addresses from command line
-    g_params.ip_addresses = sys.argv[2:]
+    g_params.ip_addresses = argv[2:]
     # Initialize auth and chat stubs for replicas
     # Only connect to servers with id > my_id
     g_params.auth_stubs = []
@@ -252,4 +252,4 @@ def main():
 # Main method that collects server IP address as a command line argument
 # If no IP address is provided, localhost is used
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

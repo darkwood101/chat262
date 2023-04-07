@@ -4,55 +4,73 @@
 # 
 
 import grpc
-from concurrent import futures
 import chat_pb2
 import chat_pb2_grpc
-from collections import defaultdict
-import sys
-import pickle
-from server import serve
-import threading
+from server import main
+import subprocess
 import time
 import os
-from os.path import exists
-
+import sys
 
 # Basic registration test
 def test_auth1(auth_stub, chat_stub):
-    request = chat_pb2.RegisterRequest(username='user1', password='pass1')
+    request = chat_pb2.RegisterRequest(
+        username = 'user1',
+        password = 'pass1',
+        is_client = True
+    )
     response = auth_stub.Register(request)
-    # print(response.message)
     assert(response.success == True)
     return True
 
 # Attempt to register with username that already exists
 def test_auth2(auth_stub, chat_stub):
-    request = chat_pb2.RegisterRequest(username='user1', password='pass1')
+    request = chat_pb2.RegisterRequest(
+        username = 'user1',
+        password = 'pass1',
+        is_client = True
+    )
     response = auth_stub.Register(request)
     assert(response.success == False)
     return True
 
 # Basic login test
 def test_auth3(auth_stub, chat_stub):
-    request = chat_pb2.LoginRequest(username='user1', password='pass1')
+    request = chat_pb2.LoginRequest(
+        username = 'user1',
+        password = 'pass1',
+        is_client = True
+    )
     response = auth_stub.Login(request)
     assert(response.success == True)
     return True
 
 # Attempt to login with wrong password
 def test_auth4(auth_stub, chat_stub):
-    request = chat_pb2.LoginRequest(username='user1', password='wrongpassword')
+    request = chat_pb2.LoginRequest(
+        username = 'user1',
+        password = 'wrongpassword',
+        is_client = True
+    )
     response = auth_stub.Login(request)
     assert(response.success == False)
     return True
 
 # Test for getting all registered users
 def test_getusers(auth_stub, chat_stub):
-    request = chat_pb2.RegisterRequest(username='user2', password='pass2')
+    request = chat_pb2.RegisterRequest(
+        username = 'user2',
+        password = 'pass2',
+        is_client = True
+    )
     response = auth_stub.Register(request)
     assert(response.success == True)
 
-    request = chat_pb2.RegisterRequest(username='user3', password='pass3')
+    request = chat_pb2.RegisterRequest(
+        username = 'user3',
+        password = 'pass3',
+        is_client = True
+    )
     response = auth_stub.Register(request)
     assert(response.success == True)
 
@@ -65,14 +83,19 @@ def test_getusers(auth_stub, chat_stub):
 
 # Basic send + receive message test
 def test_chat1(auth_stub, chat_stub):
-    request = chat_pb2.SendRequest(sender='user1', receiver='user2', body='Hello World')
+    request = chat_pb2.SendRequest(
+        sender = 'user1',
+        receiver = 'user2',
+        body = 'Hello World',
+        is_client = True
+    )
     response = chat_stub.SendMessage(request)
     assert(response.success == True)
 
-    message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = 'user2'))
+    message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = 'user2')).chats
+    assert(len(message_list) == 1)
     for m in message_list:
-        assert(m.sender == 'user1')
-        assert(m.body == 'Hello World')
+        assert(m == 'From user1: Hello World')
     return True
 
 # Attempt to send message to user that doesn't exist
@@ -92,11 +115,10 @@ def test_chat3(auth_stub, chat_stub):
     response = chat_stub.SendMessage(request)
     assert(response.success == True)
 
-    message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = 'user3'))
+    message_list = chat_stub.ReceiveMessage(chat_pb2.User(username = 'user3')).chats
     c = 1
     for m in message_list:
-        assert(m.sender == 'user'+ str(c))
-        assert(m.body == str(c))
+        assert(m == 'From user' + str(c) + ': ' + str(c))
         c += 1
     return True
 
@@ -113,41 +135,47 @@ def test_delete(auth_stub, chat_stub):
     return True
 
 if __name__ == "__main__":
-    n_arg = len(sys.argv)
-    channel_name = ''
-    if n_arg == 1:
-        channel_name = 'localhost:50051'
-    elif n_arg == 2:
-        channel_name = sys.argv[1] + ':50051'
-
     # start up server with given IP address
-    server = threading.Thread(target=serve, args=(channel_name,)).start()
     # sleep to avoid race conditions
-    time.sleep(0.5) 
 
-    channel = grpc.insecure_channel(channel_name)
+    server_2 = subprocess.Popen(["python3","server.py", "2", "127.0.0.1", "127.0.0.2", "127.0.0.3"])
+    time.sleep(0.5)
+    server_1 = subprocess.Popen(["python3","server.py", "1", "127.0.0.1", "127.0.0.2", "127.0.0.3"])
+    time.sleep(0.5)
+    server_0 = subprocess.Popen(["python3","server.py", "0", "127.0.0.1", "127.0.0.2", "127.0.0.3"])
+    time.sleep(0.5)
+
+    channel = grpc.insecure_channel('127.0.0.1:50051')
     auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
     chat_stub = chat_pb2_grpc.ChatServiceStub(channel)
 
-    if test_auth1(auth_stub, chat_stub): print('Test 1 (basic register) passed.')
-    time.sleep(0.05)
-    if test_auth2(auth_stub, chat_stub): print('Test 2 (register attempt with same username) passed.')
-    time.sleep(0.05)
-    if test_auth3(auth_stub, chat_stub): print('Test 3 (basic login) passed.')
-    time.sleep(0.05)
-    if test_auth4(auth_stub, chat_stub): print('Test 4 (login attempt with wrong password) passed.')
-    time.sleep(0.05)
-    if test_getusers(auth_stub, chat_stub): print('Test 5 (getting all users) passed.')
-    time.sleep(0.05)
-    if test_chat1(auth_stub, chat_stub): print('Test 6 (basic send + receive chat) passed.')
-    time.sleep(0.05)
-    if test_chat2(auth_stub, chat_stub): print('Test 7 (attempt to send chat to invalid user) passed.')
-    time.sleep(0.05)
-    if test_chat3(auth_stub, chat_stub): print('Test 7 (receiving chats from multiple users) passed.')
-    time.sleep(0.05)
-    if test_delete(auth_stub, chat_stub): print('Test 8 (deleting an account) passed.')
-    time.sleep(0.05)
-    
+    try:
+        if test_auth1(auth_stub, chat_stub): print('Test 1 (basic register) passed.')
+        time.sleep(0.05)
+        if test_auth2(auth_stub, chat_stub): print('Test 2 (register attempt with same username) passed.')
+        time.sleep(0.05)
+        if test_auth3(auth_stub, chat_stub): print('Test 3 (basic login) passed.')
+        time.sleep(0.05)
+        if test_auth4(auth_stub, chat_stub): print('Test 4 (login attempt with wrong password) passed.')
+        time.sleep(0.05)
+        if test_getusers(auth_stub, chat_stub): print('Test 5 (getting all users) passed.')
+        time.sleep(0.05)
+        if test_chat1(auth_stub, chat_stub): print('Test 6 (basic send + receive chat) passed.')
+        time.sleep(0.05)
+        if test_chat2(auth_stub, chat_stub): print('Test 7 (attempt to send chat to invalid user) passed.')
+        time.sleep(0.05)
+        if test_chat3(auth_stub, chat_stub): print('Test 7 (receiving chats from multiple users) passed.')
+        time.sleep(0.05)
+        if test_delete(auth_stub, chat_stub): print('Test 8 (deleting an account) passed.')
+        time.sleep(0.05)
+        print('All tests passed')
+    except Exception as e:
+        print(e)
+        print('Tests failed')
 
-    print('All tests passed.')
-    os.remove('db.pkl')
+    os.remove('db0.pkl')
+    os.remove('db1.pkl')
+    os.remove('db2.pkl')
+    server_0.terminate()
+    server_1.terminate()
+    server_2.terminate()
