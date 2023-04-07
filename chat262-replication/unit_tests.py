@@ -138,12 +138,8 @@ if __name__ == "__main__":
     # start up server with given IP address
     # sleep to avoid race conditions
 
-    server_2 = subprocess.Popen(["python3","server.py", "2", "127.0.0.1", "127.0.0.2", "127.0.0.3"])
-    time.sleep(0.5)
-    server_1 = subprocess.Popen(["python3","server.py", "1", "127.0.0.1", "127.0.0.2", "127.0.0.3"])
-    time.sleep(0.5)
-    server_0 = subprocess.Popen(["python3","server.py", "0", "127.0.0.1", "127.0.0.2", "127.0.0.3"])
-    time.sleep(0.5)
+    server = subprocess.Popen(["python3","server.py", "2", "", "", "127.0.0.1"])
+    time.sleep(1)
 
     channel = grpc.insecure_channel('127.0.0.1:50051')
     auth_stub = chat_pb2_grpc.AuthServiceStub(channel)
@@ -173,9 +169,5 @@ if __name__ == "__main__":
         print(e)
         print('Tests failed')
 
-    os.remove('db0.pkl')
-    os.remove('db1.pkl')
     os.remove('db2.pkl')
-    server_0.terminate()
-    server_1.terminate()
-    server_2.terminate()
+    server.terminate()
