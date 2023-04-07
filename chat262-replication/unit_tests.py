@@ -165,8 +165,8 @@ if __name__ == "__main__":
         if test_delete(auth_stub, chat_stub): print('Test 8 (deleting an account) passed.')
         time.sleep(0.05)
         print('All tests passed')
-    except Exception as e:
-        print(e)
+    except:
+        traceback.print_exc()
         print('Tests failed')
 
     os.remove('db2.pkl')
