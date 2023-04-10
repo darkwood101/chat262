@@ -1,23 +1,14 @@
-#  Chat 262 Documentation: The gRPC version
+#  Chat 262 Documentation: Replication and Persistence
 
 - [1. Installation and Configuration](#1-installation)
 - [2. Building and Running](#2-build)
 - [3. Implementation and Functionality](#3-implementation)
 
+This implements a two-fault tolerant and persistent chatbot application.
 
 ## 1. Installation and Configuration
 
-You will need the following prerequisites to build Chat 262:
-
-- Python 3.7 or higher
-- pip version 9.0.1 or higher
-- Install gRPC and gRPC tools:
-```console
-$ python -m pip install grpcio
-$ python -m pip install grpcio-tools
-```
-For more information on getting started with gRPC, see [this tutorial](https://grpc.io/docs/languages/python/quickstart/). 
-
+See the [README.md](https://github.com/darkwood101/chat262/tree/main/chat262-grpc) for the gRPC version for installing and configuring gRPC.
 
 ## 2. Building and Running
 
@@ -28,25 +19,33 @@ $ cd chat262-grpc/
 $ python -m grpc_tools.protoc -I protos --python_out=. --pyi_out=. --grpc_python_out=. protos/chat.proto
 ```
 
-To run the server on a specified IP address, run:
+To test out the two-fault tolerance and persistence capabilities, you can start up 3 servers (in the following order)
 
 ```console
-$ python server.py [IP-ADDRESS]
+$ python3 server.py 2 127.0.0.1 127.0.0.2 127.0.0.3
+$ python3 server.py 1 127.0.0.1 127.0.0.2 127.0.0.3
+$ python3 server.py 0 127.0.0.1 127.0.0.2 127.0.0.3
 ```
 
-To start a client:
-
+Then start up the client(s):
 ```console
-$ python client.py [IP-ADDRESS]
+$ python3 client.py 127.0.0.1 127.0.0.2 127.0.0.3
 ```
-If no IP address is provided, then the default local host is used. 
 
 ## 3. Implementation and Functionality
 
-The services and message types are defined in the protos/chat.proto file. In particular, we define two services (AuthService and ChatService) and protocol buffer message type definitions for all the request and response types used in our service methods. AuthService handles register, login, and delete account requests and ChatService handles send/receive message requests and getting all the current users. We define message types for Users, Login requests/responses, Register request/responses, Send request/responses, and ChatMessage.
+#### Persistence Design Decisions:
+* To make message store persistent across server restarts, we create a .pkl database file associated with each of the three servers. These database files are maintained to have the same message content through our replication scheme explained below.
+* Since the client is only communicating with the leader, when changes to the leader’s database are made through gRPC requests, the leader transfers these requests to the non-leader servers who then make the corresponding changes to their own databases. 
+* We persist all user data, including username-password pairs and messages sent/received by all users.
 
-The server.py file contains the service method implementations for AuthService and ChatService, handles storing and loading data from the database, and also starts up the server on a specified IP address. The database is stored on disk and updated with pickle loading and dumping so that database information persists across server restarts. Methods implemented in AuthService include Register, Login, and DeleteAccount, and methods implemented in ChatService incldue SendMessage, GetUsers, and ReceiveMessage. These functions are called from the client side using the stub code.
-
-The client.py file includes client-side implementations for registering and logging in, sending and receiving messages, and the UI design for the chat service. There are two main "pages": a login page where a user is prompted to register or log in, and a home page where a user can see all the usernames in the database and then send chats to another user and receive incoming chats. When a user logs in, they are given all new unread messages since the last time they logged in. Messages are delivered on demand (with a slight up to one second delay), and sending + receiving messages occurs simultaneously.
+#### Replication Design Decisions:
+* Setup: we have 3 servers and 1 client communicating with the leader server, to ensure that our system is 2-fault tolerant in the face of crash/failstop failures.
+* Leader election/order: 
+  * We establish a pre-set leader order for transferring leadership in the case of crashes: server 0, server 1, server 2. All entities (the client and the
+  servers) are aware of this order as well as the IP addresses of the other entities.
+  * When the leader crashes, the client automatically connects to the next server as determined by the leader order above. If a server receives a message
+  from the client, it assumes that it has become the leader.
+* Detecting server crashes: When the client sends any request to any server, if it doesn’t receive a response within a timeout period of 1 second, it assumes that the server has crashed or failed. The client then connects with the next server, who is established to be the next leader.
 
 
