@@ -15,7 +15,7 @@ See the [README.md](https://github.com/darkwood101/chat262/tree/main/chat262-grp
 To generate the gRPC client and server stub code, run the following command:
 
 ```console
-$ cd chat262-grpc/
+$ cd chat262-replication/
 $ python -m grpc_tools.protoc -I protos --python_out=. --pyi_out=. --grpc_python_out=. protos/chat.proto
 ```
 
@@ -32,14 +32,14 @@ Then start up the client(s):
 $ python3 client.py 127.0.0.1 127.0.0.2 127.0.0.3
 ```
 
-## 3. Implementation and Functionality
+## 3. Design Decisions and Implementation 
 
-#### Persistence Design Decisions:
+#### Persistence:
 * To make message store persistent across server restarts, we create a .pkl database file associated with each of the three servers. These database files are maintained to have the same message content through our replication scheme explained below.
 * Since the client is only communicating with the leader, when changes to the leader’s database are made through gRPC requests, the leader transfers these requests to the non-leader servers who then make the corresponding changes to their own databases. 
 * We persist all user data, including username-password pairs and messages sent/received by all users.
 
-#### Replication Design Decisions:
+#### Replication:
 * Setup: we have 3 servers and 1 client communicating with the leader server, to ensure that our system is 2-fault tolerant in the face of crash/failstop failures.
 * Leader election/order: 
   * We establish a pre-set leader order for transferring leadership in the case of crashes: server 0, server 1, server 2. All entities (the client and the
