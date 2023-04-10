@@ -1,12 +1,12 @@
 #  Chat 262 Documentation: Replication and Persistence
 
-- [1. Installation and Configuration](#1-installation)
+- [1. Configuration](#1-installation)
 - [2. Building and Running](#2-build)
-- [3. Implementation and Functionality](#3-implementation)
+- [3. Design Decisions and Implementation](#3-implementation)
 
 This implements a two-fault tolerant and persistent chatbot application.
 
-## 1. Installation and Configuration
+## 1. Configuration
 
 See the [README.md](https://github.com/darkwood101/chat262/tree/main/chat262-grpc) for the gRPC version for installing and configuring gRPC.
 
